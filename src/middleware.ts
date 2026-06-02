@@ -11,7 +11,7 @@ function getSecret() {
 }
 
 // Routes that require authentication
-const protectedRoutes = ["/bookings", "/orders", "/checkout"];
+const protectedRoutes = ["/account", "/bookings", "/orders", "/checkout"];
 // Routes only for admins
 const adminRoutes = ["/admin"];
 // Routes that logged-in users should not see

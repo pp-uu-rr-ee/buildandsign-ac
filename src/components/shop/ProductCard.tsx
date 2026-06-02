@@ -29,10 +29,9 @@ export function ProductCard({ product }: Props) {
   return (
     <Link
       href={`/products/${product.slug}`}
-      className="group flex flex-col rounded-xl border border-gray-200 bg-white overflow-hidden hover:shadow-md hover:border-blue-200 transition-all duration-200"
+      className="group flex flex-col rounded-xl border border-gray-200 bg-white overflow-hidden hover:shadow-md hover:border-blue-200 transition-all duration-200 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-blue-700"
     >
-      {/* Image */}
-      <div className="relative aspect-[4/3] bg-gray-50 overflow-hidden">
+      <div className="relative aspect-[4/3] bg-gray-50 overflow-hidden dark:bg-gray-800">
         {product.primaryImage?.url ? (
           <Image
             src={product.primaryImage.url}
@@ -44,7 +43,7 @@ export function ProductCard({ product }: Props) {
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <svg
-              className="h-16 w-16 text-gray-300"
+              className="h-16 w-16 text-gray-300 dark:text-gray-600"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -59,7 +58,6 @@ export function ProductCard({ product }: Props) {
           </div>
         )}
 
-        {/* Badges */}
         <div className="absolute top-2 left-2 flex flex-col gap-1">
           {discount !== null && (
             <Badge className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5">
@@ -74,41 +72,40 @@ export function ProductCard({ product }: Props) {
         </div>
 
         {isOutOfStock && (
-          <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-            <span className="text-sm font-semibold text-gray-500">
+          <div className="absolute inset-0 bg-white/70 dark:bg-gray-900/70 flex items-center justify-center">
+            <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">
               Out of Stock
             </span>
           </div>
         )}
       </div>
 
-      {/* Info */}
       <div className="flex flex-col gap-1.5 p-4 flex-1">
-        <p className="text-xs text-blue-600 font-medium capitalize">
+        <p className="text-xs text-blue-600 font-medium capitalize dark:text-blue-400">
           {product.category.replace("_", " ")} Type
         </p>
-        <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors">
+        <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors dark:text-gray-100 dark:group-hover:text-blue-400">
           {product.name}
         </h3>
         {product.shortDescription && (
-          <p className="text-xs text-gray-500 line-clamp-2">
+          <p className="text-xs text-gray-500 line-clamp-2 dark:text-gray-400">
             {product.shortDescription}
           </p>
         )}
 
         <div className="mt-auto pt-3 flex items-end justify-between gap-2">
           <div>
-            <p className="text-lg font-bold text-gray-900">
+            <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
               {formatPrice(product.priceInCents)}
             </p>
             {product.comparePriceInCents && (
-              <p className="text-xs text-gray-400 line-through">
+              <p className="text-xs text-gray-400 dark:text-gray-500 line-through">
                 {formatPrice(product.comparePriceInCents)}
               </p>
             )}
           </div>
           {isLowStock && (
-            <span className="text-xs text-orange-500 font-medium whitespace-nowrap">
+            <span className="text-xs text-orange-500 dark:text-orange-400 font-medium whitespace-nowrap">
               Only {product.stock} left
             </span>
           )}
