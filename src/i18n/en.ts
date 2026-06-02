@@ -294,6 +294,19 @@ const en = {
     type: (cat: string) => `${cat} Type`,
   },
 
+  blog: {
+    title: "Blog",
+    subtitle: "Tips, guides, and updates from our team of AC professionals.",
+    readMore: "Read more",
+    noPosts: "No articles yet",
+    noPostsHint: "Check back soon for tips, guides, and news.",
+    minRead: (n: number) => `${n} min read`,
+    by: "By",
+    backToBlog: "← Back to Blog",
+    tags: "Tags",
+    publishedOn: "Published on",
+  },
+
   common: {
     back: "Back",
     loading: "Loading…",

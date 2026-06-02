@@ -296,6 +296,19 @@ const th: Translations = {
     type: (cat: string) => `${cat} Type`,
   },
 
+  blog: {
+    title: "บทความ",
+    subtitle: "เคล็ดลับ คู่มือ และข่าวสารจากทีมช่างแอร์มืออาชีพของเรา",
+    readMore: "อ่านเพิ่มเติม",
+    noPosts: "ยังไม่มีบทความ",
+    noPostsHint: "กลับมาใหม่เร็วๆ นี้สำหรับเคล็ดลับและคู่มือ",
+    minRead: (n: number) => `อ่าน ${n} นาที`,
+    by: "โดย",
+    backToBlog: "← กลับไปยังบทความ",
+    tags: "แท็ก",
+    publishedOn: "เผยแพร่เมื่อ",
+  },
+
   common: {
     back: "ย้อนกลับ",
     loading: "กำลังโหลด…",

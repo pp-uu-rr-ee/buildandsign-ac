@@ -2,9 +2,12 @@
 
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { bookings } from "@/db/schema";
+import { bookings, users } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { getSession } from "@/lib/session";
 import { bookingSchema } from "@/lib/validations/booking";
+import { sendBookingConfirmation } from "@/lib/email";
+import { getService } from "@/config/services";
 
 function generateBookingNumber(): string {
   const prefix = "BK";
@@ -89,7 +92,41 @@ export async function createBookingAction(
           : null,
       customerNotes: data.customerNotes,
     })
-    .returning({ id: bookings.id });
+    .returning({ id: bookings.id, bookingNumber: bookings.bookingNumber });
+
+  if (session?.userId) {
+    try {
+      const [user] = await db
+        .select({ email: users.email })
+        .from(users)
+        .where(eq(users.id, session.userId))
+        .limit(1);
+
+      if (user) {
+        const service = getService(data.serviceType);
+        await sendBookingConfirmation({
+          to: user.email,
+          bookingNumber: booking.bookingNumber,
+          customerName: data.fullName,
+          serviceTitle: service?.title ?? data.serviceType,
+          scheduledAt: new Date(data.scheduledAt),
+          durationMinutes: data.durationMinutes,
+          serviceAddress: {
+            fullName: data.fullName,
+            phone: data.phone,
+            addressLine1: data.addressLine1,
+            addressLine2: data.addressLine2,
+            city: data.city,
+            province: data.province,
+            postalCode: data.postalCode,
+          },
+          bookingId: booking.id,
+        });
+      }
+    } catch (err) {
+      console.error("[email] Failed to send booking confirmation:", err);
+    }
+  }
 
   redirect(`/bookings/${booking.id}/confirmation`);
 }

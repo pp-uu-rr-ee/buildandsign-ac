@@ -53,8 +53,9 @@ const productSchema = z.object({
   shortDescription: z.string().optional(),
   category: z.enum(["split","window","portable","central","cassette","ducted"]),
   status: z.enum(["active","draft","archived","out_of_stock"]),
-  priceInCents: z.coerce.number().int().positive(),
-  comparePriceInCents: z.coerce.number().int().optional().or(z.literal("")),
+  // User enters peso amounts; multiply by 100 to store as centavos
+  priceInPesos: z.coerce.number().positive("Price must be a positive number"),
+  comparePriceInPesos: z.coerce.number().positive().optional().or(z.literal("")),
   stock: z.coerce.number().int().min(0),
   isFeatured: z.coerce.boolean().optional(),
 });
@@ -63,13 +64,17 @@ export type ProductFormResult =
   | { success: true }
   | { success: false; error: string; fieldErrors?: Record<string, string[]> };
 
+export type CreateProductResult =
+  | { success: true; productId: string }
+  | { success: false; error: string; fieldErrors?: Record<string, string[]> };
+
 export async function updateProductAction(
   _prev: ProductFormResult,
   formData: FormData
 ): Promise<ProductFormResult> {
   const id = formData.get("id") as string;
   const raw = Object.fromEntries(
-    ["name","slug","shortDescription","category","status","priceInCents","comparePriceInCents","stock","isFeatured"]
+    ["name","slug","shortDescription","category","status","priceInPesos","comparePriceInPesos","stock","isFeatured"]
       .map((k) => [k, formData.get(k)])
   );
   raw.isFeatured = formData.get("isFeatured") === "on" ? "true" : "false";
@@ -79,10 +84,13 @@ export async function updateProductAction(
     return { success: false, error: "Validation failed", fieldErrors: parsed.error.flatten().fieldErrors as any };
   }
 
-  const { comparePriceInCents, ...rest } = parsed.data;
+  const { priceInPesos, comparePriceInPesos, ...rest } = parsed.data;
   await db.update(products).set({
     ...rest,
-    comparePriceInCents: comparePriceInCents !== "" ? Number(comparePriceInCents) : null,
+    priceInCents: Math.round(priceInPesos * 100),
+    comparePriceInCents: comparePriceInPesos !== "" && comparePriceInPesos
+      ? Math.round(Number(comparePriceInPesos) * 100)
+      : null,
     isFeatured: rest.isFeatured ?? false,
     updatedAt: new Date(),
   }).where(eq(products.id, id));
@@ -90,6 +98,50 @@ export async function updateProductAction(
   revalidatePath("/admin/products");
   revalidatePath(`/products/${rest.slug}`);
   return { success: true };
+}
+
+const createProductSchema = z.object({
+  name: z.string().min(2),
+  slug: z.string().min(2).regex(/^[a-z0-9-]+$/, "Lowercase letters, numbers and hyphens only"),
+  shortDescription: z.string().optional(),
+  category: z.enum(["split","window","portable","central","cassette","ducted"]),
+  status: z.enum(["active","draft","archived","out_of_stock"]),
+  // User enters peso amounts; multiply by 100 to store as centavos
+  priceInPesos: z.coerce.number().positive("Price must be a positive number"),
+  comparePriceInPesos: z.coerce.number().positive().optional().or(z.literal("")),
+  stock: z.coerce.number().int().min(0),
+  isFeatured: z.coerce.boolean().optional(),
+});
+
+export async function createProductAction(
+  _prev: CreateProductResult,
+  formData: FormData
+): Promise<CreateProductResult> {
+  const raw = Object.fromEntries(
+    ["name","slug","shortDescription","category","status","priceInPesos","comparePriceInPesos","stock","isFeatured"]
+      .map((k) => [k, formData.get(k)])
+  );
+  raw.isFeatured = formData.get("isFeatured") === "on" ? "true" : "false";
+
+  const parsed = createProductSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { success: false, error: "Validation failed", fieldErrors: parsed.error.flatten().fieldErrors as any };
+  }
+
+  const { priceInPesos, comparePriceInPesos, ...rest } = parsed.data;
+
+  const [product] = await db.insert(products).values({
+    ...rest,
+    priceInCents: Math.round(priceInPesos * 100),
+    comparePriceInCents: comparePriceInPesos !== "" && comparePriceInPesos
+      ? Math.round(Number(comparePriceInPesos) * 100)
+      : null,
+    isFeatured: rest.isFeatured ?? false,
+  }).returning({ id: products.id });
+
+  revalidatePath("/admin/products");
+  revalidatePath("/products");
+  return { success: true, productId: product.id };
 }
 
 export async function toggleProductStatusAction(id: string, currentStatus: string) {

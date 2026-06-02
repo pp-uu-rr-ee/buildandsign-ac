@@ -5,7 +5,7 @@ export const bookingSchema = z.object({
   technicianId: z.string().uuid("Please select a time slot"),
   scheduledAt: z
     .string()
-    .datetime("Invalid date/time")
+    .datetime({ local: true, message: "Invalid date/time" })
     .refine(
       (v) => new Date(v) > new Date(),
       "Booking must be in the future"

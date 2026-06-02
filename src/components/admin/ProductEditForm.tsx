@@ -45,16 +45,16 @@ export function ProductEditForm({ product }: { product: Product }) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Field
           label="Price (₱ — enter in pesos)"
-          name="priceInCents"
+          name="priceInPesos"
           type="number"
           defaultValue={String(product.priceInCents / 100)}
           required
-          error={fieldErrors?.priceInCents?.[0]}
+          error={fieldErrors?.priceInPesos?.[0]}
           hint="e.g. 28999 for ₱28,999"
         />
         <Field
           label="Compare Price (₱)"
-          name="comparePriceInCents"
+          name="comparePriceInPesos"
           type="number"
           defaultValue={product.comparePriceInCents ? String(product.comparePriceInCents / 100) : ""}
           hint="Crossed-out original price"

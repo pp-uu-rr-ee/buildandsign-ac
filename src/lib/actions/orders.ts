@@ -6,6 +6,7 @@ import { orders, orderItems, products } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { getSession } from "@/lib/session";
 import { checkoutSchema } from "@/lib/validations/checkout";
+import { sendOrderReceipt } from "@/lib/email";
 import type { CartItem } from "@/types";
 
 export type OrderActionResult =
@@ -128,7 +129,7 @@ export async function createOrderAction(
       },
       notes: data.notes,
     })
-    .returning({ id: orders.id });
+    .returning({ id: orders.id, orderNumber: orders.orderNumber });
 
   await db.insert(orderItems).values(
     validatedItems.map((item) => ({ orderId: order.id, ...item }))
@@ -140,6 +141,37 @@ export async function createOrderAction(
       .update(products)
       .set({ stock: sql`${products.stock} - ${item.quantity}` })
       .where(eq(products.id, item.productId));
+  }
+
+  try {
+    await sendOrderReceipt({
+      to: data.email,
+      orderNumber: order.orderNumber,
+      customerName: data.fullName,
+      customerEmail: data.email,
+      items: validatedItems.map((item) => ({
+        productName: item.productName,
+        quantity: item.quantity,
+        unitPriceInCents: item.unitPriceInCents,
+        totalInCents: item.totalInCents,
+      })),
+      subtotalInCents: subtotal,
+      shippingInCents,
+      totalInCents,
+      paymentMethod: data.paymentMethod,
+      shippingAddress: {
+        fullName: data.fullName,
+        phone: data.phone,
+        addressLine1: data.addressLine1,
+        addressLine2: data.addressLine2,
+        city: data.city,
+        province: data.province,
+        postalCode: data.postalCode,
+      },
+      orderId: order.id,
+    });
+  } catch (err) {
+    console.error("[email] Failed to send order receipt:", err);
   }
 
   redirect(`/orders/${order.id}/confirmation`);
