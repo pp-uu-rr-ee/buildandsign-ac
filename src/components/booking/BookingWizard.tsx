@@ -15,7 +15,7 @@ type SerializableService = {
   title: string;
   tagline: string;
   durationMinutes: number;
-  basePriceInCents: number;
+  basePriceInSatang: number;
   includes: string[];
 };
 
@@ -214,7 +214,7 @@ export function BookingWizard({ service }: Props) {
             <Row label={t.booking.rowTime} value={`${selectedSlot?.startTime} – ${selectedSlot?.endTime}`} />
             <Row label={t.booking.rowTechnician} value={selectedSlot?.technicianName ?? "—"} />
             <Row label={t.booking.rowDuration} value={t.booking.durationValue(service.durationMinutes)} />
-            <Row label={t.booking.rowStartingPrice} value={formatPrice(service.basePriceInCents)} />
+            <Row label={t.booking.rowStartingPrice} value={formatPrice(service.basePriceInSatang)} />
           </div>
 
           <p className="text-xs text-gray-400 dark:text-gray-500">{t.booking.priceDisclaimer}</p>

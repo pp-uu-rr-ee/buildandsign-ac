@@ -10,7 +10,7 @@ type Props = {
   productName: string;
   slug: string;
   imageUrl: string | null;
-  priceInCents: number;
+  priceInSatang: number;
   stock: number;
 };
 
@@ -19,7 +19,7 @@ export function AddToCartButton({
   productName,
   slug,
   imageUrl,
-  priceInCents,
+  priceInSatang,
   stock,
 }: Props) {
   const [qty, setQty] = useState(1);
@@ -29,7 +29,7 @@ export function AddToCartButton({
   const isOutOfStock = stock === 0;
 
   const handleAdd = () => {
-    addItem({ productId, name: productName, slug, imageUrl, unitPriceInCents: priceInCents, quantity: qty });
+    addItem({ productId, name: productName, slug, imageUrl, unitPriceInSatang: priceInSatang, quantity: qty });
     setAdded(true);
     toast.success(`${productName} added to cart`);
     setTimeout(() => setAdded(false), 2000);

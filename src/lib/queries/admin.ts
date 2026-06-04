@@ -19,7 +19,7 @@ export async function getDashboardStats() {
   ] = await Promise.all([
     db.select({ totalOrders: count() }).from(orders),
     db.select({ pendingOrders: count() }).from(orders).where(eq(orders.status, "pending")),
-    db.select({ totalRevenue: sql<number>`coalesce(sum(total_in_cents),0)::int` }).from(orders).where(eq(orders.paymentStatus, "paid")),
+    db.select({ totalRevenue: sql<number>`coalesce(sum(total_in_satang),0)::int` }).from(orders).where(eq(orders.paymentStatus, "paid")),
     db.select({ totalBookings: count() }).from(bookings),
     db.select({ pendingBookings: count() }).from(bookings).where(eq(bookings.status, "pending")),
     db.select({ totalProducts: count() }).from(products),
@@ -38,7 +38,7 @@ export async function getRecentOrders(limit = 8) {
       orderNumber: orders.orderNumber,
       status: orders.status,
       paymentStatus: orders.paymentStatus,
-      totalInCents: orders.totalInCents,
+      totalInSatang: orders.totalInSatang,
       customerName: orders.shippingAddress,
       createdAt: orders.createdAt,
     })
@@ -59,7 +59,7 @@ export async function getOrders({ page = 1, limit = 15, status }: { page?: numbe
       status: orders.status,
       paymentStatus: orders.paymentStatus,
       paymentMethod: orders.paymentMethod,
-      totalInCents: orders.totalInCents,
+      totalInSatang: orders.totalInSatang,
       shippingAddress: orders.shippingAddress,
       createdAt: orders.createdAt,
     })
@@ -96,7 +96,7 @@ export async function getBookings({ page = 1, limit = 15, status }: { page?: num
       scheduledAt: bookings.scheduledAt,
       durationMinutes: bookings.durationMinutes,
       serviceAddress: bookings.serviceAddress,
-      quotedPriceInCents: bookings.quotedPriceInCents,
+      quotedPriceInSatang: bookings.quotedPriceInSatang,
       technicianName: users.name,
       technicianId: bookings.technicianId,
     })
@@ -140,7 +140,7 @@ export async function getAdminProducts({ page = 1, limit = 15, search }: { page?
       slug: products.slug,
       category: products.category,
       status: products.status,
-      priceInCents: products.priceInCents,
+      priceInSatang: products.priceInSatang,
       stock: products.stock,
       lowStockThreshold: products.lowStockThreshold,
       isFeatured: products.isFeatured,

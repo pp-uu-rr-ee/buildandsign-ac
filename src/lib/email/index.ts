@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 import { siteConfig } from "@/config/site";
-import { bookingConfirmationHtml, orderReceiptHtml } from "./templates";
+import { bookingConfirmationHtml, orderReceiptHtml, passwordResetHtml } from "./templates";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.EMAIL_FROM ?? "no-reply@coolairservices.com";
@@ -56,12 +56,12 @@ export type OrderEmailPayload = {
   items: {
     productName: string;
     quantity: number;
-    unitPriceInCents: number;
-    totalInCents: number;
+    unitPriceInSatang: number;
+    totalInSatang: number;
   }[];
-  subtotalInCents: number;
-  shippingInCents: number;
-  totalInCents: number;
+  subtotalInSatang: number;
+  shippingInSatang: number;
+  totalInSatang: number;
   paymentMethod: string;
   shippingAddress: {
     fullName: string;
@@ -87,13 +87,30 @@ export async function sendOrderReceipt(payload: OrderEmailPayload): Promise<void
       customerName: payload.customerName,
       customerEmail: payload.customerEmail,
       items: payload.items,
-      subtotalInCents: payload.subtotalInCents,
-      shippingInCents: payload.shippingInCents,
-      totalInCents: payload.totalInCents,
+      subtotalInSatang: payload.subtotalInSatang,
+      shippingInSatang: payload.shippingInSatang,
+      totalInSatang: payload.totalInSatang,
       paymentMethod: payload.paymentMethod,
       shippingAddress: payload.shippingAddress,
       orderUrl: `${APP_URL}/orders/${payload.orderId}/confirmation`,
     }),
+  });
+
+  if (error) throw new Error(`Resend error: ${error.message}`);
+}
+
+export async function sendPasswordReset(payload: {
+  to: string;
+  customerName: string;
+  resetUrl: string;
+}): Promise<void> {
+  if (!process.env.RESEND_API_KEY) return;
+
+  const { error } = await resend.emails.send({
+    from: `${siteConfig.name} <${FROM}>`,
+    to: payload.to,
+    subject: "Reset your Cool Air Services password",
+    html: passwordResetHtml({ customerName: payload.customerName, resetUrl: payload.resetUrl }),
   });
 
   if (error) throw new Error(`Resend error: ${error.message}`);

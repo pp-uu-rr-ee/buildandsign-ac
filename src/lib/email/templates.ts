@@ -164,8 +164,8 @@ export function bookingConfirmationHtml(d: BookingEmailData): string {
 type OrderItem = {
   productName: string;
   quantity: number;
-  unitPriceInCents: number;
-  totalInCents: number;
+  unitPriceInSatang: number;
+  totalInSatang: number;
 };
 
 type OrderEmailData = {
@@ -173,9 +173,9 @@ type OrderEmailData = {
   customerName: string;
   customerEmail: string;
   items: OrderItem[];
-  subtotalInCents: number;
-  shippingInCents: number;
-  totalInCents: number;
+  subtotalInSatang: number;
+  shippingInSatang: number;
+  totalInSatang: number;
   paymentMethod: string;
   shippingAddress: {
     fullName: string;
@@ -210,7 +210,7 @@ export function orderReceiptHtml(d: OrderEmailData): string {
           <span style="color:${brand.muted};"> × ${item.quantity}</span>
         </td>
         <td style="padding:10px 0;font-size:14px;color:${brand.text};font-weight:600;text-align:right;border-bottom:1px solid ${brand.border};">
-          ${formatPrice(item.totalInCents)}
+          ${formatPrice(item.totalInSatang)}
         </td>
       </tr>`
     )
@@ -240,15 +240,15 @@ export function orderReceiptHtml(d: OrderEmailData): string {
           ${itemRows}
           <tr>
             <td style="padding:10px 0 4px;font-size:14px;color:${brand.muted};">Subtotal</td>
-            <td style="padding:10px 0 4px;font-size:14px;color:${brand.text};text-align:right;">${formatPrice(d.subtotalInCents)}</td>
+            <td style="padding:10px 0 4px;font-size:14px;color:${brand.text};text-align:right;">${formatPrice(d.subtotalInSatang)}</td>
           </tr>
           <tr>
             <td style="padding:4px 0;font-size:14px;color:${brand.muted};">Shipping</td>
-            <td style="padding:4px 0;font-size:14px;color:${brand.text};text-align:right;">${d.shippingInCents === 0 ? "Free" : formatPrice(d.shippingInCents)}</td>
+            <td style="padding:4px 0;font-size:14px;color:${brand.text};text-align:right;">${d.shippingInSatang === 0 ? "Free" : formatPrice(d.shippingInSatang)}</td>
           </tr>
           <tr>
             <td style="padding:12px 0 0;font-size:16px;font-weight:700;color:${brand.text};border-top:2px solid ${brand.border};">Total</td>
-            <td style="padding:12px 0 0;font-size:16px;font-weight:700;color:${brand.primary};text-align:right;border-top:2px solid ${brand.border};">${formatPrice(d.totalInCents)}</td>
+            <td style="padding:12px 0 0;font-size:16px;font-weight:700;color:${brand.primary};text-align:right;border-top:2px solid ${brand.border};">${formatPrice(d.totalInSatang)}</td>
           </tr>
         </table>
       </div>
@@ -279,3 +279,31 @@ export function orderReceiptHtml(d: OrderEmailData): string {
 
   return base(`Order Confirmed — ${d.orderNumber}`, body);
 }
+
+// ── Password Reset ────────────────────────────────────────────────────────────
+export function passwordResetHtml(d: { customerName: string; resetUrl: string }): string {
+  const body = `
+    <h2 style="margin:0 0 8px;font-size:22px;font-weight:700;color:${brand.text};">Reset your password</h2>
+    <p style="margin:0 0 24px;font-size:15px;color:${brand.muted};">Hi ${d.customerName},</p>
+    <p style="margin:0 0 24px;font-size:14px;color:${brand.text};line-height:1.6;">
+      We received a request to reset the password for your Cool Air Services account.
+      Click the button below to choose a new password. This link expires in <strong>1 hour</strong>.
+    </p>
+
+    <div style="text-align:center;margin:32px 0;">
+      <a href="${d.resetUrl}" style="display:inline-block;background:${brand.primary};color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 36px;border-radius:8px;">
+        Reset Password
+      </a>
+    </div>
+
+    <p style="margin:0 0 8px;font-size:13px;color:${brand.muted};text-align:center;">
+      If you didn't request a password reset, you can safely ignore this email — your password will not change.
+    </p>
+    <p style="margin:0;font-size:13px;color:${brand.muted};text-align:center;">
+      Or copy this link into your browser:<br />
+      <span style="word-break:break-all;color:${brand.primary};">${d.resetUrl}</span>
+    </p>
+  `;
+  return base("Reset your Cool Air Services password", body);
+}
+

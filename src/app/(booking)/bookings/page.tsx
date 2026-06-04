@@ -66,7 +66,7 @@ export default async function BookingsPage() {
                 : booking.status.charAt(0).toUpperCase() + booking.status.slice(1);
             const serviceLabel =
               SERVICE_LABELS[booking.serviceType] ?? booking.serviceType;
-            const price = booking.finalPriceInCents ?? booking.quotedPriceInCents;
+            const price = booking.finalPriceInSatang ?? booking.quotedPriceInSatang;
 
             return (
               <Link

@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!service) return {};
   return {
     title: `Book ${service.title}`,
-    description: `Schedule your ${service.title.toLowerCase()} appointment online. Starting at ${formatPrice(service.basePriceInCents)}. Pick your date and time slot in seconds.`,
+    description: `Schedule your ${service.title.toLowerCase()} appointment online. Starting at ${formatPrice(service.basePriceInSatang)}. Pick your date and time slot in seconds.`,
   };
 }
 
@@ -50,7 +50,7 @@ export default async function BookServicePage({ params }: Props) {
             title: service.title,
             tagline: service.tagline,
             durationMinutes: service.durationMinutes,
-            basePriceInCents: service.basePriceInCents,
+            basePriceInSatang: service.basePriceInSatang,
             includes: service.includes,
           }} />
         </div>
@@ -75,7 +75,7 @@ export default async function BookServicePage({ params }: Props) {
                 Starting at
               </p>
               <p className="text-2xl font-bold text-gray-900">
-                {formatPrice(service.basePriceInCents)}
+                {formatPrice(service.basePriceInSatang)}
               </p>
               <p className="text-xs text-gray-400 mt-1">
                 Final price quoted after inspection

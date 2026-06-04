@@ -51,13 +51,13 @@ export type CartItem = {
   name: string;
   slug: string;
   imageUrl: string | null;
-  unitPriceInCents: number;
+  unitPriceInSatang: number;
   quantity: number;
 };
 
 export type Cart = {
   items: CartItem[];
-  totalInCents: number;
+  totalInSatang: number;
   itemCount: number;
 };
 

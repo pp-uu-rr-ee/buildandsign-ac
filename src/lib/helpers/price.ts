@@ -1,10 +1,10 @@
-export function formatPrice(cents: number): string {
-  return new Intl.NumberFormat("en-PH", {
+export function formatPrice(satang: number): string {
+  return new Intl.NumberFormat("th-TH", {
     style: "currency",
-    currency: "PHP",
+    currency: "THB",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(cents / 100);
+  }).format(satang / 100);
 }
 
 export function discountPercent(

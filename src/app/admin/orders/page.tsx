@@ -66,7 +66,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
                 <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
                   {new Date(o.createdAt).toLocaleDateString("en-PH")}
                 </td>
-                <td className="px-4 py-3 font-semibold text-gray-900">{formatPrice(o.totalInCents)}</td>
+                <td className="px-4 py-3 font-semibold text-gray-900">{formatPrice(o.totalInSatang)}</td>
                 <td className="px-4 py-3">
                   <StatusBadge status={o.paymentStatus} />
                 </td>

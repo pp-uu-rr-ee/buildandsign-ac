@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { getCustomerStats } from "@/lib/queries/account";
-import { User, ShoppingBag, CalendarCheck, ArrowRight } from "lucide-react";
+import { User, ShoppingBag, CalendarCheck, ArrowRight, CreditCard } from "lucide-react";
 import { LogoutButton } from "@/components/account/LogoutButton";
 
 export const metadata = { title: "My Account" };
@@ -65,6 +65,7 @@ export default async function AccountPage() {
         {[
           { href: "/orders", label: "View my orders", icon: ShoppingBag },
           { href: "/bookings", label: "View my bookings", icon: CalendarCheck },
+          { href: "/account/cards", label: "Saved cards", icon: CreditCard },
           { href: "/products", label: "Shop AC units", icon: ShoppingBag },
           { href: "/services", label: "Book a service", icon: CalendarCheck },
         ].map(({ href, label, icon: Icon }) => (

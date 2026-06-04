@@ -10,8 +10,8 @@ type SeedProduct = {
   sku: string;
   category: "split" | "window" | "portable" | "central" | "cassette" | "ducted";
   status: "active" | "draft" | "archived" | "out_of_stock";
-  priceInCents: number;
-  comparePriceInCents?: number;
+  priceInSatang: number;
+  comparePriceInSatang?: number;
   stock: number;
   isFeatured: boolean;
   specifications: Record<string, string>;
@@ -29,8 +29,8 @@ const seedProducts: SeedProduct[] = [
     sku: "CAR-INV-10HP",
     category: "split" as const,
     status: "active" as const,
-    priceInCents: 2899900,
-    comparePriceInCents: 3299900,
+    priceInSatang: 2899900,
+    comparePriceInSatang: 3299900,
     stock: 15,
     isFeatured: true,
     specifications: {
@@ -58,8 +58,8 @@ const seedProducts: SeedProduct[] = [
     sku: "DAI-INV-15HP",
     category: "split" as const,
     status: "active" as const,
-    priceInCents: 3799900,
-    comparePriceInCents: 4199900,
+    priceInSatang: 3799900,
+    comparePriceInSatang: 4199900,
     stock: 10,
     isFeatured: true,
     specifications: {
@@ -87,7 +87,7 @@ const seedProducts: SeedProduct[] = [
     sku: "PAN-ECO-20HP",
     category: "split" as const,
     status: "active" as const,
-    priceInCents: 4599900,
+    priceInSatang: 4599900,
     stock: 8,
     isFeatured: false,
     specifications: {
@@ -115,8 +115,8 @@ const seedProducts: SeedProduct[] = [
     sku: "LG-WIN-075HP",
     category: "window" as const,
     status: "active" as const,
-    priceInCents: 1599900,
-    comparePriceInCents: 1799900,
+    priceInSatang: 1599900,
+    comparePriceInSatang: 1799900,
     stock: 22,
     isFeatured: false,
     specifications: {
@@ -143,7 +143,7 @@ const seedProducts: SeedProduct[] = [
     sku: "MID-PORT-10HP",
     category: "portable" as const,
     status: "active" as const,
-    priceInCents: 2199900,
+    priceInSatang: 2199900,
     stock: 5,
     isFeatured: false,
     specifications: {
@@ -170,8 +170,8 @@ const seedProducts: SeedProduct[] = [
     sku: "SAM-WF-10HP",
     category: "split" as const,
     status: "active" as const,
-    priceInCents: 3299900,
-    comparePriceInCents: 3699900,
+    priceInSatang: 3299900,
+    comparePriceInSatang: 3699900,
     stock: 12,
     isFeatured: true,
     specifications: {

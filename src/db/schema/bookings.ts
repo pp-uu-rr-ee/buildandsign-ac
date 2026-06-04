@@ -48,9 +48,9 @@ export const bookings = pgTable("bookings", {
   scheduledAt: timestamp("scheduled_at").notNull(),
   durationMinutes: integer("duration_minutes").notNull().default(60),
 
-  // Pricing in cents (quoted at booking time)
-  quotedPriceInCents: integer("quoted_price_in_cents"),
-  finalPriceInCents: integer("final_price_in_cents"),
+  // Pricing in satang (1 THB = 100 satang)
+  quotedPriceInSatang: integer("quoted_price_in_satang"),
+  finalPriceInSatang: integer("final_price_in_satang"),
 
   // Service location — captured at booking time
   serviceAddress: jsonb("service_address")

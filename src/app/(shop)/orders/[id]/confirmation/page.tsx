@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2, Package, Truck, MapPin, CreditCard } from "lucide-react";
+import { CartClearer } from "@/components/shop/CartClearer";
 import { db } from "@/db";
 import { orders, orderItems } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -10,8 +11,7 @@ type Props = { params: Promise<{ id: string }> };
 
 const PAYMENT_LABELS: Record<string, string> = {
   cod: "Cash on Delivery",
-  gcash: "GCash",
-  bank_transfer: "Bank Transfer",
+  card: "Credit / Debit Card (Opn Payments)",
 };
 
 export default async function OrderConfirmationPage({ params }: Props) {
@@ -34,6 +34,7 @@ export default async function OrderConfirmationPage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-lg px-4 sm:px-6 py-16 text-center">
+      <CartClearer />
       {/* Icon */}
       <div className="flex justify-center mb-6">
         <div className="h-20 w-20 rounded-full bg-green-100 flex items-center justify-center">
@@ -54,7 +55,7 @@ export default async function OrderConfirmationPage({ params }: Props) {
       <div className="rounded-2xl border border-gray-200 bg-white text-left overflow-hidden mb-8">
         <div className="bg-blue-600 px-5 py-4 text-white">
           <p className="text-blue-100 text-xs">Order total</p>
-          <p className="text-2xl font-bold">{formatPrice(order.totalInCents)}</p>
+          <p className="text-2xl font-bold">{formatPrice(order.totalInSatang)}</p>
         </div>
 
         <div className="divide-y divide-gray-100">
@@ -63,7 +64,7 @@ export default async function OrderConfirmationPage({ params }: Props) {
               {items.map((item) => (
                 <li key={item.id} className="text-sm text-gray-700">
                   {item.productName} × {item.quantity} —{" "}
-                  <span className="font-medium">{formatPrice(item.totalInCents)}</span>
+                  <span className="font-medium">{formatPrice(item.totalInSatang)}</span>
                 </li>
               ))}
             </ul>
@@ -71,9 +72,9 @@ export default async function OrderConfirmationPage({ params }: Props) {
 
           <DetailRow icon={<Truck className="h-4 w-4" />} label="Shipping">
             <p className="text-sm text-gray-700">
-              {order.shippingInCents === 0
+              {order.shippingInSatang === 0
                 ? "Free shipping"
-                : formatPrice(order.shippingInCents)}
+                : formatPrice(order.shippingInSatang)}
             </p>
           </DetailRow>
 

@@ -75,7 +75,7 @@ export function CartPageClient() {
                 {item.name}
               </Link>
               <p className="text-sm text-gray-500 mt-0.5">
-                {formatPrice(item.unitPriceInCents)} each
+                {formatPrice(item.unitPriceInSatang)} each
               </p>
 
               <div className="flex items-center justify-between mt-3">
@@ -100,7 +100,7 @@ export function CartPageClient() {
 
                 <div className="flex items-center gap-3">
                   <span className="font-semibold text-gray-900">
-                    {formatPrice(item.unitPriceInCents * item.quantity)}
+                    {formatPrice(item.unitPriceInSatang * item.quantity)}
                   </span>
                   <button
                     onClick={() => removeItem(item.productId)}

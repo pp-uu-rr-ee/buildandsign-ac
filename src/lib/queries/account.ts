@@ -9,7 +9,7 @@ export async function getCustomerOrders(userId: string) {
       orderNumber: orders.orderNumber,
       status: orders.status,
       paymentStatus: orders.paymentStatus,
-      totalInCents: orders.totalInCents,
+      totalInSatang: orders.totalInSatang,
       createdAt: orders.createdAt,
     })
     .from(orders)
@@ -42,8 +42,8 @@ export async function getCustomerBookings(userId: string) {
       serviceType: bookings.serviceType,
       status: bookings.status,
       scheduledAt: bookings.scheduledAt,
-      quotedPriceInCents: bookings.quotedPriceInCents,
-      finalPriceInCents: bookings.finalPriceInCents,
+      quotedPriceInSatang: bookings.quotedPriceInSatang,
+      finalPriceInSatang: bookings.finalPriceInSatang,
       serviceAddress: bookings.serviceAddress,
       createdAt: bookings.createdAt,
     })

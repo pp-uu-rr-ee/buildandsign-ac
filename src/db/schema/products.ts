@@ -32,16 +32,19 @@ export const productStatusEnum = pgEnum("product_status", [
 export const products = pgTable("products", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 255 }).notNull(),
+  nameTh: varchar("name_th", { length: 255 }),
   slug: varchar("slug", { length: 255 }).notNull().unique(),
   description: text("description"),
+  descriptionTh: text("description_th"),
   shortDescription: text("short_description"),
+  shortDescriptionTh: text("short_description_th"),
   sku: varchar("sku", { length: 100 }).unique(),
   category: productCategoryEnum("category").notNull(),
   status: productStatusEnum("status").notNull().default("draft"),
 
-  // Pricing — stored as cents (integer) to avoid float precision issues
-  priceInCents: integer("price_in_cents").notNull(),
-  comparePriceInCents: integer("compare_price_in_cents"), // original/crossed-out price
+  // Pricing — stored as satang (integer, 1 THB = 100 satang) to avoid float precision issues
+  priceInSatang: integer("price_in_satang").notNull(),
+  comparePriceInSatang: integer("compare_price_in_satang"), // original/crossed-out price
 
   stock: integer("stock").notNull().default(0),
   lowStockThreshold: integer("low_stock_threshold").notNull().default(5),

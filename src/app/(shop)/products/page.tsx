@@ -5,6 +5,7 @@ import { ProductCard } from "@/components/shop/ProductCard";
 import { ProductFilters } from "@/components/shop/ProductFilters";
 import { ProductSort } from "@/components/shop/ProductSort";
 import { Pagination } from "@/components/shop/Pagination";
+import { getT } from "@/lib/helpers/lang";
 import type { ProductCategoryEnum } from "@/types";
 import type { ProductFilters as Filters } from "@/lib/queries/products";
 
@@ -28,7 +29,7 @@ export default async function ProductsPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const sp = await searchParams;
+  const [sp, t] = await Promise.all([searchParams, getT()]);
 
   const filters: Filters = {
     category: (
@@ -49,25 +50,23 @@ export default async function ProductsPage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-      {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Air Conditioning Units</h1>
-        <p className="text-gray-500 mt-1">
-          {total} product{total !== 1 ? "s" : ""} available
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+          {t.products.pageTitle}
+        </h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1">
+          {t.products.available(total)}
         </p>
       </div>
 
       <div className="flex gap-8">
-        {/* Sidebar — wrapped in Suspense because it reads searchParams via hooks */}
         <aside className="hidden lg:block w-56 shrink-0">
           <Suspense>
             <ProductFilters />
           </Suspense>
         </aside>
 
-        {/* Product grid */}
         <div className="flex-1 min-w-0">
-          {/* Sort bar */}
           <div className="flex items-center justify-between mb-5">
             <Suspense>
               <ProductSort />
@@ -76,11 +75,11 @@ export default async function ProductsPage({
 
           {products.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
-              <p className="text-2xl font-semibold text-gray-700 mb-2">
-                No products found
+              <p className="text-2xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                {t.products.noResults}
               </p>
-              <p className="text-gray-400 text-sm">
-                Try adjusting your filters or search term.
+              <p className="text-gray-400 dark:text-gray-500 text-sm">
+                {t.products.noResultsHint}
               </p>
             </div>
           ) : (

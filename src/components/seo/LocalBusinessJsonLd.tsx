@@ -25,7 +25,7 @@ export function LocalBusinessJsonLd() {
     },
     hasMap: `https://www.google.com/maps/search/?api=1&query=${siteConfig.geo.latitude},${siteConfig.geo.longitude}`,
     priceRange: "₱₱",
-    sameAs: [siteConfig.social.facebook, siteConfig.social.instagram],
+    sameAs: [siteConfig.social.facebook, siteConfig.social.line],
     areaServed: {
       "@type": "City",
       name: siteConfig.address.addressLocality,

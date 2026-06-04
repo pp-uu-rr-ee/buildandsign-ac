@@ -31,17 +31,17 @@ export async function getProducts(filters: ProductFilters = {}) {
     category && category.length > 0
       ? inArray(products.category, category)
       : undefined,
-    minPrice !== undefined ? gte(products.priceInCents, minPrice) : undefined,
-    maxPrice !== undefined ? lte(products.priceInCents, maxPrice) : undefined,
+    minPrice !== undefined ? gte(products.priceInSatang, minPrice) : undefined,
+    maxPrice !== undefined ? lte(products.priceInSatang, maxPrice) : undefined,
     search ? ilike(products.name, `%${search}%`) : undefined,
     featured !== undefined ? eq(products.isFeatured, featured) : undefined,
   );
 
   const orderBy =
     sort === "price_asc"
-      ? asc(products.priceInCents)
+      ? asc(products.priceInSatang)
       : sort === "price_desc"
-      ? desc(products.priceInCents)
+      ? desc(products.priceInSatang)
       : sort === "name_asc"
       ? asc(products.name)
       : desc(products.createdAt);
@@ -53,11 +53,13 @@ export async function getProducts(filters: ProductFilters = {}) {
       .select({
         id: products.id,
         name: products.name,
+        nameTh: products.nameTh,
         slug: products.slug,
         shortDescription: products.shortDescription,
+        shortDescriptionTh: products.shortDescriptionTh,
         category: products.category,
-        priceInCents: products.priceInCents,
-        comparePriceInCents: products.comparePriceInCents,
+        priceInSatang: products.priceInSatang,
+        comparePriceInSatang: products.comparePriceInSatang,
         stock: products.stock,
         isFeatured: products.isFeatured,
         primaryImage: {
@@ -119,9 +121,10 @@ export async function getRelatedProducts(
     .select({
       id: products.id,
       name: products.name,
+      nameTh: products.nameTh,
       slug: products.slug,
-      priceInCents: products.priceInCents,
-      comparePriceInCents: products.comparePriceInCents,
+      priceInSatang: products.priceInSatang,
+      comparePriceInSatang: products.comparePriceInSatang,
       primaryImage: {
         url: productImages.url,
         altText: productImages.altText,

@@ -67,7 +67,7 @@ export function CartDrawer() {
                       {item.name}
                     </Link>
                     <p className="text-sm font-semibold text-gray-900 mt-1 dark:text-gray-100">
-                      {formatPrice(item.unitPriceInCents * item.quantity)}
+                      {formatPrice(item.unitPriceInSatang * item.quantity)}
                     </p>
 
                     <div className="flex items-center gap-2 mt-2">

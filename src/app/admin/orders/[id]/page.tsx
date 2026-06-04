@@ -48,7 +48,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                     </td>
                     <td className="px-5 py-3 text-gray-500 text-xs">×{item.quantity}</td>
                     <td className="px-5 py-3 text-right font-semibold text-gray-900">
-                      {formatPrice(item.totalInCents)}
+                      {formatPrice(item.totalInSatang)}
                     </td>
                   </tr>
                 ))}
@@ -56,17 +56,17 @@ export default async function AdminOrderDetailPage({ params }: Props) {
               <tfoot className="border-t border-gray-200 bg-gray-50">
                 <tr>
                   <td colSpan={2} className="px-5 py-2 text-xs text-gray-500">Subtotal</td>
-                  <td className="px-5 py-2 text-right text-sm font-medium">{formatPrice(order.subtotalInCents)}</td>
+                  <td className="px-5 py-2 text-right text-sm font-medium">{formatPrice(order.subtotalInSatang)}</td>
                 </tr>
                 <tr>
                   <td colSpan={2} className="px-5 py-2 text-xs text-gray-500">Shipping</td>
                   <td className="px-5 py-2 text-right text-sm font-medium">
-                    {order.shippingInCents === 0 ? "Free" : formatPrice(order.shippingInCents)}
+                    {order.shippingInSatang === 0 ? "Free" : formatPrice(order.shippingInSatang)}
                   </td>
                 </tr>
                 <tr>
                   <td colSpan={2} className="px-5 py-2 text-sm font-semibold text-gray-900">Total</td>
-                  <td className="px-5 py-2 text-right text-base font-bold text-gray-900">{formatPrice(order.totalInCents)}</td>
+                  <td className="px-5 py-2 text-right text-base font-bold text-gray-900">{formatPrice(order.totalInSatang)}</td>
                 </tr>
               </tfoot>
             </table>

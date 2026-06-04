@@ -84,7 +84,7 @@ export default async function OrdersPage() {
 
                 <div className="text-right shrink-0">
                   <p className="font-bold text-gray-900 dark:text-gray-100">
-                    {formatPrice(order.totalInCents)}
+                    {formatPrice(order.totalInSatang)}
                   </p>
                   <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-blue-500 transition-colors ml-auto mt-1 dark:text-gray-600" />
                 </div>

@@ -12,11 +12,13 @@ import {
   ArrowRight,
   ThumbsUp,
 } from "lucide-react";
+import { ImageSlot } from "@/components/ui/image-slot";
 import { siteConfig } from "@/config/site";
 import { servicesConfig } from "@/config/services";
 import { getProducts } from "@/lib/queries/products";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { formatPrice } from "@/lib/helpers/price";
+import { getT, getLang } from "@/lib/helpers/lang";
 
 const serviceIcons = {
   cleaning: Sparkles,
@@ -31,18 +33,24 @@ const testimonials = [
     location: "Makati City",
     rating: 5,
     text: "Super professional team! They cleaned my 3 AC units in under 2 hours and the difference in air quality is night and day. Will definitely book again.",
+    textTh:
+      "ทีมงานมืออาชีพมากๆ ล้างแอร์ 3 เครื่องของเราเสร็จภายใน 2 ชั่วโมง อากาศดีขึ้นชัดเจนมาก จะกลับมาใช้บริการอีกแน่นอน",
   },
   {
     name: "Roland Cruz",
     location: "Pasig City",
     rating: 5,
     text: "My AC stopped cooling in the middle of summer. Cool Air Services sent a technician the same day and fixed it within an hour. Reasonable price and great service!",
+    textTh:
+      "แอร์ดับกลางหน้าร้อน Cool Air Services ส่งช่างมาในวันเดียวกันและซ่อมเสร็จภายในชั่วโมง ราคาสมเหตุสมผลและบริการดีมากครับ",
   },
   {
     name: "Jenny Reyes",
     location: "Taguig City",
     rating: 5,
     text: "Bought a new AC from their shop and had them install it. The installation was flawless — clean work, no mess, and they walked me through everything. Highly recommended!",
+    textTh:
+      "ซื้อแอร์จากร้านและให้ช่างติดตั้งให้ การติดตั้งสมบูรณ์แบบมาก เรียบร้อย ไม่รก และช่างอธิบายทุกอย่างให้ฟังด้วย แนะนำเลยค่ะ!",
   },
 ];
 
@@ -52,10 +60,11 @@ export const metadata = {
 };
 
 export default async function HomePage() {
-  const { products: featuredProducts } = await getProducts({
-    featured: true,
-    limit: 4,
-  });
+  const [{ products: featuredProducts }, t, lang] = await Promise.all([
+    getProducts({ featured: true, limit: 4 }),
+    getT(),
+    getLang(),
+  ]);
 
   return (
     <>
@@ -63,44 +72,56 @@ export default async function HomePage() {
       <section className="relative overflow-hidden bg-gradient-to-br from-blue-700 via-blue-600 to-sky-500">
         <div className="absolute inset-0 bg-[url('/images/hero-pattern.svg')] opacity-10" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-1.5 text-sm font-medium text-white mb-6">
-              <BadgeCheck className="h-4 w-4" />
-              Certified AC Technicians · Metro Manila
-            </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight mb-6">
-              {siteConfig.tagline}
-            </h1>
-            <p className="text-lg text-blue-100 max-w-xl mb-10">
-              {siteConfig.description}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link
-                href="/services"
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-8 py-3.5 text-base font-semibold text-blue-700 shadow-lg hover:bg-blue-50 transition-colors"
-              >
-                Book a Service
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/products"
-                className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-white/40 px-8 py-3.5 text-base font-semibold text-white hover:bg-white/10 transition-colors"
-              >
-                Shop AC Units
-              </Link>
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-1.5 text-sm font-medium text-white mb-6">
+                <BadgeCheck className="h-4 w-4" />
+                {t.home.heroBadge}
+              </div>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight mb-6">
+                {t.home.heroTitle}
+              </h1>
+              <p className="text-lg text-blue-100 max-w-xl mb-10">
+                {t.home.heroSubtitle}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link
+                  href="/services"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-8 py-3.5 text-base font-semibold text-blue-700 shadow-lg hover:bg-blue-50 transition-colors"
+                >
+                  {t.home.bookService}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="/products"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-white/40 px-8 py-3.5 text-base font-semibold text-white hover:bg-white/10 transition-colors"
+                >
+                  {t.home.shopAC}
+                </Link>
+              </div>
+
+              <div className="mt-12 flex flex-wrap gap-6">
+                {[
+                  { icon: ShieldCheck, label: t.home.warranty },
+                  { icon: Clock, label: t.home.sameDay },
+                  { icon: ThumbsUp, label: t.home.customers },
+                ].map(({ icon: Icon, label }) => (
+                  <div key={label} className="flex items-center gap-2 text-blue-100 text-sm">
+                    <Icon className="h-4 w-4 text-white" />
+                    {label}
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="mt-12 flex flex-wrap gap-6">
-              {[
-                { icon: ShieldCheck, label: "90-Day Workmanship Warranty" },
-                { icon: Clock, label: "Same-Day Service Available" },
-                { icon: ThumbsUp, label: "500+ Happy Customers" },
-              ].map(({ icon: Icon, label }) => (
-                <div key={label} className="flex items-center gap-2 text-blue-100 text-sm">
-                  <Icon className="h-4 w-4 text-white" />
-                  {label}
-                </div>
-              ))}
+            {/* Hero image */}
+            <div className="hidden lg:block">
+              <ImageSlot
+              src="/images/hero.jpg"
+                hint="1200 × 900 px"
+                onDark
+                className="aspect-[4/3] rounded-2xl bg-white/10"
+              />
             </div>
           </div>
         </div>
@@ -110,16 +131,19 @@ export default async function HomePage() {
       <section className="bg-gray-50 py-20 dark:bg-gray-900">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-3 dark:text-gray-50">Our Services</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-3 dark:text-gray-50">
+              {t.home.servicesTitle}
+            </h2>
             <p className="text-gray-500 max-w-xl mx-auto dark:text-gray-400">
-              Professional AC services for homes and businesses across Metro Manila.
-              All work guaranteed.
+              {t.home.servicesSubtitle}
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {servicesConfig.map((service) => {
               const Icon = serviceIcons[service.id];
+              const title = lang === "th" ? service.titleTh : service.title;
+              const tagline = lang === "th" ? service.taglineTh : service.tagline;
               return (
                 <div
                   key={service.id}
@@ -129,20 +153,20 @@ export default async function HomePage() {
                     <Icon className="h-6 w-6" />
                   </div>
                   <h3 className="text-lg font-bold text-gray-900 mb-1 dark:text-gray-100">
-                    {service.title}
+                    {title}
                   </h3>
                   <p className="text-sm text-gray-500 mb-4 flex-1 dark:text-gray-400">
-                    {service.tagline}
+                    {tagline}
                   </p>
                   <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-100 dark:border-gray-700">
                     <span className="text-blue-700 font-semibold text-sm dark:text-blue-400">
-                      From {formatPrice(service.basePriceInCents)}
+                      {t.home.fromPrice} {formatPrice(service.basePriceInSatang)}
                     </span>
                     <Link
                       href={`/book/${service.id}`}
                       className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 dark:text-blue-400 dark:hover:text-blue-300"
                     >
-                      Book <ArrowRight className="h-3 w-3" />
+                      {t.home.book} <ArrowRight className="h-3 w-3" />
                     </Link>
                   </div>
                 </div>
@@ -155,7 +179,7 @@ export default async function HomePage() {
               href="/services"
               className="inline-flex items-center gap-2 rounded-lg border border-blue-600 px-6 py-2.5 text-sm font-semibold text-blue-600 hover:bg-blue-600 hover:text-white transition-colors dark:border-blue-500 dark:text-blue-400 dark:hover:bg-blue-600 dark:hover:text-white"
             >
-              View All Services <ArrowRight className="h-4 w-4" />
+              {t.home.viewAllServices} <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
@@ -168,17 +192,17 @@ export default async function HomePage() {
             <div className="flex items-end justify-between mb-10">
               <div>
                 <h2 className="text-3xl font-bold text-gray-900 mb-2 dark:text-gray-50">
-                  Featured AC Units
+                  {t.home.featuredTitle}
                 </h2>
                 <p className="text-gray-500 dark:text-gray-400">
-                  Top-rated air conditioners for every space and budget.
+                  {t.home.featuredSubtitle}
                 </p>
               </div>
               <Link
                 href="/products"
                 className="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
               >
-                View all products <ArrowRight className="h-4 w-4" />
+                {t.home.viewAllProducts} <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
 
@@ -193,7 +217,7 @@ export default async function HomePage() {
                 href="/products"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400"
               >
-                View all products <ArrowRight className="h-4 w-4" />
+                {t.home.viewAllProducts} <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </div>
@@ -204,44 +228,41 @@ export default async function HomePage() {
       <section className="py-20 bg-blue-700 text-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-3">Why Cool Air Services?</h2>
-            <p className="text-blue-200 max-w-xl mx-auto">
-              We've been keeping Metro Manila cool for years — with certified
-              technicians, transparent pricing, and guaranteed results.
-            </p>
+            <h2 className="text-3xl font-bold mb-3">{t.home.whyTitle}</h2>
+            <p className="text-blue-200 max-w-xl mx-auto">{t.home.whySubtitle}</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
                 icon: BadgeCheck,
-                title: "Brand-Certified Technicians",
-                body: "Our team is trained and certified by leading AC manufacturers — Carrier, Daikin, Panasonic, LG, Samsung, and more.",
+                title: t.home.whyCertifiedTitle,
+                body: t.home.whyCertifiedBody,
               },
               {
                 icon: Clock,
-                title: "Same-Day Booking Available",
-                body: "Need help fast? We offer same-day service slots Monday to Saturday. Book online and get confirmed in minutes.",
+                title: t.home.whySameDayTitle,
+                body: t.home.whySameDayBody,
               },
               {
                 icon: ShieldCheck,
-                title: "90-Day Workmanship Warranty",
-                body: "Every repair and installation comes with a 90-day warranty on labor. If something goes wrong, we fix it — free of charge.",
+                title: t.home.whyWarrantyTitle,
+                body: t.home.whyWarrantyBody,
               },
               {
                 icon: Star,
-                title: "Transparent Flat-Rate Pricing",
-                body: "Know exactly what you're paying before we arrive. No hidden charges, no surprise add-ons — just honest pricing.",
+                title: t.home.whyPricingTitle,
+                body: t.home.whyPricingBody,
               },
               {
                 icon: Wrench,
-                title: "All Makes & Models",
-                body: "Window type, split type, cassette, or tower — inverter or non-inverter. We service them all, regardless of brand.",
+                title: t.home.whyBrandsTitle,
+                body: t.home.whyBrandsBody,
               },
               {
                 icon: PhoneCall,
-                title: "Real Support, Real People",
-                body: `Questions before or after your booking? Call us at ${siteConfig.phone} or email ${siteConfig.email}. No bots.`,
+                title: t.home.whySupportTitle,
+                body: t.home.whySupportBody(siteConfig.phone, siteConfig.email),
               },
             ].map(({ icon: Icon, title, body }) => (
               <div key={title} className="flex gap-4">
@@ -265,37 +286,38 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-3 dark:text-gray-50">
-              What Our Customers Say
+              {t.home.testimonialsTitle}
             </h2>
             <p className="text-gray-500 max-w-xl mx-auto dark:text-gray-400">
-              Don't just take our word for it — hear from homeowners and businesses
-              across Metro Manila.
+              {t.home.testimonialsSubtitle}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((t) => (
-              <div
-                key={t.name}
-                className="rounded-2xl bg-white border border-gray-200 p-6 flex flex-col gap-4 dark:bg-gray-800 dark:border-gray-700"
-              >
-                <div className="flex gap-0.5">
-                  {Array.from({ length: t.rating }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className="h-4 w-4 fill-yellow-400 text-yellow-400"
-                    />
-                  ))}
+            {testimonials.map((item) => {
+              const text = lang === "th" ? item.textTh : item.text;
+              return (
+                <div
+                  key={item.name}
+                  className="rounded-2xl bg-white border border-gray-200 p-6 flex flex-col gap-4 dark:bg-gray-800 dark:border-gray-700"
+                >
+                  <div className="flex gap-0.5">
+                    {Array.from({ length: item.rating }).map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    ))}
+                  </div>
+                  <p className="text-gray-700 text-sm leading-relaxed flex-1 dark:text-gray-300">
+                    &ldquo;{text}&rdquo;
+                  </p>
+                  <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <p className="font-semibold text-gray-900 text-sm dark:text-gray-100">
+                      {item.name}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{item.location}</p>
+                  </div>
                 </div>
-                <p className="text-gray-700 text-sm leading-relaxed flex-1 dark:text-gray-300">
-                  &ldquo;{t.text}&rdquo;
-                </p>
-                <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
-                  <p className="font-semibold text-gray-900 text-sm dark:text-gray-100">{t.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{t.location}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -304,33 +326,30 @@ export default async function HomePage() {
       <section className="py-20 bg-white dark:bg-gray-950">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="rounded-3xl bg-gradient-to-br from-blue-600 to-sky-500 px-8 py-16 text-center text-white">
-            <h2 className="text-3xl sm:text-4xl font-black mb-4">
-              Ready to Stay Cool?
-            </h2>
+            <h2 className="text-3xl sm:text-4xl font-black mb-4">{t.home.ctaTitle}</h2>
             <p className="text-blue-100 max-w-lg mx-auto mb-8 text-lg">
-              Book a service online in minutes, or browse our selection of
-              energy-efficient AC units delivered to your door.
+              {t.home.ctaSubtitle}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/services"
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-8 py-3.5 text-base font-semibold text-blue-700 shadow hover:bg-blue-50 transition-colors"
               >
-                Book a Service <ArrowRight className="h-4 w-4" />
+                {t.home.bookService} <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 href="/products"
                 className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-white/40 px-8 py-3.5 text-base font-semibold text-white hover:bg-white/10 transition-colors"
               >
-                Shop AC Units
+                {t.home.shopAC}
               </Link>
             </div>
             <p className="mt-6 text-sm text-blue-200">
-              Questions? Call us at{" "}
+              {t.home.ctaContact}{" "}
               <a href={`tel:${siteConfig.phone}`} className="underline hover:text-white">
                 {siteConfig.phone}
               </a>
-              {" "}· Mon–Sat, 8 AM–6 PM
+              {" "}· {t.home.ctaHours}
             </p>
           </div>
         </div>

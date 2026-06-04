@@ -49,8 +49,12 @@ export async function assignTechnicianAction(bookingId: string, technicianId: st
 // ── Product management ───────────────────────────────────────────────────────
 const productSchema = z.object({
   name: z.string().min(2),
+  nameTh: z.string().optional(),
   slug: z.string().min(2).regex(/^[a-z0-9-]+$/, "Lowercase letters, numbers and hyphens only"),
   shortDescription: z.string().optional(),
+  shortDescriptionTh: z.string().optional(),
+  description: z.string().optional(),
+  descriptionTh: z.string().optional(),
   category: z.enum(["split","window","portable","central","cassette","ducted"]),
   status: z.enum(["active","draft","archived","out_of_stock"]),
   // User enters peso amounts; multiply by 100 to store as centavos
@@ -74,7 +78,8 @@ export async function updateProductAction(
 ): Promise<ProductFormResult> {
   const id = formData.get("id") as string;
   const raw = Object.fromEntries(
-    ["name","slug","shortDescription","category","status","priceInPesos","comparePriceInPesos","stock","isFeatured"]
+    ["name","nameTh","slug","shortDescription","shortDescriptionTh","description","descriptionTh",
+     "category","status","priceInPesos","comparePriceInPesos","stock","isFeatured"]
       .map((k) => [k, formData.get(k)])
   );
   raw.isFeatured = formData.get("isFeatured") === "on" ? "true" : "false";
@@ -87,8 +92,11 @@ export async function updateProductAction(
   const { priceInPesos, comparePriceInPesos, ...rest } = parsed.data;
   await db.update(products).set({
     ...rest,
-    priceInCents: Math.round(priceInPesos * 100),
-    comparePriceInCents: comparePriceInPesos !== "" && comparePriceInPesos
+    nameTh: rest.nameTh || null,
+    shortDescriptionTh: rest.shortDescriptionTh || null,
+    descriptionTh: rest.descriptionTh || null,
+    priceInSatang: Math.round(priceInPesos * 100),
+    comparePriceInSatang: comparePriceInPesos !== "" && comparePriceInPesos
       ? Math.round(Number(comparePriceInPesos) * 100)
       : null,
     isFeatured: rest.isFeatured ?? false,
@@ -100,30 +108,18 @@ export async function updateProductAction(
   return { success: true };
 }
 
-const createProductSchema = z.object({
-  name: z.string().min(2),
-  slug: z.string().min(2).regex(/^[a-z0-9-]+$/, "Lowercase letters, numbers and hyphens only"),
-  shortDescription: z.string().optional(),
-  category: z.enum(["split","window","portable","central","cassette","ducted"]),
-  status: z.enum(["active","draft","archived","out_of_stock"]),
-  // User enters peso amounts; multiply by 100 to store as centavos
-  priceInPesos: z.coerce.number().positive("Price must be a positive number"),
-  comparePriceInPesos: z.coerce.number().positive().optional().or(z.literal("")),
-  stock: z.coerce.number().int().min(0),
-  isFeatured: z.coerce.boolean().optional(),
-});
-
 export async function createProductAction(
   _prev: CreateProductResult,
   formData: FormData
 ): Promise<CreateProductResult> {
   const raw = Object.fromEntries(
-    ["name","slug","shortDescription","category","status","priceInPesos","comparePriceInPesos","stock","isFeatured"]
+    ["name","nameTh","slug","shortDescription","shortDescriptionTh",
+     "category","status","priceInPesos","comparePriceInPesos","stock","isFeatured"]
       .map((k) => [k, formData.get(k)])
   );
   raw.isFeatured = formData.get("isFeatured") === "on" ? "true" : "false";
 
-  const parsed = createProductSchema.safeParse(raw);
+  const parsed = productSchema.safeParse(raw);
   if (!parsed.success) {
     return { success: false, error: "Validation failed", fieldErrors: parsed.error.flatten().fieldErrors as any };
   }
@@ -132,8 +128,10 @@ export async function createProductAction(
 
   const [product] = await db.insert(products).values({
     ...rest,
-    priceInCents: Math.round(priceInPesos * 100),
-    comparePriceInCents: comparePriceInPesos !== "" && comparePriceInPesos
+    nameTh: rest.nameTh || null,
+    shortDescriptionTh: rest.shortDescriptionTh || null,
+    priceInSatang: Math.round(priceInPesos * 100),
+    comparePriceInSatang: comparePriceInPesos !== "" && comparePriceInPesos
       ? Math.round(Number(comparePriceInPesos) * 100)
       : null,
     isFeatured: rest.isFeatured ?? false,

@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useRouter } from "next/navigation";
 import translations from "@/i18n";
 import type { Language, Translations } from "@/i18n";
 
@@ -17,13 +18,14 @@ const LanguageContext = createContext<{
   t: Translations;
   toggle: () => void;
 }>({
-  lang: "en",
-  t: translations.en,
+  lang: "th",
+  t: translations.th,
   toggle: () => {},
 });
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Language>("en");
+  const router = useRouter();
+  const [lang, setLang] = useState<Language>("th");
 
   useEffect(() => {
     const stored = document.cookie
@@ -34,12 +36,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const toggle = () => {
-    setLang((prev) => {
-      const next: Language = prev === "en" ? "th" : "en";
-      // Write cookie so server components can read the preference
-      document.cookie = `lang=${next}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
-      return next;
-    });
+    const next: Language = lang === "en" ? "th" : "en";
+    document.cookie = `lang=${next}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+    setLang(next);
+    // Re-render Server Components with the new cookie — no full page reload
+    router.refresh();
   };
 
   return (

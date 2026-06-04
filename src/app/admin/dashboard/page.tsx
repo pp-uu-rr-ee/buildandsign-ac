@@ -82,7 +82,7 @@ export default async function AdminDashboardPage() {
                         {(order.customerName as any)?.fullName ?? "Guest"}
                       </td>
                       <td className="px-4 py-3 font-semibold text-gray-900">
-                        {formatPrice(order.totalInCents)}
+                        {formatPrice(order.totalInSatang)}
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={order.status} />

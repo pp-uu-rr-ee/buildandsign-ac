@@ -50,13 +50,33 @@ export const useCart = create<CartState>()(
 
       clearCart: () => set({ items: [] }),
     }),
-    { name: "ac-cart" }
+    {
+      name: "ac-cart",
+      version: 2,
+      migrate: (persistedState: unknown, version: number) => {
+        const state = persistedState as { items: Record<string, unknown>[] };
+        if (version < 2) {
+          // Migrate: rename unitPriceInCents → unitPriceInSatang
+          return {
+            ...state,
+            items: (state.items ?? []).map((item) => ({
+              ...item,
+              unitPriceInSatang:
+                (item.unitPriceInSatang as number | undefined) ??
+                (item.unitPriceInCents as number | undefined) ??
+                0,
+            })),
+          };
+        }
+        return state as CartState;
+      },
+    }
   )
 );
 
 // Derived selectors (computed outside the store to avoid re-renders)
 export function cartTotal(items: CartItem[]): number {
-  return items.reduce((sum, i) => sum + i.unitPriceInCents * i.quantity, 0);
+  return items.reduce((sum, i) => sum + i.unitPriceInSatang * i.quantity, 0);
 }
 
 export function cartCount(items: CartItem[]): number {

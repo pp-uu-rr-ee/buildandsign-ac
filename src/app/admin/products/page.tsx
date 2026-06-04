@@ -73,7 +73,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                   </div>
                 </td>
                 <td className="px-4 py-3 capitalize text-gray-600">{p.category}</td>
-                <td className="px-4 py-3 font-semibold text-gray-900">{formatPrice(p.priceInCents)}</td>
+                <td className="px-4 py-3 font-semibold text-gray-900">{formatPrice(p.priceInSatang)}</td>
                 <td className="px-4 py-3">
                   <span className={`text-sm font-medium ${p.stock <= p.lowStockThreshold ? "text-orange-500" : "text-gray-700"}`}>
                     {p.stock}

@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import Link from "next/link";
 import { loginAction } from "@/lib/actions/auth";
 import { useLanguage } from "@/components/providers/LanguageProvider";
@@ -8,9 +10,11 @@ import type { ActionResult } from "@/lib/actions/auth";
 
 const initialState: ActionResult = { success: true };
 
-export function LoginForm() {
+function LoginFormInner() {
   const [state, formAction, isPending] = useActionState(loginAction, initialState);
   const { t } = useLanguage();
+  const searchParams = useSearchParams();
+  const wasReset = searchParams.get("reset") === "1";
 
   const fieldErrors = !state.success ? state.fieldErrors : undefined;
   const globalError = !state.success && !state.fieldErrors ? state.error : null;
@@ -21,6 +25,12 @@ export function LoginForm() {
         <h1 className="text-2xl font-bold tracking-tight">{t.auth.welcomeBack}</h1>
         <p className="text-sm text-gray-500 mt-1">{t.auth.signInSubtitle}</p>
       </div>
+
+      {wasReset && (
+        <div className="rounded-md bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700 dark:bg-green-950/30 dark:border-green-800 dark:text-green-400">
+          Password updated successfully. Please sign in with your new password.
+        </div>
+      )}
 
       {globalError && (
         <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 dark:bg-red-950/30 dark:border-red-800 dark:text-red-400">
@@ -86,5 +96,13 @@ export function LoginForm() {
         </Link>
       </p>
     </div>
+  );
+}
+
+export function LoginForm() {
+  return (
+    <Suspense>
+      <LoginFormInner />
+    </Suspense>
   );
 }

@@ -6,7 +6,7 @@ type Props = {
     name: string;
     slug: string;
     description: string | null;
-    priceInCents: number;
+    priceInSatang: number;
     stock: number;
     sku: string | null;
     primaryImageUrl?: string;
@@ -31,7 +31,7 @@ export function ProductJsonLd({ product }: Props) {
     offers: {
       "@type": "Offer",
       priceCurrency: "PHP",
-      price: (product.priceInCents / 100).toFixed(2),
+      price: (product.priceInSatang / 100).toFixed(2),
       availability:
         product.stock > 0
           ? "https://schema.org/InStock"

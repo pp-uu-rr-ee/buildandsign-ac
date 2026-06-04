@@ -10,18 +10,18 @@ export async function Navbar() {
   const [session, t] = await Promise.all([getSession(), getT()]);
 
   const navLinks = [
+    { label: t.common.home, href: "/" },
     { label: t.nav.products, href: "/products" },
     { label: t.nav.services, href: "/services" },
     { label: t.nav.blog, href: "/blog" },
     { label: t.nav.about, href: "/about" },
-    { label: t.nav.contact, href: "/contact" },
   ];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/90 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/90">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-4">
-          <MobileNav />
+          <MobileNav user={session} />
 
           <Link
             href="/"
@@ -58,9 +58,11 @@ export async function Navbar() {
             <CartDrawer />
 
             {session ? (
-              <UserMenu user={session} />
+              <div className="hidden lg:block">
+                <UserMenu user={session} />
+              </div>
             ) : (
-              <div className="hidden sm:flex items-center gap-2">
+              <div className="hidden lg:flex items-center gap-2">
                 <Link
                   href="/login"
                   className="px-3 py-1.5 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors dark:text-gray-200 dark:hover:bg-gray-800"

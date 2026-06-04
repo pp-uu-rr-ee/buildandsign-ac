@@ -1,17 +1,22 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice, discountPercent } from "@/lib/helpers/price";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 type Props = {
   product: {
     id: string;
     name: string;
+    nameTh?: string | null;
     slug: string;
     shortDescription: string | null;
+    shortDescriptionTh?: string | null;
     category: string;
-    priceInCents: number;
-    comparePriceInCents: number | null;
+    priceInSatang: number;
+    comparePriceInSatang: number | null;
     stock: number;
     isFeatured: boolean;
     primaryImage: { url: string; altText: string | null } | null;
@@ -19,12 +24,17 @@ type Props = {
 };
 
 export function ProductCard({ product }: Props) {
-  const discount = discountPercent(
-    product.comparePriceInCents,
-    product.priceInCents
-  );
+  const { lang, t } = useLanguage();
+  const discount = discountPercent(product.comparePriceInSatang, product.priceInSatang);
   const isLowStock = product.stock > 0 && product.stock <= 5;
   const isOutOfStock = product.stock === 0;
+
+  const displayName =
+    lang === "th" && product.nameTh ? product.nameTh : product.name;
+  const displayShortDesc =
+    lang === "th" && product.shortDescriptionTh
+      ? product.shortDescriptionTh
+      : product.shortDescription;
 
   return (
     <Link
@@ -35,7 +45,7 @@ export function ProductCard({ product }: Props) {
         {product.primaryImage?.url ? (
           <Image
             src={product.primaryImage.url}
-            alt={product.primaryImage.altText ?? product.name}
+            alt={product.primaryImage.altText ?? displayName}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -66,7 +76,7 @@ export function ProductCard({ product }: Props) {
           )}
           {product.isFeatured && (
             <Badge className="bg-blue-600 text-white text-xs px-1.5 py-0.5">
-              Featured
+              {t.products.featured}
             </Badge>
           )}
         </div>
@@ -74,7 +84,7 @@ export function ProductCard({ product }: Props) {
         {isOutOfStock && (
           <div className="absolute inset-0 bg-white/70 dark:bg-gray-900/70 flex items-center justify-center">
             <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">
-              Out of Stock
+              {t.products.outOfStock}
             </span>
           </div>
         )}
@@ -82,31 +92,31 @@ export function ProductCard({ product }: Props) {
 
       <div className="flex flex-col gap-1.5 p-4 flex-1">
         <p className="text-xs text-blue-600 font-medium capitalize dark:text-blue-400">
-          {product.category.replace("_", " ")} Type
+          {t.products.type(product.category.replace("_", " "))}
         </p>
         <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors dark:text-gray-100 dark:group-hover:text-blue-400">
-          {product.name}
+          {displayName}
         </h3>
-        {product.shortDescription && (
+        {displayShortDesc && (
           <p className="text-xs text-gray-500 line-clamp-2 dark:text-gray-400">
-            {product.shortDescription}
+            {displayShortDesc}
           </p>
         )}
 
         <div className="mt-auto pt-3 flex items-end justify-between gap-2">
           <div>
             <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
-              {formatPrice(product.priceInCents)}
+              {formatPrice(product.priceInSatang)}
             </p>
-            {product.comparePriceInCents && (
+            {product.comparePriceInSatang && (
               <p className="text-xs text-gray-400 dark:text-gray-500 line-through">
-                {formatPrice(product.comparePriceInCents)}
+                {formatPrice(product.comparePriceInSatang)}
               </p>
             )}
           </div>
           {isLowStock && (
             <span className="text-xs text-orange-500 dark:text-orange-400 font-medium whitespace-nowrap">
-              Only {product.stock} left
+              {t.products.onlyLeft(product.stock)}
             </span>
           )}
         </div>

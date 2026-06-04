@@ -41,15 +41,24 @@ export function ProductCreateForm() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field
-          label="Product Name"
-          name="name"
-          required
-          placeholder="e.g. Daikin 1.5HP Inverter Split Type"
-          onChange={handleNameChange}
-          error={fe.name?.[0]}
-        />
+      {/* EN / TH name section */}
+      <div className="rounded-lg border border-gray-200 p-4 space-y-4">
+        <h3 className="text-sm font-semibold text-gray-700">Product Name</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field
+            label="Name (English)"
+            name="name"
+            required
+            placeholder="e.g. Daikin 1.5HP Inverter Split Type"
+            onChange={handleNameChange}
+            error={fe.name?.[0]}
+          />
+          <Field
+            label="ชื่อสินค้า (ภาษาไทย)"
+            name="nameTh"
+            placeholder="เช่น แอร์ไดกิ้น 1.5 แรงม้า อินเวอร์เตอร์"
+          />
+        </div>
         <div>
           <label htmlFor="slug" className="block text-sm font-medium text-gray-700 mb-1">
             Slug <span className="text-red-500">*</span>
@@ -70,11 +79,22 @@ export function ProductCreateForm() {
         </div>
       </div>
 
-      <Field
-        label="Short Description"
-        name="shortDescription"
-        placeholder="One-line summary shown on product cards"
-      />
+      {/* Short description */}
+      <div className="rounded-lg border border-gray-200 p-4 space-y-4">
+        <h3 className="text-sm font-semibold text-gray-700">Short Description</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field
+            label="Short Description (English)"
+            name="shortDescription"
+            placeholder="One-line summary shown on product cards"
+          />
+          <Field
+            label="คำอธิบายสั้น (ภาษาไทย)"
+            name="shortDescriptionTh"
+            placeholder="สรุปสั้นๆ แสดงบนการ์ดสินค้า"
+          />
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <SelectField label="Category" name="category" options={CATEGORIES} defaultValue="split" />

@@ -41,17 +41,18 @@ export const orders = pgTable("orders", {
   paymentMethod: varchar("payment_method", { length: 100 }),
   paymentReference: varchar("payment_reference", { length: 255 }),
 
-  // Totals in cents
-  subtotalInCents: integer("subtotal_in_cents").notNull(),
-  shippingInCents: integer("shipping_in_cents").notNull().default(0),
-  taxInCents: integer("tax_in_cents").notNull().default(0),
-  discountInCents: integer("discount_in_cents").notNull().default(0),
-  totalInCents: integer("total_in_cents").notNull(),
+  // Totals in satang (1 THB = 100 satang)
+  subtotalInSatang: integer("subtotal_in_satang").notNull(),
+  shippingInSatang: integer("shipping_in_satang").notNull().default(0),
+  taxInSatang: integer("tax_in_satang").notNull().default(0),
+  discountInSatang: integer("discount_in_satang").notNull().default(0),
+  totalInSatang: integer("total_in_satang").notNull(),
 
   // Shipping address snapshotted at order time (denormalized intentionally)
   shippingAddress: jsonb("shipping_address")
     .$type<{
       fullName: string;
+      email?: string;
       phone: string;
       addressLine1: string;
       addressLine2?: string;
@@ -79,9 +80,9 @@ export const orderItems = pgTable("order_items", {
   // Snapshot product details at purchase time — products may change later
   productName: varchar("product_name", { length: 255 }).notNull(),
   productSku: varchar("product_sku", { length: 100 }),
-  unitPriceInCents: integer("unit_price_in_cents").notNull(),
+  unitPriceInSatang: integer("unit_price_in_satang").notNull(),
   quantity: integer("quantity").notNull(),
-  totalInCents: integer("total_in_cents").notNull(),
+  totalInSatang: integer("total_in_satang").notNull(),
 });
 
 export const ordersRelations = relations(orders, ({ one, many }) => ({

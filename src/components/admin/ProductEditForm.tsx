@@ -30,12 +30,70 @@ export function ProductEditForm({ product }: { product: Product }) {
         <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{globalError}</div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Product Name" name="name" defaultValue={product.name} required error={fieldErrors?.name?.[0]} />
-        <Field label="Slug" name="slug" defaultValue={product.slug} required error={fieldErrors?.slug?.[0]} />
+      {/* Name + Slug */}
+      <div className="rounded-lg border border-gray-200 p-4 space-y-4">
+        <h3 className="text-sm font-semibold text-gray-700">Product Name</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field
+            label="Name (English)"
+            name="name"
+            defaultValue={product.name}
+            required
+            error={fieldErrors?.name?.[0]}
+          />
+          <Field
+            label="ชื่อสินค้า (ภาษาไทย)"
+            name="nameTh"
+            defaultValue={product.nameTh ?? ""}
+            placeholder="เช่น แอร์ไดกิ้น 1.5 แรงม้า อินเวอร์เตอร์"
+          />
+        </div>
+        <Field
+          label="Slug"
+          name="slug"
+          defaultValue={product.slug}
+          required
+          error={fieldErrors?.slug?.[0]}
+        />
       </div>
 
-      <Field label="Short Description" name="shortDescription" defaultValue={product.shortDescription ?? ""} />
+      {/* Short description */}
+      <div className="rounded-lg border border-gray-200 p-4 space-y-4">
+        <h3 className="text-sm font-semibold text-gray-700">Short Description</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field
+            label="Short Description (English)"
+            name="shortDescription"
+            defaultValue={product.shortDescription ?? ""}
+          />
+          <Field
+            label="คำอธิบายสั้น (ภาษาไทย)"
+            name="shortDescriptionTh"
+            defaultValue={product.shortDescriptionTh ?? ""}
+            placeholder="สรุปสั้นๆ แสดงบนการ์ดสินค้า"
+          />
+        </div>
+      </div>
+
+      {/* Full description */}
+      <div className="rounded-lg border border-gray-200 p-4 space-y-4">
+        <h3 className="text-sm font-semibold text-gray-700">Full Description</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <TextareaField
+            label="Description (English)"
+            name="description"
+            defaultValue={product.description ?? ""}
+            rows={5}
+          />
+          <TextareaField
+            label="คำอธิบาย (ภาษาไทย)"
+            name="descriptionTh"
+            defaultValue={product.descriptionTh ?? ""}
+            placeholder="คำอธิบายสินค้าโดยละเอียดเป็นภาษาไทย"
+            rows={5}
+          />
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <SelectField label="Category" name="category" defaultValue={product.category} options={CATEGORIES} />
@@ -47,7 +105,7 @@ export function ProductEditForm({ product }: { product: Product }) {
           label="Price (₱ — enter in pesos)"
           name="priceInPesos"
           type="number"
-          defaultValue={String(product.priceInCents / 100)}
+          defaultValue={String(product.priceInSatang / 100)}
           required
           error={fieldErrors?.priceInPesos?.[0]}
           hint="e.g. 28999 for ₱28,999"
@@ -56,7 +114,7 @@ export function ProductEditForm({ product }: { product: Product }) {
           label="Compare Price (₱)"
           name="comparePriceInPesos"
           type="number"
-          defaultValue={product.comparePriceInCents ? String(product.comparePriceInCents / 100) : ""}
+          defaultValue={product.comparePriceInSatang ? String(product.comparePriceInSatang / 100) : ""}
           hint="Crossed-out original price"
         />
         <Field label="Stock" name="stock" type="number" defaultValue={String(product.stock)} required error={fieldErrors?.stock?.[0]} />
@@ -102,6 +160,23 @@ function Field({ label, name, type = "text", defaultValue, required, placeholder
       />
       {hint && <p className="mt-1 text-xs text-gray-400">{hint}</p>}
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+    </div>
+  );
+}
+
+function TextareaField({ label, name, defaultValue, placeholder, rows = 4 }: {
+  label: string; name: string; defaultValue?: string; placeholder?: string; rows?: number;
+}) {
+  return (
+    <div>
+      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
+        {label}
+      </label>
+      <textarea
+        id={name} name={name} defaultValue={defaultValue}
+        placeholder={placeholder} rows={rows}
+        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-y"
+      />
     </div>
   );
 }

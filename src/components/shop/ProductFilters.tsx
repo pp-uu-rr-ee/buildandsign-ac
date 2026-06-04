@@ -3,24 +3,10 @@
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useTransition } from "react";
 import { Separator } from "@/components/ui/separator";
-import { formatPrice } from "@/lib/helpers/price";
-
-const CATEGORIES = [
-  { value: "split", label: "Split Type" },
-  { value: "window", label: "Window Type" },
-  { value: "portable", label: "Portable" },
-  { value: "central", label: "Central / Ducted" },
-  { value: "cassette", label: "Cassette" },
-];
-
-const PRICE_RANGES = [
-  { label: "Under ₱20,000", min: 0, max: 2000000 },
-  { label: "₱20,000 – ₱35,000", min: 2000000, max: 3500000 },
-  { label: "₱35,000 – ₱50,000", min: 3500000, max: 5000000 },
-  { label: "Over ₱50,000", min: 5000000, max: 99999900 },
-];
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 export function ProductFilters() {
+  const { t } = useLanguage();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -30,13 +16,25 @@ export function ProductFilters() {
   const activeMin = searchParams.get("minPrice");
   const activeMax = searchParams.get("maxPrice");
 
+  const CATEGORIES = [
+    { value: "split", label: t.products.catSplit },
+    { value: "window", label: t.products.catWindow },
+    { value: "portable", label: t.products.catPortable },
+    { value: "central", label: t.products.catCentral },
+    { value: "cassette", label: t.products.catCassette },
+  ];
+
+  const PRICE_RANGES = [
+    { label: t.products.priceLt20k, min: 0, max: 2000000 },
+    { label: t.products.price20k35k, min: 2000000, max: 3500000 },
+    { label: t.products.price35k50k, min: 3500000, max: 5000000 },
+    { label: t.products.priceGt50k, min: 5000000, max: 99999900 },
+  ];
+
   const setParam = useCallback(
     (updates: Record<string, string | string[] | null>) => {
       const params = new URLSearchParams(searchParams.toString());
-
-      // Reset page on any filter change
       params.delete("page");
-
       for (const [key, value] of Object.entries(updates)) {
         params.delete(key);
         if (value === null) continue;
@@ -46,7 +44,6 @@ export function ProductFilters() {
           params.set(key, value);
         }
       }
-
       startTransition(() => {
         router.push(`${pathname}?${params.toString()}`, { scroll: false });
       });
@@ -62,8 +59,7 @@ export function ProductFilters() {
   };
 
   const setPriceRange = (min: number, max: number) => {
-    const alreadyActive =
-      activeMin === String(min) && activeMax === String(max);
+    const alreadyActive = activeMin === String(min) && activeMax === String(max);
     if (alreadyActive) {
       setParam({ minPrice: null, maxPrice: null });
     } else {
@@ -76,36 +72,33 @@ export function ProductFilters() {
       router.push(pathname, { scroll: false });
     });
 
-  const hasActiveFilters =
-    activeCategories.length > 0 || activeMin || activeMax;
+  const hasActiveFilters = activeCategories.length > 0 || activeMin || activeMax;
 
   return (
-    <aside
-      className={`space-y-6 transition-opacity ${isPending ? "opacity-50" : ""}`}
-    >
+    <aside className={`space-y-6 transition-opacity ${isPending ? "opacity-50" : ""}`}>
       <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-gray-900">Filters</h2>
+        <h2 className="font-semibold text-gray-900 dark:text-gray-100">
+          {t.products.filtersTitle}
+        </h2>
         {hasActiveFilters && (
           <button
             onClick={clearAll}
-            className="text-xs text-blue-600 hover:underline"
+            className="text-xs text-blue-600 hover:underline dark:text-blue-400"
           >
-            Clear all
+            {t.products.clearAll}
           </button>
         )}
       </div>
 
-      {/* Category */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">AC Type</h3>
+        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+          {t.products.acType}
+        </h3>
         <div className="space-y-2">
           {CATEGORIES.map((cat) => {
             const checked = activeCategories.includes(cat.value);
             return (
-              <label
-                key={cat.value}
-                className="flex items-center gap-2.5 cursor-pointer group"
-              >
+              <label key={cat.value} className="flex items-center gap-2.5 cursor-pointer group">
                 <input
                   type="checkbox"
                   checked={checked}
@@ -115,8 +108,8 @@ export function ProductFilters() {
                 <span
                   className={`text-sm transition-colors ${
                     checked
-                      ? "text-blue-600 font-medium"
-                      : "text-gray-600 group-hover:text-gray-900"
+                      ? "text-blue-600 font-medium dark:text-blue-400"
+                      : "text-gray-600 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-100"
                   }`}
                 >
                   {cat.label}
@@ -129,19 +122,16 @@ export function ProductFilters() {
 
       <Separator />
 
-      {/* Price Range */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">Price Range</h3>
+        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+          {t.products.priceRange}
+        </h3>
         <div className="space-y-2">
           {PRICE_RANGES.map((range) => {
             const isActive =
-              activeMin === String(range.min) &&
-              activeMax === String(range.max);
+              activeMin === String(range.min) && activeMax === String(range.max);
             return (
-              <label
-                key={range.label}
-                className="flex items-center gap-2.5 cursor-pointer group"
-              >
+              <label key={range.label} className="flex items-center gap-2.5 cursor-pointer group">
                 <input
                   type="radio"
                   name="priceRange"
@@ -152,8 +142,8 @@ export function ProductFilters() {
                 <span
                   className={`text-sm transition-colors ${
                     isActive
-                      ? "text-blue-600 font-medium"
-                      : "text-gray-600 group-hover:text-gray-900"
+                      ? "text-blue-600 font-medium dark:text-blue-400"
+                      : "text-gray-600 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-100"
                   }`}
                 >
                   {range.label}

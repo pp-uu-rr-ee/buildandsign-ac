@@ -45,11 +45,11 @@ export default async function AdminBookingDetailPage({ params }: Props) {
             <div className="px-5 py-4 grid grid-cols-2 gap-4 text-sm">
               <div><p className="text-xs text-gray-400 mb-0.5">Service Type</p><p className="capitalize font-medium">{booking.serviceType}</p></div>
               <div><p className="text-xs text-gray-400 mb-0.5">Duration</p><p className="font-medium">{booking.durationMinutes} minutes</p></div>
-              {booking.quotedPriceInCents && (
-                <div><p className="text-xs text-gray-400 mb-0.5">Quoted Price</p><p className="font-medium">{formatPrice(booking.quotedPriceInCents)}</p></div>
+              {booking.quotedPriceInSatang && (
+                <div><p className="text-xs text-gray-400 mb-0.5">Quoted Price</p><p className="font-medium">{formatPrice(booking.quotedPriceInSatang)}</p></div>
               )}
-              {booking.finalPriceInCents && (
-                <div><p className="text-xs text-gray-400 mb-0.5">Final Price</p><p className="font-medium">{formatPrice(booking.finalPriceInCents)}</p></div>
+              {booking.finalPriceInSatang && (
+                <div><p className="text-xs text-gray-400 mb-0.5">Final Price</p><p className="font-medium">{formatPrice(booking.finalPriceInSatang)}</p></div>
               )}
               {booking.customerNotes && (
                 <div className="col-span-2"><p className="text-xs text-gray-400 mb-0.5">Customer Notes</p><p className="text-gray-700">{booking.customerNotes}</p></div>

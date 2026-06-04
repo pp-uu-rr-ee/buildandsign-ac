@@ -6,6 +6,7 @@ import {
   timestamp,
   pgEnum,
   boolean,
+  index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { orders } from "./orders";
@@ -26,6 +27,7 @@ export const users = pgTable("users", {
   role: userRoleEnum("role").notNull().default("customer"),
   emailVerified: boolean("email_verified").notNull().default(false),
   avatarUrl: text("avatar_url"),
+  opnCustomerId: varchar("opn_customer_id", { length: 255 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -39,6 +41,21 @@ export const usersRelations = relations(users, ({ many, one }) => ({
     references: [technicians.userId],
   }),
 }));
+
+export const passwordResetTokens = pgTable(
+  "password_reset_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    token: varchar("token", { length: 128 }).notNull().unique(),
+    expiresAt: timestamp("expires_at").notNull(),
+    usedAt: timestamp("used_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [index("password_reset_tokens_user_idx").on(t.userId)]
+);
 
 // Import here to avoid circular deps — technicians references users
 import { technicians } from "./technicians";
