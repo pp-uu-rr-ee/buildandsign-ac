@@ -59,6 +59,11 @@ export async function getAvailableSlots(
   const dayStart = new Date(`${dateStr}T00:00:00`);
   const dayEnd = new Date(`${dateStr}T23:59:59`);
 
+  // Only ACCEPTED/CONFIRMED bookings block slots.
+  // "pending" = customer submitted but admin hasn't quoted, or customer hasn't
+  // accepted the quote yet — multiple customers can compete for the same slot
+  // until one accepts. The accept-quote action runs a conflict check at the
+  // moment of acceptance.
   const existingBookings = await db
     .select({
       technicianId: bookings.technicianId,
@@ -70,7 +75,7 @@ export async function getAvailableSlots(
       and(
         gte(bookings.scheduledAt, dayStart),
         lte(bookings.scheduledAt, dayEnd),
-        sql`${bookings.status} NOT IN ('cancelled', 'no_show')`
+        sql`${bookings.status} IN ('confirmed', 'in_progress', 'completed')`
       )
     );
 

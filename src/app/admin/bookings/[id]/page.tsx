@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import { getBookingById, getActiveTechnicianOptions } from "@/lib/queries/admin";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { BookingStatusUpdater } from "@/components/admin/BookingStatusUpdater";
+import { BookingQuoteForm } from "@/components/admin/BookingQuoteForm";
 import { formatPrice } from "@/lib/helpers/price";
 
 type Props = { params: Promise<{ id: string }> };
@@ -20,17 +21,17 @@ export default async function AdminBookingDetailPage({ params }: Props) {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="flex items-center gap-3">
-        <Link href="/admin/bookings" className="p-1.5 rounded-md hover:bg-gray-100 transition-colors">
+      <div className="flex items-center gap-3 flex-wrap">
+        <Link href="/admin/bookings" className="p-1.5 rounded-md hover:bg-gray-100 transition-colors shrink-0">
           <ChevronLeft className="h-5 w-5 text-gray-500" />
         </Link>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 font-mono">{booking.bookingNumber}</h1>
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-xl font-bold text-gray-900 font-mono break-all">{booking.bookingNumber}</h1>
           <p className="text-xs text-gray-400">
-            {new Date(booking.scheduledAt).toLocaleString("en-PH", { dateStyle: "full", timeStyle: "short" })}
+            {new Date(booking.scheduledAt).toLocaleString("en-US", { dateStyle: "full", timeStyle: "short" })}
           </p>
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto shrink-0">
           <StatusBadge status={booking.status} type="booking" />
         </div>
       </div>
@@ -60,25 +61,72 @@ export default async function AdminBookingDetailPage({ params }: Props) {
             </div>
           </div>
 
-          {/* AC Unit */}
-          {ac && (
+          {/* AC Units (new shape — array + notes) */}
+          {ac && (ac.units?.length || ac.brand || ac.notes) && (
             <div className="rounded-xl border border-gray-200 overflow-hidden">
               <div className="px-5 py-3 bg-gray-50 border-b border-gray-200">
-                <h2 className="font-semibold text-gray-900 text-sm">AC Unit Details</h2>
+                <h2 className="font-semibold text-gray-900 text-sm">
+                  AC Units {ac.units?.length ? `(${ac.units.length})` : ""}
+                </h2>
               </div>
-              <div className="px-5 py-4 grid grid-cols-2 gap-4 text-sm">
-                {[["Brand", ac.brand], ["Model", ac.model], ["Type", ac.type], ["Year Installed", ac.yearInstalled]]
-                  .filter(([, v]) => v)
-                  .map(([label, value]) => (
-                    <div key={label as string}>
-                      <p className="text-xs text-gray-400 mb-0.5">{label as string}</p>
-                      <p className="capitalize font-medium">{String(value)}</p>
+              <div className="px-5 py-4 space-y-3 text-sm">
+                {ac.units?.map(
+                  (
+                    u: { brand: string; btu: number; type: string; quantity: number },
+                    i: number
+                  ) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 text-sm text-gray-700 border-b border-gray-100 pb-2 last:border-0 last:pb-0"
+                    >
+                      <span className="font-bold text-gray-900 w-16">×{u.quantity}</span>
+                      <span className="font-medium">{u.brand}</span>
+                      <span className="text-gray-500">·</span>
+                      <span>{u.btu.toLocaleString()} BTU</span>
+                      <span className="text-gray-500">·</span>
+                      <span className="capitalize">{u.type}</span>
                     </div>
-                  ))}
-                {ac.notes && <div className="col-span-2"><p className="text-xs text-gray-400 mb-0.5">Notes</p><p>{ac.notes}</p></div>}
+                  )
+                )}
+
+                {/* Legacy single-unit fallback */}
+                {!ac.units?.length && (ac.brand || ac.model || ac.type) && (
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      ["Brand", ac.brand],
+                      ["Model", ac.model],
+                      ["Type", ac.type],
+                      ["Year Installed", ac.yearInstalled],
+                    ]
+                      .filter(([, v]) => v)
+                      .map(([label, value]) => (
+                        <div key={label as string}>
+                          <p className="text-xs text-gray-400 mb-0.5">{label as string}</p>
+                          <p className="capitalize font-medium">{String(value)}</p>
+                        </div>
+                      ))}
+                  </div>
+                )}
+
+                {ac.notes && (
+                  <div className="pt-2 border-t border-gray-100">
+                    <p className="text-xs text-gray-400 mb-0.5">Notes</p>
+                    <p className="text-gray-700">{ac.notes}</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
+
+          {/* Quote form — show on all bookings now (deposit may be 0) */}
+          <BookingQuoteForm
+            bookingId={booking.id}
+            depositInSatang={booking.depositInSatang ?? 0}
+            quotedPriceInSatang={booking.quotedPriceInSatang}
+            balanceInSatang={booking.balanceInSatang}
+            balancePaymentStatus={booking.balancePaymentStatus}
+            quoteConfirmedAt={booking.quoteConfirmedAt}
+          />
 
           {/* Status updater */}
           <BookingStatusUpdater

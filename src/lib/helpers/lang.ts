@@ -12,3 +12,13 @@ export async function getT() {
   const lang = await getLang();
   return translations[lang];
 }
+
+/** Map app language to a JS Intl locale for date/time/number formatting. */
+export function langToLocale(lang: Language): string {
+  return lang === "th" ? "th-TH" : "en-US";
+}
+
+/** Convenience: get the right locale tag for the current request. */
+export async function getLocale(): Promise<string> {
+  return langToLocale(await getLang());
+}

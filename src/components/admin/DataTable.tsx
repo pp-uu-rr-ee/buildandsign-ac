@@ -23,8 +23,8 @@ type Props<T> = {
 
 export function DataTable<T>({ columns, rows, emptyMessage = "No records found.", getKey }: Props<T>) {
   return (
-    <div className="rounded-xl border border-gray-200 overflow-hidden">
-      <Table>
+    <div className="rounded-xl border border-gray-200 overflow-x-auto">
+      <Table className="min-w-[640px]">
         <TableHeader>
           <TableRow className="bg-gray-50">
             {columns.map((col) => (

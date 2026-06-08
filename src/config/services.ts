@@ -1,9 +1,30 @@
-import { Wrench, Sparkles, Package, ClipboardCheck } from "lucide-react";
+import {
+  Wrench,
+  Sparkles,
+  Package,
+  ClipboardCheck,
+  type LucideIcon,
+} from "lucide-react";
 
+/** Services that are currently bookable end-to-end (also matches DB enum). */
 export type ServiceId = "cleaning" | "repair" | "installation" | "inspection";
 
+/** Top-level grouping shown on the services page. */
+export type ServiceGroup = "btu" | "diagnostic";
+
+export type BtuTier = {
+  /** Display label, e.g. "9,000–13,000 BTU" */
+  range: string;
+  rangeTh: string;
+  /** Price for this tier, in satang (1 THB = 100). */
+  priceInSatang: number;
+  /** Set true to show a "+" after the price (entry-level / starts at). */
+  startingAt?: boolean;
+};
+
 export type ServiceConfig = {
-  id: ServiceId;
+  /** Stable id. Bookable services must use a value of ServiceId. */
+  id: string;
   title: string;
   titleTh: string;
   tagline: string;
@@ -11,8 +32,47 @@ export type ServiceConfig = {
   description: string;
   descriptionTh: string;
   durationMinutes: number;
+
+  /**
+   * Lowest visible price (in satang). For BTU services this is the smallest
+   * tier; for diagnostic services this is the diagnostic fee.
+   */
   basePriceInSatang: number;
-  icon: typeof Wrench;
+
+  /** If true, base price represents a starting/entry price, not a flat rate. */
+  startingPrice?: boolean;
+
+  /** Group this service belongs to. */
+  group: ServiceGroup;
+
+  /** BTU pricing tiers (only for group="btu"). */
+  btuPricing?: BtuTier[];
+
+  /** Diagnostic fee in satang (only for group="diagnostic"). Same as basePriceInSatang. */
+  diagnosticFeeInSatang?: number;
+
+  /** Per-service overrides shown above the fee notice in diagnostic cards. */
+  feeLabel?: string;
+  feeLabelTh?: string;
+  feeNote?: string;
+  feeNoteTh?: string;
+
+  /** Extra variables that affect price (installation: extra pipe, drilling, etc). */
+  extraFactors?: string[];
+  extraFactorsTh?: string[];
+
+  /** Common symptoms users select for diagnostic services. */
+  commonSymptoms?: string[];
+  commonSymptomsTh?: string[];
+
+  icon: LucideIcon;
+
+  /** False = display only, no online booking yet (show "call to book"). */
+  bookable: boolean;
+
+  /** Surface this service on the marketing homepage. */
+  featuredOnHome?: boolean;
+
   includes: string[];
   includesTh: string[];
   faqs: { question: string; answer: string }[];
@@ -20,18 +80,28 @@ export type ServiceConfig = {
 };
 
 export const servicesConfig: ServiceConfig[] = [
+  // ─── Group A: BTU-based pricing ────────────────────────────────────────────
   {
     id: "cleaning",
     title: "AC Cleaning",
     titleTh: "ล้างแอร์",
-    tagline: "Deep-clean your unit for peak performance.",
-    taglineTh: "ล้างทำความสะอาดแบบล้ำลึกเพื่อประสิทธิภาพสูงสุด",
+    tagline: "Best for online booking — priced clearly by BTU.",
+    taglineTh: "เหมาะที่สุดสำหรับการจองออนไลน์ — ราคาชัดเจนตามขนาด BTU",
     description:
-      "Our thorough AC cleaning service removes dust, mold, and bacteria from filters, coils, and the drainage system. A clean unit runs more efficiently and improves indoor air quality.",
+      "Routine cleaning that removes dust, mold, and bacteria from filters, coils, and the drainage system. A clean unit runs more efficiently and improves indoor air quality.",
     descriptionTh:
-      "บริการล้างแอร์แบบครบวงจร ขจัดฝุ่น เชื้อรา และแบคทีเรียออกจากฟิลเตอร์ คอยล์ และระบบระบายน้ำ เครื่องที่สะอาดทำงานได้มีประสิทธิภาพมากขึ้นและช่วยปรับปรุงคุณภาพอากาศภายในบ้าน",
+      "บริการล้างแอร์ตามรอบ ขจัดฝุ่น เชื้อรา และแบคทีเรียออกจากฟิลเตอร์ คอยล์ และระบบระบายน้ำ เครื่องที่สะอาดทำงานได้มีประสิทธิภาพมากขึ้นและช่วยปรับปรุงคุณภาพอากาศภายในบ้าน",
     durationMinutes: 60,
-    basePriceInSatang: 79900,
+    basePriceInSatang: 50000, // 500 บาท
+    group: "btu",
+    bookable: true,
+    featuredOnHome: true,
+    btuPricing: [
+      { range: "9,000–13,000 BTU", rangeTh: "9,000–13,000 BTU", priceInSatang: 50000 },
+      { range: "18,000–24,000 BTU", rangeTh: "18,000–24,000 BTU", priceInSatang: 70000 },
+      { range: "30,000–36,000 BTU", rangeTh: "30,000–36,000 BTU", priceInSatang: 90000 },
+      { range: "48,000+ BTU", rangeTh: "48,000+ BTU", priceInSatang: 120000, startingAt: true },
+    ],
     icon: Sparkles,
     includes: [
       "Filter wash and dry",
@@ -57,109 +127,54 @@ export const servicesConfig: ServiceConfig[] = [
       },
       {
         question: "How long does cleaning take?",
-        answer:
-          "Approximately 1 hour per indoor unit. Additional units are serviced at a discounted rate.",
-      },
-      {
-        question: "Do I need to be home during the service?",
-        answer:
-          "Yes, an adult must be present at the start. You can leave after the technician begins if needed.",
+        answer: "Approximately 1 hour per indoor unit.",
       },
     ],
     faqsTh: [
       {
         question: "ควรล้างแอร์บ่อยแค่ไหน?",
-        answer:
-          "ทุก 3–6 เดือนสำหรับเครื่องใช้ในบ้าน เครื่องที่ใช้งานหนักหรือเชิงพาณิชย์ควรล้างทุก 2–3 เดือน",
+        answer: "ทุก 3–6 เดือนสำหรับเครื่องใช้ในบ้าน เครื่องที่ใช้งานหนักหรือเชิงพาณิชย์ควรล้างทุก 2–3 เดือน",
       },
       {
         question: "ล้างแอร์ใช้เวลานานแค่ไหน?",
-        answer:
-          "ประมาณ 1 ชั่วโมงต่อเครื่อง เครื่องเพิ่มเติมจะได้รับส่วนลดพิเศษ",
-      },
-      {
-        question: "ต้องอยู่บ้านระหว่างให้บริการหรือไม่?",
-        answer:
-          "ต้องมีผู้ใหญ่อยู่ตอนช่างเริ่มงาน หลังจากนั้นสามารถออกไปได้หากจำเป็น",
+        answer: "ประมาณ 1 ชั่วโมงต่อเครื่อง",
       },
     ],
   },
-  {
-    id: "repair",
-    title: "AC Repair",
-    titleTh: "ซ่อมแอร์",
-    tagline: "Fast diagnosis and reliable fixes.",
-    taglineTh: "วินิจฉัยเร็ว ซ่อมได้จริง เชื่อถือได้",
-    description:
-      "Our certified technicians diagnose and repair all makes and models — from refrigerant leaks and compressor issues to sensor faults and PCB problems. We carry common parts in our service vehicles.",
-    descriptionTh:
-      "ช่างเทคนิคที่ผ่านการรับรองวินิจฉัยและซ่อมทุกยี่ห้อและทุกรุ่น ตั้งแต่น้ำยารั่ว ปัญหาคอมเพรสเซอร์ ไปจนถึงเซนเซอร์และ PCB เสีย เรามีอะไหล่ทั่วไปพร้อมในรถบริการ",
-    durationMinutes: 120,
-    basePriceInSatang: 149900,
-    icon: Wrench,
-    includes: [
-      "Full system diagnosis",
-      "Error code reading",
-      "Refrigerant pressure test",
-      "Component inspection",
-      "Labor for standard repairs",
-      "90-day warranty on workmanship",
-    ],
-    includesTh: [
-      "วินิจฉัยระบบทั้งหมด",
-      "อ่านรหัสข้อผิดพลาด",
-      "ทดสอบความดันน้ำยา",
-      "ตรวจสอบชิ้นส่วน",
-      "ค่าแรงสำหรับการซ่อมมาตรฐาน",
-      "รับประกันผลงาน 90 วัน",
-    ],
-    faqs: [
-      {
-        question: "Is the diagnostic fee included?",
-        answer:
-          "Yes — the booking fee covers diagnosis. Parts and refrigerant top-up are billed separately at market rates.",
-      },
-      {
-        question: "What if my unit needs a major part replacement?",
-        answer:
-          "We'll provide a written quotation after diagnosis. You can approve or decline with no obligation.",
-      },
-      {
-        question: "Do you service all AC brands?",
-        answer:
-          "Yes — Carrier, Daikin, Panasonic, LG, Samsung, Midea, Fujitsu, and more.",
-      },
-    ],
-    faqsTh: [
-      {
-        question: "ค่าวินิจฉัยรวมอยู่ในราคาหรือไม่?",
-        answer:
-          "รวมแล้ว — ค่าจองครอบคลุมการวินิจฉัย อะไหล่และการเติมน้ำยาคิดแยกตามราคาตลาด",
-      },
-      {
-        question: "ถ้าเครื่องต้องเปลี่ยนอะไหล่ชิ้นใหญ่จะทำอย่างไร?",
-        answer:
-          "เราจะให้ใบเสนอราคาเป็นลายลักษณ์อักษรหลังการวินิจฉัย สามารถอนุมัติหรือปฏิเสธได้โดยไม่มีข้อผูกมัด",
-      },
-      {
-        question: "ให้บริการแอร์ทุกยี่ห้อหรือไม่?",
-        answer:
-          "ใช่ — Carrier, Daikin, Panasonic, LG, Samsung, Midea, Fujitsu และอื่นๆ",
-      },
-    ],
-  },
+
   {
     id: "installation",
-    title: "AC Installation",
-    titleTh: "ติดตั้งแอร์",
-    tagline: "Professional mounting, wiring, and commissioning.",
-    taglineTh: "ติดตั้ง เดินสาย และทดสอบระบบอย่างมืออาชีพ",
+    title: "New AC Installation",
+    titleTh: "ติดตั้งแอร์ใหม่",
+    tagline: "Starting price by BTU — final quote depends on the site.",
+    taglineTh: "ราคาเริ่มต้นตาม BTU — ราคาจริงขึ้นอยู่กับหน้างาน",
     description:
-      "Proper installation is critical to your AC's lifespan and efficiency. Our team handles everything — bracket mounting, refrigerant line laying, electrical connection, and initial commissioning — to manufacturer specs.",
+      "Proper installation is critical to your AC's lifespan and efficiency. The starting price covers bracket mounting, refrigerant line up to 3m, electrical connection, and commissioning. Final quote depends on pipe length, drilling, brackets and electrical work needed.",
     descriptionTh:
-      "การติดตั้งที่ถูกต้องเป็นสิ่งสำคัญต่ออายุการใช้งานและประสิทธิภาพของแอร์ ทีมงานของเราดูแลทุกขั้นตอน — ติดตั้งแบรกเกต วางท่อน้ำยา เดินไฟฟ้า และทดสอบระบบเบื้องต้น ตามมาตรฐานของผู้ผลิต",
+      "การติดตั้งที่ถูกต้องเป็นสิ่งสำคัญต่ออายุการใช้งานและประสิทธิภาพของแอร์ ราคาเริ่มต้นครอบคลุมการติดตั้งแบรกเกต ท่อน้ำยาไม่เกิน 3 เมตร เดินไฟ และทดสอบระบบ ราคาจริงขึ้นอยู่กับระยะท่อ การเจาะผนัง ขาแขวน และงานไฟฟ้าที่ต้องเพิ่ม",
     durationMinutes: 180,
-    basePriceInSatang: 249900,
+    basePriceInSatang: 300000, // 3,000 บาท
+    startingPrice: true,
+    group: "btu",
+    bookable: true,
+    featuredOnHome: true,
+    btuPricing: [
+      { range: "Up to 18,000 BTU", rangeTh: "ไม่เกิน 18,000 BTU", priceInSatang: 300000 },
+      { range: "24,000 BTU", rangeTh: "24,000 BTU", priceInSatang: 400000 },
+      { range: "36,000+ BTU", rangeTh: "36,000+ BTU", priceInSatang: 500000, startingAt: true },
+    ],
+    extraFactors: [
+      "Refrigerant pipe length (per metre)",
+      "Extra electrical wiring",
+      "Wall drilling",
+      "Mounting bracket",
+    ],
+    extraFactorsTh: [
+      "ระยะท่อ (คิดเป็นเมตร)",
+      "เดินไฟเพิ่ม",
+      "เจาะผนัง",
+      "ขาแขวน",
+    ],
     icon: Package,
     includes: [
       "Standard bracket installation",
@@ -179,90 +194,159 @@ export const servicesConfig: ServiceConfig[] = [
     ],
     faqs: [
       {
-        question: "What's included in the standard rate?",
+        question: "Why is this only a starting price?",
         answer:
-          "Standard rate covers up to 3 metres of refrigerant copper line and 2 metres of electrical cable. Additional materials are billed at cost.",
-      },
-      {
-        question: "Do you supply the AC unit?",
-        answer:
-          "You can purchase one from our shop or supply your own. We install all standard residential split-type and window-type units.",
-      },
-      {
-        question: "Will the installation void my warranty?",
-        answer:
-          "No — our technicians are brand-certified and follow manufacturer guidelines to preserve your warranty.",
+          "Installation depends heavily on the site — pipe length, drilling, electrical work and bracket type all add to the final cost. We confirm the full quote on-site before any work starts.",
       },
     ],
     faqsTh: [
       {
-        question: "อัตรามาตรฐานครอบคลุมอะไรบ้าง?",
+        question: "ทำไมถึงเป็นราคาเริ่มต้นเท่านั้น?",
         answer:
-          "ครอบคลุมท่อทองแดงน้ำยาสูงสุด 3 เมตร และสายไฟฟ้า 2 เมตร วัสดุเพิ่มเติมคิดตามต้นทุน",
-      },
-      {
-        question: "จำหน่ายเครื่องแอร์ด้วยหรือไม่?",
-        answer:
-          "สามารถซื้อจากร้านของเราหรือนำเครื่องมาเองได้ เราติดตั้งแอร์ผนังและแอร์หน้าต่างมาตรฐานสำหรับที่พักอาศัย",
-      },
-      {
-        question: "การติดตั้งจะทำให้การรับประกันสินค้าสิ้นสุดหรือไม่?",
-        answer:
-          "ไม่ — ช่างของเราผ่านการรับรองจากแบรนด์และปฏิบัติตามแนวทางของผู้ผลิตเพื่อรักษาการรับประกันของคุณ",
+          "การติดตั้งขึ้นกับหน้างาน — ระยะท่อ การเจาะ งานไฟ และขาแขวนจะมีผลต่อราคาจริง เราจะแจ้งราคารวมหน้างานก่อนเริ่มทำเสมอ",
       },
     ],
   },
+
+  // ─── Group B: Diagnostic-fee pricing ───────────────────────────────────────
+  {
+    id: "repair",
+    title: "AC Repair",
+    titleTh: "ซ่อมแอร์",
+    tagline: "Pay a flat diagnostic fee — repair quote given on-site.",
+    taglineTh: "จ่ายค่าตรวจเช็คแบบเหมา — ราคาซ่อมแจ้งหลังประเมิน",
+    description:
+      "AC repairs vary wildly — refrigerant top-up, capacitor swap, motor replacement, PCB swap, drain pipe flush. We charge a flat ฿300 diagnostic fee and quote the actual repair after our technician evaluates the unit on-site.",
+    descriptionTh:
+      "งานซ่อมแต่ละเคสราคาต่างกันมาก — เติมน้ำยา เปลี่ยนคาปาซิเตอร์ เปลี่ยนมอเตอร์ เปลี่ยนบอร์ด ล้างท่อน้ำทิ้ง เราเก็บค่าตรวจเช็คแบบเหมา 300 บาท แล้วช่างจะเสนอราคาซ่อมจริงหลังตรวจหน้างาน",
+    durationMinutes: 60,
+    basePriceInSatang: 30000, // 300 บาท — diagnostic fee
+    diagnosticFeeInSatang: 30000,
+    group: "diagnostic",
+    bookable: true,
+    featuredOnHome: true,
+    commonSymptoms: [
+      "Refrigerant top-up",
+      "Capacitor replacement",
+      "Motor replacement",
+      "PCB / control board replacement",
+      "Drain pipe flush",
+    ],
+    commonSymptomsTh: [
+      "เติมน้ำยา",
+      "เปลี่ยนคาปาซิเตอร์",
+      "เปลี่ยนมอเตอร์",
+      "เปลี่ยนบอร์ด",
+      "ล้างท่อน้ำทิ้ง",
+    ],
+    icon: Wrench,
+    includes: [
+      "On-site diagnosis",
+      "Error code reading",
+      "Refrigerant pressure check",
+      "Component inspection",
+      "Written quote for repair",
+      "Diagnostic fee waived if you proceed with repair",
+    ],
+    includesTh: [
+      "วินิจฉัยถึงหน้างาน",
+      "อ่านรหัสข้อผิดพลาด",
+      "ทดสอบความดันน้ำยา",
+      "ตรวจสอบชิ้นส่วน",
+      "ใบเสนอราคาซ่อมเป็นลายลักษณ์อักษร",
+      "ค่าตรวจหักออกหากตกลงซ่อมต่อ",
+    ],
+    faqs: [
+      {
+        question: "Why a separate diagnostic fee?",
+        answer:
+          "Repair prices vary too much by issue (a refrigerant top-up vs a PCB replacement) to publish upfront. The ฿300 covers our travel + diagnosis time. If you go ahead with the repair, the fee is deducted from the total.",
+      },
+    ],
+    faqsTh: [
+      {
+        question: "ทำไมต้องคิดค่าตรวจแยก?",
+        answer:
+          "ราคาซ่อมแต่ละเคสต่างกันมาก (เติมน้ำยา vs เปลี่ยนบอร์ด) จึงไม่สามารถประกาศราคาคงที่ได้ ค่าตรวจ 300 บาทคือค่าเดินทาง + เวลาตรวจ ถ้าตกลงซ่อมต่อจะหักค่าตรวจออกจากยอดรวม",
+      },
+    ],
+  },
+
   {
     id: "inspection",
     title: "AC Inspection",
-    titleTh: "ตรวจสอบแอร์",
-    tagline: "Comprehensive health check before problems arise.",
-    taglineTh: "ตรวจสุขภาพเครื่องปรับอากาศอย่างครอบคลุมก่อนเกิดปัญหา",
+    titleTh: "ตรวจสภาพแอร์",
+    tagline: "Preventive 25-point health check with a written report.",
+    taglineTh: "ตรวจสุขภาพแอร์เชิงป้องกัน 25 จุด พร้อมรายงานสรุป",
     description:
-      "Our inspection covers 25 check points across your AC system — from refrigerant levels and electrical safety to structural mounting and drainage. Ideal before buying a secondhand unit or before the summer season.",
+      "A scheduled, no-problem-required check-up. Our technician runs a 25-point inspection across cooling performance, refrigerant level, electrical safety, mounting and drainage — then hands you a detailed report. Ideal before peak summer, after a long period without service, or when buying a secondhand unit.",
     descriptionTh:
-      "การตรวจสอบของเราครอบคลุม 25 จุดตรวจสอบทั่วทั้งระบบแอร์ — ตั้งแต่ระดับน้ำยาและความปลอดภัยทางไฟฟ้า ไปจนถึงการยึดติดและระบบระบายน้ำ เหมาะสำหรับก่อนซื้อเครื่องมือสองหรือก่อนเข้าหน้าร้อน",
+      "การตรวจสภาพแบบป้องกัน ไม่ต้องรอให้เสียก่อน ช่างจะตรวจ 25 จุดทั่วระบบ ทั้งประสิทธิภาพการทำความเย็น ระดับน้ำยา ความปลอดภัยทางไฟฟ้า การยึดติด และการระบายน้ำ พร้อมส่งรายงานสรุปให้ เหมาะก่อนเข้าหน้าร้อน หลังไม่ได้ใช้บริการนาน หรือก่อนซื้อเครื่องมือสอง",
     durationMinutes: 60,
-    basePriceInSatang: 59900,
+    basePriceInSatang: 50000, // 500 บาท inspection fee
+    diagnosticFeeInSatang: 50000,
+    group: "diagnostic",
+    bookable: true,
+    featuredOnHome: true,
+    feeLabel: "Inspection fee",
+    feeLabelTh: "ค่าตรวจสภาพ",
+    feeNote:
+      "Includes the full 25-point report. No repair work is done — we recommend follow-ups separately if needed.",
+    feeNoteTh:
+      "รวมรายงาน 25 จุดครบถ้วน ไม่มีงานซ่อม หากเจอจุดที่ต้องแก้ไขเราจะแนะนำให้จองรอบใหม่",
+    commonSymptoms: [
+      "Pre-summer tune-up",
+      "Annual maintenance",
+      "Pre-purchase inspection (secondhand)",
+      "Post-storm check",
+      "Move-in / move-out",
+    ],
+    commonSymptomsTh: [
+      "ตรวจก่อนเข้าหน้าร้อน",
+      "ตรวจประจำปี",
+      "ตรวจก่อนซื้อเครื่องมือสอง",
+      "ตรวจหลังพายุ",
+      "ตรวจก่อนเข้า/ออกบ้าน",
+    ],
     icon: ClipboardCheck,
     includes: [
       "25-point system check",
       "Refrigerant level assessment",
       "Electrical safety inspection",
       "Mounting and structural check",
-      "Detailed written report",
-      "Priority repair booking if needed",
+      "Detailed PDF report with photos",
+      "Recommendations for cleaning or repair if needed",
     ],
     includesTh: [
       "ตรวจสอบ 25 จุด",
       "ประเมินระดับน้ำยา",
       "ตรวจสอบความปลอดภัยทางไฟฟ้า",
       "ตรวจสอบการยึดติดและโครงสร้าง",
-      "รายงานเป็นลายลักษณ์อักษรโดยละเอียด",
-      "สิทธิ์จองซ่อมด่วนหากจำเป็น",
+      "รายงาน PDF พร้อมภาพถ่ายโดยละเอียด",
+      "คำแนะนำให้ล้างหรือซ่อมหากจำเป็น",
     ],
     faqs: [
       {
-        question: "Do I get a written report?",
+        question: "How is this different from AC Repair?",
         answer:
-          "Yes — you'll receive a PDF report within 24 hours covering all 25 check points with photos and recommendations.",
+          "Repair is for when something is wrong — we diagnose and fix it. Inspection is preventive: a scheduled check-up to catch issues early and confirm the unit is running well. No problem required.",
       },
       {
-        question: "When is inspection most useful?",
+        question: "Will you fix things during the inspection?",
         answer:
-          "Before the summer heat peaks, before/after a typhoon season, or when buying a secondhand unit.",
+          "No — inspection is observation + report only. If we find something that needs work, we'll recommend cleaning or repair and you can book it as a separate visit.",
       },
     ],
     faqsTh: [
       {
-        question: "จะได้รับรายงานเป็นลายลักษณ์อักษรหรือไม่?",
+        question: "ต่างจากบริการซ่อมแอร์ยังไง?",
         answer:
-          "ใช่ — จะได้รับรายงาน PDF ภายใน 24 ชั่วโมง ครอบคลุม 25 จุดตรวจสอบพร้อมรูปภาพและคำแนะนำ",
+          "ซ่อมคือมีปัญหาแล้วต้องแก้ — เราวินิจฉัยและซ่อมให้ ส่วนตรวจสภาพคือการป้องกัน เป็นการเช็คตามรอบเพื่อจับปัญหาแต่เนิ่นๆ และยืนยันว่าเครื่องยังทำงานดี ไม่จำเป็นต้องมีอาการเสีย",
       },
       {
-        question: "การตรวจสอบมีประโยชน์มากที่สุดเมื่อไหร่?",
+        question: "ระหว่างตรวจจะซ่อมให้เลยไหม?",
         answer:
-          "ก่อนหน้าร้อน ก่อน/หลังฤดูพายุ หรือเมื่อซื้อเครื่องมือสอง",
+          "ไม่ — บริการตรวจสภาพคือตรวจและรายงานเท่านั้น ถ้าพบจุดที่ต้องแก้ไข เราจะแนะนำให้ล้างหรือซ่อม และคุณสามารถจองเป็นรอบใหม่ได้",
       },
     ],
   },
@@ -270,4 +354,34 @@ export const servicesConfig: ServiceConfig[] = [
 
 export function getService(id: string): ServiceConfig | undefined {
   return servicesConfig.find((s) => s.id === id);
+}
+
+/**
+ * Deposit charged at booking time (satang). Two strategies:
+ *
+ *  - Diagnostic-fee services (repair/inspection): the deposit IS the diagnostic
+ *    fee. If the customer goes ahead with the repair, the deposit is deducted
+ *    from the final total.
+ *
+ *  - BTU-priced services (cleaning/installation): we take a small booking
+ *    deposit so that "ghost bookings" cost something. The real amount due is
+ *    confirmed by the admin after looking at the BTU and site details.
+ *
+ * Returning a fallback of 20,000 satang (฿200) for any unknown id keeps the
+ * action safe even if a new service slips through.
+ */
+export function calculateBookingDeposit(serviceId: string): number {
+  const service = getService(serviceId);
+  if (!service) return 20000;
+
+  // Diagnostic group: deposit = diagnostic fee
+  if (service.group === "diagnostic") {
+    return service.diagnosticFeeInSatang ?? service.basePriceInSatang;
+  }
+
+  // BTU group: flat ฿200 booking reservation fee. Admin confirms the real
+  // total after evaluating BTU/site, customer pays the balance separately.
+  if (service.id === "cleaning") return 50000; // ฿500 — fixed enough to take full deposit
+  if (service.id === "installation") return 20000; // ฿200 reservation
+  return 20000;
 }

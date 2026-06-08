@@ -19,10 +19,10 @@ const en = {
   },
 
   home: {
-    heroBadge: "Certified AC Technicians · Metro Manila",
+    heroBadge: "Certified AC Technicians · Bangkok",
     heroTitle: "Expert AC Installation, Repair & Cleaning",
     heroSubtitle:
-      "Professional air conditioning services — sales, installation, repair, and cleaning. Serving Metro Manila and surrounding areas.",
+      "Professional air conditioning services — sales, installation, repair, and cleaning. Serving Bangkok and surrounding areas.",
     bookService: "Book a Service",
     shopAC: "Shop AC Units",
     warranty: "90-Day Workmanship Warranty",
@@ -31,7 +31,7 @@ const en = {
 
     servicesTitle: "Our Services",
     servicesSubtitle:
-      "Professional AC services for homes and businesses across Metro Manila. All work guaranteed.",
+      "Professional AC services for homes and businesses across Bangkok. All work guaranteed.",
     fromPrice: "From",
     book: "Book",
     viewAllServices: "View All Services",
@@ -42,7 +42,7 @@ const en = {
 
     whyTitle: "Why Cool Air Services?",
     whySubtitle:
-      "We've been keeping Metro Manila cool for years — with certified technicians, transparent pricing, and guaranteed results.",
+      "We've been keeping Bangkok cool for years — with certified technicians, transparent pricing, and guaranteed results.",
     whyCertifiedTitle: "Brand-Certified Technicians",
     whyCertifiedBody:
       "Our team is trained and certified by leading AC manufacturers — Carrier, Daikin, Panasonic, LG, Samsung, and more.",
@@ -64,7 +64,7 @@ const en = {
 
     testimonialsTitle: "What Our Customers Say",
     testimonialsSubtitle:
-      "Don't just take our word for it — hear from homeowners and businesses across Metro Manila.",
+      "Don't just take our word for it — hear from homeowners and businesses across Bangkok.",
 
     ctaTitle: "Ready to Stay Cool?",
     ctaSubtitle:
@@ -82,6 +82,7 @@ const en = {
     badgeGuarantee: "90-day guarantee",
     badgePricing: "Transparent pricing",
     startingAt: "Starting at",
+    startingFrom: "Starting from",
     duration: (min: number) => `~${min} min`,
     whatsIncluded: "What's included",
     faqs: "FAQs",
@@ -89,6 +90,31 @@ const en = {
     notSureTitle: "Not sure which service you need?",
     notSureBody:
       "Call us and describe the problem. Our team will recommend the right service — no upselling, just honest advice.",
+
+    // New: 2-group layout
+    groupBtuTitle: "Priced by BTU size",
+    groupBtuSubtitle:
+      "Transparent flat-rate pricing — pick your AC's BTU and see the price up front.",
+    groupDiagnosticTitle: "Flat per-visit fee",
+    groupDiagnosticSubtitle:
+      "For repairs and preventive inspections — a single fixed visit fee with no surprises. Repair gets an on-site quote; inspection gets a 25-point report.",
+
+    // BTU table
+    btuTableHeading: "Price by BTU",
+    btuRangeCol: "BTU range",
+    btuPriceCol: "Price",
+    btuFootnote: "Multiple units: +20% per extra unit on the same visit.",
+
+    // Diagnostic
+    diagnosticFeeLabel: "Diagnostic fee",
+    diagnosticFeeNote:
+      "Repair quote provided after on-site evaluation. Fee deducted if you proceed.",
+    commonSymptomsTitle: "Common cases",
+    extraFactorsTitle: "Final price also depends on",
+
+    // Bookable / call CTA
+    callToBook: "Call to book",
+    onlineSoon: "Online booking coming soon",
   },
 
   booking: {
@@ -144,6 +170,73 @@ const en = {
     allBooked: "All slots are fully booked for this date. Please choose another day.",
     technicianLabel: "Technician:",
     calendarDays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+
+    // Book page sidebar
+    bookTitle: (title: string) => `Book ${title}`,
+    breadcrumbHome: "Home",
+    breadcrumbServices: "Services",
+    finalPriceQuoted: "Final price quoted after inspection",
+    moreIncluded: (n: number) => `+ ${n} more included`,
+    guaranteeTitle: "90-day workmanship guarantee",
+    guaranteeBody:
+      "If the same issue recurs within 90 days of your service, we come back at no extra charge.",
+
+    // Deposit / payment block in wizard
+    depositDueNow: "Deposit due now",
+    depositNoteDiagnostic:
+      "Diagnostic fee — deducted from your total if you proceed with repair.",
+    depositNoteBooking:
+      "Booking deposit — balance billed after admin confirms the quote.",
+    cardholderName: "Cardholder name",
+    cardSecured: "Secured by Opn Payments · Visa & Mastercard accepted",
+    payAmount: (amount: string) => `Pay ${amount}`,
+    tokenLoading: "Payment system loading, please try again.",
+    cardIncomplete: "Please fill in all card details.",
+
+    // Booking detail page (/bookings/[id])
+    backToBookings: "Back to bookings",
+    paymentSummary: "Payment summary",
+    deposit: "Deposit",
+    balance: "Balance",
+    totalQuote: "Total quote",
+    totalPaid: "Total paid",
+    paid: "Paid",
+    due: "Due",
+    needHelpCall: "Need help? Call us",
+    awaitingQuoteTitle: "Waiting for the admin to confirm the final quote.",
+    awaitingQuoteBody:
+      "After the technician evaluates on-site, we'll send you the total and the remaining balance to pay here.",
+    payBalanceTitle: "Pay remaining balance",
+    payBalanceSubtitle: "Quote confirmed by admin · Pay to complete your booking",
+    paymentReceived: "Payment received",
+    processing: "Processing…",
+
+    // Quote acceptance (new free-booking flow)
+    awaitingQuoteState: "Awaiting quote from our team",
+    awaitingQuoteHint:
+      "We'll review your booking and send you a quote within 24 hours. No charge yet.",
+    quoteReadyTitle: "Quote ready — accept to lock your slot",
+    quoteReadySubtitle:
+      "Your time slot is reserved temporarily. Accept this quote to confirm.",
+    acceptQuote: "Accept Quote",
+    accepting: "Accepting…",
+    quoteAccepted: "Quote accepted — your slot is now locked!",
+    slotLocked: "Slot confirmed",
+
+    // Cancel booking
+    cancelBooking: "Cancel booking",
+    cancelBookingTitle: "Cancel this booking?",
+    cancelBookingBody:
+      "If you cancel 24+ hours before the scheduled time your deposit is refundable. Within 24 hours the deposit is forfeit.",
+    cancellationReason: "Reason for cancelling",
+    cancellationReasonPlaceholder:
+      "e.g. need to reschedule, found another technician, no longer needed…",
+    keepBooking: "Keep booking",
+    confirmCancel: "Confirm cancellation",
+    cancelling: "Cancelling…",
+    cancelledMessage: "Booking cancelled.",
+    cancelledRefundable: "Your deposit will be refunded within 5–7 business days.",
+    cancelledForfeit: "Deposit is non-refundable (within 24h window).",
   },
 
   cart: {
@@ -345,15 +438,119 @@ const en = {
     publishedOn: "Published on",
   },
 
+  admin: {
+    // Sidebar
+    panel: "Admin Panel",
+    dashboard: "Dashboard",
+    products: "Products",
+    orders: "Orders",
+    bookings: "Bookings",
+    calendar: "Calendar",
+    technicians: "Technicians",
+    customers: "Customers",
+    blog: "Blog",
+    settings: "Settings",
+    viewSite: "← View site",
+
+    // Common
+    new: "New",
+    add: "+ Add",
+    edit: "Edit",
+    save: "Save",
+    saving: "Saving…",
+    delete: "Delete",
+    cancel: "Cancel",
+    view: "View",
+    search: "Search",
+    actions: "Actions",
+    status: "Status",
+    date: "Date",
+    total: "Total",
+    customer: "Customer",
+    service: "Service",
+    notFound: "No records found.",
+
+    // Dashboard
+    dashStatsOrders: "Total Orders",
+    dashStatsOrdersSub: (n: number) => `${n} pending`,
+    dashStatsRevenue: "Revenue (paid)",
+    dashStatsBookings: "Bookings",
+    dashStatsBookingsSub: (n: number) => `${n} unconfirmed`,
+    dashStatsCustomers: "Customers",
+    dashRecentOrders: "Recent Orders",
+    dashUpcomingBookings: "Upcoming Bookings",
+    dashViewAll: "View all",
+    dashNoOrders: "No orders yet.",
+    dashNoBookings: "No confirmed bookings.",
+    dashLowStock: (n: number) =>
+      `${n} product${n > 1 ? "s" : ""} below low-stock threshold.`,
+    dashViewProducts: "View products →",
+    technician: "Technician",
+    unassigned: "Unassigned",
+    payment: "Payment",
+    featured: "Featured",
+    yes: "Yes",
+    no: "No",
+    lowStockBadge: "Low",
+    addProduct: "+ Add Product",
+    newPost: "New Post",
+    addTechnician: "Add Technician",
+    bookingNumber: "Booking #",
+    orderNumber: "Order #",
+    scheduled: "Scheduled",
+    statusAll: "All",
+  },
+
+  confirmation: {
+    // Shared
+    backHome: "Back to home",
+    nextStepsTitle: "What happens next?",
+
+    // Order
+    orderPlaced: "Order Placed!",
+    orderReceivedPrefix: "Your order",
+    orderReceivedSuffix: "has been received. We'll contact you shortly to confirm.",
+    orderTotal: "Order total",
+    items: "Items",
+    shipping: "Shipping",
+    freeShipping: "Free shipping",
+    shipTo: "Ship to",
+    payment: "Payment",
+    paymentCod: "Cash on Delivery",
+    paymentCard: "Credit / Debit Card (Opn Payments)",
+    continueShopping: "Continue Shopping",
+    bookInstallation: "Book Installation Service",
+    orderStep1: "We'll call or text you within 2 hours to confirm your order.",
+    orderStep2: "Our team packs and dispatches your unit within 1–2 business days.",
+    orderStep3: "You'll receive a tracking number once your order ships.",
+    orderStep4: "Our technician can install your new unit — book at /services.",
+
+    // Booking
+    bookingConfirmed: "Booking Confirmed!",
+    bookingReferencePrefix: "Your booking reference is",
+    bookingReferenceSuffix: ". We'll call you to confirm the appointment.",
+    service: "Service",
+    date: "Date",
+    time: "Time",
+    technician: "Technician",
+    address: "Address",
+    viewMyBookings: "View My Bookings",
+    callUs: "Call Us",
+    bookingStep1: "We'll call you within 2 hours to confirm the appointment.",
+    bookingStep2: "You'll receive an SMS reminder 24 hours before the visit.",
+    bookingStep3: "The technician will arrive in the scheduled time window.",
+    bookingStep4: "After the service, you can leave a review to help others.",
+  },
+
   about: {
     heroTitle: "About Cool Air Services",
     heroSubtitle:
-      "We've been keeping homes and businesses cool across Metro Manila for years — with certified technicians, honest pricing, and a service guarantee you can count on.",
+      "We've been keeping homes and businesses cool across Bangkok for years — with certified technicians, honest pricing, and a service guarantee you can count on.",
     storyTitle: "Our Story",
     storyBody1:
       "Cool Air Services was founded with a simple belief: air conditioning shouldn't be a source of stress. Too many homeowners had dealt with fly-by-night technicians, surprise charges, and shoddy repairs that didn't last. We set out to do things differently.",
     storyBody2:
-      "Today, we're a trusted name in Metro Manila for AC sales, installation, cleaning, and repair. Every member of our team is brand-certified and background-checked. Every job comes with a 90-day workmanship warranty. And every price is agreed upfront — no surprises.",
+      "Today, we're a trusted name in Bangkok for AC sales, installation, cleaning, and repair. Every member of our team is brand-certified and background-checked. Every job comes with a 90-day workmanship warranty. And every price is agreed upfront — no surprises.",
     missionTitle: "Our Mission",
     missionBody:
       "To provide reliable, affordable, and professional air conditioning services that improve comfort and air quality for every home and business we serve.",

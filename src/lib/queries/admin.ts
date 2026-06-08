@@ -3,7 +3,7 @@ import {
   orders, orderItems, bookings, products,
   technicians, users, productImages,
 } from "@/db/schema";
-import { desc, eq, sql, and, ilike, count } from "drizzle-orm";
+import { desc, eq, sql, and, ilike, count, gte, lt } from "drizzle-orm";
 
 // ── Dashboard stats ──────────────────────────────────────────────────────────
 export async function getDashboardStats() {
@@ -177,6 +177,103 @@ export async function getAdminTechnicians() {
     .from(technicians)
     .innerJoin(users, eq(users.id, technicians.userId))
     .orderBy(users.name);
+}
+
+// ── Calendar ─────────────────────────────────────────────────────────────────
+
+export type CalendarBooking = {
+  id: string;
+  bookingNumber: string;
+  serviceType: string;
+  status: string;
+  scheduledAt: Date;
+  durationMinutes: number;
+  customerName: string;
+  customerCity: string;
+  customerPhone: string;
+  technicianId: string | null;
+  technicianName: string | null;
+  technicianPhone: string | null;
+  technicianStatus: string | null;
+  technicianSpecializations: string[] | null;
+  technicianRating: number | null; // 0–50 (x10)
+  technicianTotalRatings: number | null;
+};
+
+/**
+ * Returns bookings whose scheduledAt falls within [start, end).
+ * Optionally restricted to a single technician (used by the technician portal).
+ */
+export async function getCalendarBookings(opts: {
+  start: Date;
+  end: Date;
+  technicianId?: string | null;
+}): Promise<CalendarBooking[]> {
+  const filters = [
+    gte(bookings.scheduledAt, opts.start),
+    lt(bookings.scheduledAt, opts.end),
+  ];
+  if (opts.technicianId) {
+    filters.push(eq(bookings.technicianId, opts.technicianId));
+  }
+
+  const rows = await db
+    .select({
+      id: bookings.id,
+      bookingNumber: bookings.bookingNumber,
+      serviceType: bookings.serviceType,
+      status: bookings.status,
+      scheduledAt: bookings.scheduledAt,
+      durationMinutes: bookings.durationMinutes,
+      serviceAddress: bookings.serviceAddress,
+      technicianId: bookings.technicianId,
+      technicianName: users.name,
+      technicianPhone: users.phone,
+      technicianStatus: technicians.status,
+      technicianSpecializations: technicians.specializations,
+      technicianRating: technicians.averageRating,
+      technicianTotalRatings: technicians.totalRatings,
+    })
+    .from(bookings)
+    .leftJoin(technicians, eq(technicians.id, bookings.technicianId))
+    .leftJoin(users, eq(users.id, technicians.userId))
+    .where(and(...filters))
+    .orderBy(bookings.scheduledAt);
+
+  return rows.map((r) => ({
+    id: r.id,
+    bookingNumber: r.bookingNumber,
+    serviceType: r.serviceType,
+    status: r.status,
+    scheduledAt: r.scheduledAt,
+    durationMinutes: r.durationMinutes,
+    customerName: r.serviceAddress.fullName,
+    customerCity: r.serviceAddress.city,
+    customerPhone: r.serviceAddress.phone,
+    technicianId: r.technicianId,
+    technicianName: r.technicianName ?? null,
+    technicianPhone: r.technicianPhone ?? null,
+    technicianStatus: r.technicianStatus ?? null,
+    technicianSpecializations:
+      (r.technicianSpecializations as string[] | null) ?? null,
+    technicianRating: r.technicianRating ?? null,
+    technicianTotalRatings: r.technicianTotalRatings ?? null,
+  }));
+}
+
+/**
+ * Resolve the technician profile id for a given userId (used in the
+ * technician portal to scope queries).
+ */
+export async function getTechnicianIdForUser(
+  userId: string
+): Promise<string | null> {
+  const [row] = await db
+    .select({ id: technicians.id })
+    .from(technicians)
+    .where(eq(technicians.userId, userId))
+    .limit(1);
+  return row?.id ?? null;
 }
 
 // ── Selectors ────────────────────────────────────────────────────────────────

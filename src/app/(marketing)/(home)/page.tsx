@@ -20,13 +20,6 @@ import { ProductCard } from "@/components/shop/ProductCard";
 import { formatPrice } from "@/lib/helpers/price";
 import { getT, getLang } from "@/lib/helpers/lang";
 
-const serviceIcons = {
-  cleaning: Sparkles,
-  repair: Wrench,
-  installation: Package,
-  inspection: ClipboardCheck,
-} as const;
-
 const testimonials = [
   {
     name: "Maria Santos",
@@ -140,8 +133,8 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {servicesConfig.map((service) => {
-              const Icon = serviceIcons[service.id];
+            {servicesConfig.filter((s) => s.featuredOnHome).map((service) => {
+              const Icon = service.icon;
               const title = lang === "th" ? service.titleTh : service.title;
               const tagline = lang === "th" ? service.taglineTh : service.tagline;
               return (

@@ -19,13 +19,13 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Products <span className="text-gray-400 font-normal text-lg">({total})</span>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+          Products <span className="text-gray-400 font-normal text-base sm:text-lg">({total})</span>
         </h1>
         <Link
           href="/admin/products/new"
-          className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors shrink-0"
         >
           + Add Product
         </Link>
@@ -37,12 +37,12 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
           name="search"
           defaultValue={sp.search}
           placeholder="Search products…"
-          className="w-72 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full sm:w-72 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
       </form>
 
-      <div className="rounded-xl border border-gray-200 overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="rounded-xl border border-gray-200 overflow-x-auto">
+        <table className="w-full text-sm min-w-[760px]">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               {["Product","Category","Price","Stock","Status","Featured","Actions"].map((h) => (

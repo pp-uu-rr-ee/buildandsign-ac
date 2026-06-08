@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "About Us | Cool Air Services",
   description:
-    "Learn about Cool Air Services — certified AC technicians serving Metro Manila with transparent pricing and a 90-day workmanship guarantee.",
+    "Learn about Cool Air Services — certified AC technicians serving Bangkok with transparent pricing and a 90-day workmanship guarantee.",
 };
 
 export default async function AboutPage() {

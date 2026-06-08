@@ -1,6 +1,11 @@
 import { Resend } from "resend";
 import { siteConfig } from "@/config/site";
-import { bookingConfirmationHtml, orderReceiptHtml, passwordResetHtml } from "./templates";
+import {
+  bookingConfirmationHtml,
+  bookingQuoteReadyHtml,
+  orderReceiptHtml,
+  passwordResetHtml,
+} from "./templates";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.EMAIL_FROM ?? "no-reply@coolairservices.com";
@@ -93,6 +98,37 @@ export async function sendOrderReceipt(payload: OrderEmailPayload): Promise<void
       paymentMethod: payload.paymentMethod,
       shippingAddress: payload.shippingAddress,
       orderUrl: `${APP_URL}/orders/${payload.orderId}/confirmation`,
+    }),
+  });
+
+  if (error) throw new Error(`Resend error: ${error.message}`);
+}
+
+// ─── Quote ready (admin set a quote, customer needs to pay balance) ────────
+export async function sendBookingQuoteReady(payload: {
+  to: string;
+  bookingNumber: string;
+  customerName: string;
+  serviceTitle: string;
+  depositInSatang: number;
+  quotedTotalInSatang: number;
+  balanceInSatang: number;
+  bookingId: string;
+}): Promise<void> {
+  if (!process.env.RESEND_API_KEY) return;
+
+  const { error } = await resend.emails.send({
+    from: `${siteConfig.name} <${FROM}>`,
+    to: payload.to,
+    subject: `Quote ready — ${payload.bookingNumber}`,
+    html: bookingQuoteReadyHtml({
+      bookingNumber: payload.bookingNumber,
+      customerName: payload.customerName,
+      serviceTitle: payload.serviceTitle,
+      depositInSatang: payload.depositInSatang,
+      quotedTotalInSatang: payload.quotedTotalInSatang,
+      balanceInSatang: payload.balanceInSatang,
+      payBalanceUrl: `${APP_URL}/bookings/${payload.bookingId}`,
     }),
   });
 

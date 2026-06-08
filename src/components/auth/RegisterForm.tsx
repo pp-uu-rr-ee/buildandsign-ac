@@ -55,11 +55,10 @@ export function RegisterForm() {
 
         <div>
           <label htmlFor="phone" className="block text-sm font-medium mb-1">
-            {t.auth.phone}{" "}
-            <span className="text-gray-400 font-normal">({t.booking.acDetailsOptional})</span>
+            {t.auth.phone} <span className="text-red-500">*</span>
           </label>
           <input
-            id="phone" name="phone" type="tel" autoComplete="tel"
+            id="phone" name="phone" type="tel" autoComplete="tel" required
             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             disabled={isPending}
           />

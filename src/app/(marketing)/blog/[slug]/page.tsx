@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Clock, User, Tag } from "lucide-react";
 import { getPostBySlug } from "@/lib/queries/blog";
 import { incrementViewCountAction } from "@/lib/actions/blog";
-import { getT } from "@/lib/helpers/lang";
+import { getT, getLocale } from "@/lib/helpers/lang";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
-  const [post, t] = await Promise.all([getPostBySlug(slug), getT()]);
+  const [post, t, locale] = await Promise.all([getPostBySlug(slug), getT(), getLocale()]);
 
   if (!post) notFound();
 
@@ -58,7 +58,7 @@ export default async function BlogPostPage({ params }: Props) {
           <div className="flex items-center gap-1.5">
             <span>{t.blog.publishedOn}</span>
             <time dateTime={post.publishedAt.toISOString()} className="font-medium text-gray-700 dark:text-gray-300">
-              {new Date(post.publishedAt).toLocaleDateString("en-PH", {
+              {new Date(post.publishedAt).toLocaleDateString(locale, {
                 year: "numeric",
                 month: "long",
                 day: "numeric",

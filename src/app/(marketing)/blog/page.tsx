@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { FileText } from "lucide-react";
 import { getPublishedPosts } from "@/lib/queries/blog";
-import { getT } from "@/lib/helpers/lang";
+import { getT, getLocale } from "@/lib/helpers/lang";
 
 export const metadata: Metadata = {
   title: "Blog | Cool Air Services",
@@ -15,9 +15,11 @@ type SP = { page?: string };
 export default async function BlogPage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
   const page = sp.page ? Number(sp.page) : 1;
-  const t = await getT();
-
-  const { rows, pages } = await getPublishedPosts({ page });
+  const [t, locale, { rows, pages }] = await Promise.all([
+    getT(),
+    getLocale(),
+    getPublishedPosts({ page }),
+  ]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16">
@@ -66,7 +68,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                   <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mb-3">
                     {post.publishedAt && (
                       <time dateTime={post.publishedAt.toISOString()}>
-                        {new Date(post.publishedAt).toLocaleDateString("en-PH", {
+                        {new Date(post.publishedAt).toLocaleDateString(locale, {
                           year: "numeric",
                           month: "short",
                           day: "numeric",

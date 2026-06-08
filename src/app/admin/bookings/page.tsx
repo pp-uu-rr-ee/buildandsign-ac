@@ -18,9 +18,9 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Bookings <span className="text-gray-400 font-normal text-lg">({total})</span>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+          Bookings <span className="text-gray-400 font-normal text-base sm:text-lg">({total})</span>
         </h1>
       </div>
 
@@ -42,8 +42,8 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
         })}
       </div>
 
-      <div className="rounded-xl border border-gray-200 overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="rounded-xl border border-gray-200 overflow-x-auto">
+        <table className="w-full text-sm min-w-[760px]">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               {["Booking #","Service","Scheduled","Customer","Technician","Status",""].map((h) => (
@@ -59,9 +59,9 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
                 <td className="px-4 py-3 font-mono text-xs text-gray-900">{b.bookingNumber}</td>
                 <td className="px-4 py-3 capitalize text-gray-700">{b.serviceType}</td>
                 <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">
-                  {new Date(b.scheduledAt).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })}
+                  {new Date(b.scheduledAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   <br />
-                  {new Date(b.scheduledAt).toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}
+                  {new Date(b.scheduledAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
                 </td>
                 <td className="px-4 py-3 text-gray-700">
                   {(b.serviceAddress as any)?.fullName}

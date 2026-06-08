@@ -44,6 +44,12 @@ export async function getCustomerBookings(userId: string) {
       scheduledAt: bookings.scheduledAt,
       quotedPriceInSatang: bookings.quotedPriceInSatang,
       finalPriceInSatang: bookings.finalPriceInSatang,
+      depositInSatang: bookings.depositInSatang,
+      depositPaymentStatus: bookings.depositPaymentStatus,
+      balanceInSatang: bookings.balanceInSatang,
+      balancePaymentStatus: bookings.balancePaymentStatus,
+      quoteConfirmedAt: bookings.quoteConfirmedAt,
+      quoteAcceptedAt: bookings.quoteAcceptedAt,
       serviceAddress: bookings.serviceAddress,
       createdAt: bookings.createdAt,
     })

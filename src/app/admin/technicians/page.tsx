@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { Plus } from "lucide-react";
 import { getAdminTechnicians } from "@/lib/queries/admin";
 
 export const metadata = { title: "Technicians | Admin" };
@@ -13,10 +15,17 @@ export default async function AdminTechniciansPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Technicians <span className="text-gray-400 font-normal text-lg">({technicians.length})</span>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+          Technicians <span className="text-gray-400 font-normal text-base sm:text-lg">({technicians.length})</span>
         </h1>
+        <Link
+          href="/admin/technicians/new"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors shrink-0"
+        >
+          <Plus className="h-4 w-4" />
+          Add Technician
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -67,7 +76,7 @@ export default async function AdminTechniciansPage() {
 
               {/* Joined */}
               <p className="text-xs text-gray-400">
-                Joined {new Date(t.createdAt).toLocaleDateString("en-PH", { month: "short", year: "numeric" })}
+                Joined {new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
               </p>
             </div>
           );

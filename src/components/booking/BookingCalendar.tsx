@@ -14,7 +14,8 @@ function formatDate(d: Date): string {
 }
 
 export function BookingCalendar({ selectedDate, onSelect }: Props) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const locale = lang === "th" ? "th-TH" : "en-US";
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -47,7 +48,7 @@ export function BookingCalendar({ selectedDate, onSelect }: Props) {
           <ChevronLeft className="h-5 w-5" />
         </button>
         <p className="font-semibold text-gray-900 dark:text-gray-100">
-          {viewDate.toLocaleString("en-PH", { month: "long", year: "numeric" })}
+          {viewDate.toLocaleString(locale, { month: "long", year: "numeric" })}
         </p>
         <button
           onClick={() => setViewDate(new Date(year, month + 1, 1))}

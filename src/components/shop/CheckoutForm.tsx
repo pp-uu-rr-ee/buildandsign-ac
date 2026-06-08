@@ -12,7 +12,7 @@ import { useLanguage } from "@/components/providers/LanguageProvider";
 
 declare global {
   interface Window {
-    Omise: {
+    Omise?: {
       setPublicKey: (key: string) => void;
       createToken: (
         type: "card",

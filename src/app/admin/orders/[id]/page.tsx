@@ -17,15 +17,15 @@ export default async function AdminOrderDetailPage({ params }: Props) {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="flex items-center gap-3">
-        <Link href="/admin/orders" className="p-1.5 rounded-md hover:bg-gray-100 transition-colors">
+      <div className="flex items-center gap-3 flex-wrap">
+        <Link href="/admin/orders" className="p-1.5 rounded-md hover:bg-gray-100 transition-colors shrink-0">
           <ChevronLeft className="h-5 w-5 text-gray-500" />
         </Link>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 font-mono">{order.orderNumber}</h1>
-          <p className="text-xs text-gray-400">{new Date(order.createdAt).toLocaleString("en-PH")}</p>
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-xl font-bold text-gray-900 font-mono break-all">{order.orderNumber}</h1>
+          <p className="text-xs text-gray-400">{new Date(order.createdAt).toLocaleString("en-US")}</p>
         </div>
-        <div className="flex gap-2 ml-auto">
+        <div className="flex gap-2 ml-auto flex-wrap">
           <StatusBadge status={order.paymentStatus} />
           <StatusBadge status={order.status} />
         </div>
@@ -38,7 +38,8 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             <div className="px-5 py-3 bg-gray-50 border-b border-gray-200">
               <h2 className="font-semibold text-gray-900 text-sm">Items</h2>
             </div>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[480px]">
               <tbody className="divide-y divide-gray-100">
                 {order.items.map((item) => (
                   <tr key={item.id}>
@@ -70,6 +71,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                 </tr>
               </tfoot>
             </table>
+            </div>
           </div>
 
           {/* Update status */}

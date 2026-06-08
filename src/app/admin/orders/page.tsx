@@ -18,8 +18,8 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Orders <span className="text-gray-400 font-normal text-lg">({total})</span></h1>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Orders <span className="text-gray-400 font-normal text-base sm:text-lg">({total})</span></h1>
       </div>
 
       {/* Status filter tabs */}
@@ -42,8 +42,8 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-gray-200 overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="rounded-xl border border-gray-200 overflow-x-auto">
+        <table className="w-full text-sm min-w-[720px]">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               {["Order #", "Customer", "Date", "Total", "Payment", "Status", ""].map((h) => (
@@ -64,7 +64,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
                   <p className="text-xs text-gray-400">{(o.shippingAddress as any)?.city}</p>
                 </td>
                 <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
-                  {new Date(o.createdAt).toLocaleDateString("en-PH")}
+                  {new Date(o.createdAt).toLocaleDateString("en-US")}
                 </td>
                 <td className="px-4 py-3 font-semibold text-gray-900">{formatPrice(o.totalInSatang)}</td>
                 <td className="px-4 py-3">

@@ -55,7 +55,7 @@ export async function registerAction(
     .values({
       name,
       email,
-      phone: phone || null,
+      phone,
       passwordHash,
       role: "customer",
     })
@@ -115,6 +115,7 @@ export async function loginAction(
 
   // Redirect based on role
   if (user.role === "admin") redirect("/admin/dashboard");
+  if (user.role === "technician") redirect("/technician/calendar");
   redirect("/");
 }
 

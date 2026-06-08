@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { getCustomerOrders } from "@/lib/queries/account";
 import { formatPrice } from "@/lib/helpers/price";
+import { getLocale } from "@/lib/helpers/lang";
 import { ShoppingBag, ArrowRight, ChevronRight } from "lucide-react";
 
 export const metadata = { title: "My Orders" };
@@ -21,7 +22,10 @@ export default async function OrdersPage() {
   const session = await getSession();
   if (!session) redirect("/login?callbackUrl=/orders");
 
-  const orders = await getCustomerOrders(session.userId);
+  const [orders, locale] = await Promise.all([
+    getCustomerOrders(session.userId),
+    getLocale(),
+  ]);
 
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12">
@@ -74,7 +78,7 @@ export default async function OrdersPage() {
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {new Date(order.createdAt).toLocaleDateString("en-PH", {
+                    {new Date(order.createdAt).toLocaleDateString(locale, {
                       year: "numeric",
                       month: "long",
                       day: "numeric",

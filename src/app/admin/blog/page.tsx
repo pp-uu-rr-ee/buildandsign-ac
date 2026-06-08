@@ -21,14 +21,14 @@ export default async function AdminBlogPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
           Blog Posts{" "}
-          <span className="text-gray-400 font-normal text-lg">({total})</span>
+          <span className="text-gray-400 font-normal text-base sm:text-lg">({total})</span>
         </h1>
         <Link
           href="/admin/blog/new"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors shrink-0"
         >
           <Plus className="h-4 w-4" />
           New Post
@@ -41,12 +41,12 @@ export default async function AdminBlogPage({ searchParams }: { searchParams: Pr
           name="search"
           defaultValue={sp.search}
           placeholder="Search posts…"
-          className="w-72 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full sm:w-72 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
       </form>
 
-      <div className="rounded-xl border border-gray-200 overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="rounded-xl border border-gray-200 overflow-x-auto">
+        <table className="w-full text-sm min-w-[640px]">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               {["Title", "Status", "Author", "Published", "Actions"].map((h) => (
@@ -81,7 +81,7 @@ export default async function AdminBlogPage({ searchParams }: { searchParams: Pr
                   <td className="px-4 py-3 text-gray-600 text-sm">{post.authorName ?? "—"}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">
                     {post.publishedAt
-                      ? new Date(post.publishedAt).toLocaleDateString("en-PH", {
+                      ? new Date(post.publishedAt).toLocaleDateString("en-US", {
                           year: "numeric",
                           month: "short",
                           day: "numeric",

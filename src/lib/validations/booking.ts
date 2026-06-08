@@ -1,35 +1,46 @@
 import { z } from "zod";
 
+export const acUnitSchema = z.object({
+  brand: z.string().trim().min(1, "Brand is required").max(60),
+  btu: z
+    .number()
+    .int()
+    .min(5000, "BTU too small")
+    .max(120000, "BTU too large"),
+  type: z.enum(["split", "window", "cassette", "ceiling", "portable", "central"]),
+  quantity: z.number().int().min(1, "Quantity must be at least 1").max(20),
+});
+
 export const bookingSchema = z.object({
   serviceType: z.enum(["cleaning", "repair", "installation", "inspection"]),
   technicianId: z.string().uuid("Please select a time slot"),
   scheduledAt: z
     .string()
-    .datetime({ local: true, message: "Invalid date/time" })
+    .min(1, "Please pick a date and time slot")
+    .datetime({ local: true, message: "Invalid date/time format" })
     .refine(
-      (v) => new Date(v) > new Date(),
-      "Booking must be in the future"
+      (v) => new Date(v).getTime() > Date.now() - 5 * 60 * 1000,
+      "This time slot has already passed. Please pick another."
     ),
   durationMinutes: z.number().int().positive(),
 
   // Contact + address
-  fullName: z.string().min(2, "Full name is required"),
+  fullName: z.string().trim().min(2, "Full name is required").max(120),
   phone: z
     .string()
+    .trim()
     .regex(/^[0-9+\s\-()]{7,20}$/, "Invalid phone number"),
-  addressLine1: z.string().min(5, "Address is required"),
-  addressLine2: z.string().optional(),
-  city: z.string().min(2, "City is required"),
-  province: z.string().min(2, "Province is required"),
-  postalCode: z.string().min(4, "Postal code is required"),
+  addressLine1: z.string().trim().min(3, "Address is required").max(200),
+  addressLine2: z.string().trim().max(200).optional(),
+  city: z.string().trim().min(2, "City is required").max(100),
+  province: z.string().trim().min(2, "Province is required").max(100),
+  postalCode: z.string().trim().regex(/^\d{4,6}$/, "Invalid postal code"),
 
-  // AC unit details (optional)
-  acBrand: z.string().optional(),
-  acModel: z.string().optional(),
-  acType: z.string().optional(),
-  acYearInstalled: z.coerce.number().int().min(1990).max(2030).optional().or(z.literal("")),
+  // AC units — at least 1, max 10
+  units: z.array(acUnitSchema).min(1, "Add at least one AC unit").max(10),
 
-  customerNotes: z.string().max(500).optional(),
+  customerNotes: z.string().trim().max(500).optional(),
 });
 
 export type BookingInput = z.infer<typeof bookingSchema>;
+export type AcUnitInput = z.infer<typeof acUnitSchema>;

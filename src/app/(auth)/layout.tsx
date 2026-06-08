@@ -16,7 +16,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             cleaning, right when you need it.&rdquo;
           </p>
           <footer className="text-blue-200 text-sm">
-            Serving Metro Manila &amp; surrounding areas
+            Serving Bangkok &amp; surrounding areas
           </footer>
         </blockquote>
         <p className="text-blue-200 text-sm">{siteConfig.openingHours}</p>

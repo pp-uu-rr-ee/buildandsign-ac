@@ -12,6 +12,7 @@ import {
 import { relations } from "drizzle-orm";
 import { users } from "./users";
 import { technicians } from "./technicians";
+import { paymentStatusEnum } from "./orders";
 
 export const serviceTypeEnum = pgEnum("service_type", [
   "cleaning",       // routine AC cleaning/maintenance
@@ -48,9 +49,32 @@ export const bookings = pgTable("bookings", {
   scheduledAt: timestamp("scheduled_at").notNull(),
   durationMinutes: integer("duration_minutes").notNull().default(60),
 
-  // Pricing in satang (1 THB = 100 satang)
+  // ── Pricing & payments (all in satang, 1 THB = 100 satang) ─────────────
+  // Admin's total quote for the job (set after on-site evaluation for repair).
   quotedPriceInSatang: integer("quoted_price_in_satang"),
+  // What the customer actually paid in total (deposit + balance).
   finalPriceInSatang: integer("final_price_in_satang"),
+
+  // Deposit — charged at booking time.
+  depositInSatang: integer("deposit_in_satang"),
+  depositPaidAt: timestamp("deposit_paid_at"),
+  depositPaymentReference: varchar("deposit_payment_reference", { length: 255 }),
+  depositPaymentStatus: paymentStatusEnum("deposit_payment_status")
+    .notNull()
+    .default("unpaid"),
+
+  // Balance — charged after admin confirms the quote.
+  balanceInSatang: integer("balance_in_satang"),
+  balancePaidAt: timestamp("balance_paid_at"),
+  balancePaymentReference: varchar("balance_payment_reference", { length: 255 }),
+  balancePaymentStatus: paymentStatusEnum("balance_payment_status")
+    .notNull()
+    .default("unpaid"),
+
+  // When admin confirmed the quote (price ready, awaiting customer accept).
+  quoteConfirmedAt: timestamp("quote_confirmed_at"),
+  // When customer accepted the quote — slot becomes locked / confirmed.
+  quoteAcceptedAt: timestamp("quote_accepted_at"),
 
   // Service location — captured at booking time
   serviceAddress: jsonb("service_address")
@@ -65,13 +89,25 @@ export const bookings = pgTable("bookings", {
     }>()
     .notNull(),
 
-  // AC unit details provided by customer
+  // AC unit details provided by customer.
+  //
+  // New shape (multiple units): { units: [...], notes? }
+  // Legacy single-unit objects from older bookings are still readable through
+  // the optional brand/model/yearInstalled/type fields — readers should check
+  // `units` first and fall back.
   acUnitDetails: jsonb("ac_unit_details").$type<{
+    units?: {
+      brand: string;
+      btu: number;
+      type: string; // split, window, cassette, ceiling, portable, central
+      quantity: number;
+    }[];
+    notes?: string;
+    // Legacy fields (kept for backwards compat with older rows)
     brand?: string;
     model?: string;
     yearInstalled?: number;
-    type?: string; // split, window, etc.
-    notes?: string;
+    type?: string;
   }>(),
 
   // Optional: linked to a product purchase (installation of a purchased unit)

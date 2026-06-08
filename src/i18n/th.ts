@@ -84,6 +84,7 @@ const th: Translations = {
     badgeGuarantee: "รับประกัน 90 วัน",
     badgePricing: "ราคาโปร่งใส",
     startingAt: "เริ่มต้นที่",
+    startingFrom: "ราคาเริ่มต้น",
     duration: (min: number) => `~${min} นาที`,
     whatsIncluded: "สิ่งที่รวมในบริการ",
     faqs: "คำถามที่พบบ่อย",
@@ -91,6 +92,31 @@ const th: Translations = {
     notSureTitle: "ไม่แน่ใจว่าต้องการบริการใด?",
     notSureBody:
       "โทรหาเราและอธิบายปัญหา ทีมงานจะแนะนำบริการที่เหมาะสม ไม่มีการขายเกินความจำเป็น",
+
+    // กลุ่มบริการ
+    groupBtuTitle: "คิดราคาตามขนาด BTU",
+    groupBtuSubtitle:
+      "ราคาคงที่โปร่งใส — เลือก BTU ของแอร์แล้วเห็นราคาทันที",
+    groupDiagnosticTitle: "ค่าบริการแบบเหมาต่อรอบ",
+    groupDiagnosticSubtitle:
+      "สำหรับงานซ่อมและตรวจสภาพเชิงป้องกัน — ค่าบริการคงที่ ไม่มีค่าซ่อนเร้น งานซ่อมจะเสนอราคาที่หน้างาน ส่วนงานตรวจสภาพมีรายงาน 25 จุด",
+
+    // ตาราง BTU
+    btuTableHeading: "ราคาตามขนาด BTU",
+    btuRangeCol: "ขนาด BTU",
+    btuPriceCol: "ราคา",
+    btuFootnote: "หลายเครื่อง: +20% สำหรับเครื่องที่ 2 เป็นต้นไปในรอบเดียวกัน",
+
+    // ค่าตรวจ
+    diagnosticFeeLabel: "ค่าตรวจเช็ค",
+    diagnosticFeeNote:
+      "ราคาซ่อมจะแจ้งหลังประเมินหน้างาน หากตกลงทำต่อจะหักค่าตรวจออกจากยอดรวม",
+    commonSymptomsTitle: "อาการที่พบบ่อย",
+    extraFactorsTitle: "ราคาจริงยังขึ้นกับ",
+
+    // ปุ่ม CTA
+    callToBook: "โทรเพื่อจอง",
+    onlineSoon: "การจองออนไลน์เร็วๆ นี้",
   },
 
   booking: {
@@ -146,6 +172,72 @@ const th: Translations = {
     allBooked: "ช่วงเวลาทั้งหมดถูกจองแล้วสำหรับวันนี้ กรุณาเลือกวันอื่น",
     technicianLabel: "ช่างเทคนิค:",
     calendarDays: ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."],
+
+    // หน้า book
+    bookTitle: (title: string) => `จอง${title}`,
+    breadcrumbHome: "หน้าหลัก",
+    breadcrumbServices: "บริการ",
+    finalPriceQuoted: "ราคาจริงแจ้งหลังตรวจสอบหน้างาน",
+    moreIncluded: (n: number) => `+ อีก ${n} รายการ`,
+    guaranteeTitle: "รับประกันงาน 90 วัน",
+    guaranteeBody:
+      "หากปัญหาเดิมเกิดขึ้นภายใน 90 วันหลังให้บริการ เราจะกลับมาแก้ให้ฟรี",
+
+    // ส่วนชำระเงิน/มัดจำในวิซาร์ด
+    depositDueNow: "มัดจำที่ต้องชำระตอนนี้",
+    depositNoteDiagnostic:
+      "ค่าตรวจเช็ค — หักออกจากยอดรวมหากตกลงซ่อมต่อ",
+    depositNoteBooking:
+      "เงินมัดจำการจอง — เรียกเก็บส่วนต่างหลังแอดมินยืนยันราคา",
+    cardholderName: "ชื่อผู้ถือบัตร",
+    cardSecured: "ปลอดภัยด้วย Opn Payments · รองรับ Visa และ Mastercard",
+    payAmount: (amount: string) => `ชำระ ${amount}`,
+    tokenLoading: "ระบบชำระเงินกำลังโหลด กรุณาลองอีกครั้ง",
+    cardIncomplete: "กรุณากรอกข้อมูลบัตรให้ครบถ้วน",
+
+    // หน้ารายละเอียดการจอง
+    backToBookings: "กลับไปยังการจอง",
+    paymentSummary: "สรุปการชำระเงิน",
+    deposit: "มัดจำ",
+    balance: "ยอดคงเหลือ",
+    totalQuote: "ยอดรวมที่ยืนยัน",
+    totalPaid: "ยอดชำระทั้งหมด",
+    paid: "ชำระแล้ว",
+    due: "ค้างชำระ",
+    needHelpCall: "ต้องการความช่วยเหลือ? โทรหาเรา",
+    awaitingQuoteTitle: "กำลังรอแอดมินยืนยันราคาสุดท้าย",
+    awaitingQuoteBody:
+      "หลังจากช่างประเมินหน้างานแล้ว เราจะแจ้งยอดรวมและยอดคงเหลือให้ชำระที่นี่",
+    payBalanceTitle: "ชำระยอดคงเหลือ",
+    payBalanceSubtitle: "ราคาได้รับการยืนยันโดยแอดมินแล้ว · ชำระเพื่อเสร็จสิ้นการจอง",
+    paymentReceived: "รับชำระแล้ว",
+    processing: "กำลังประมวลผล…",
+
+    // ใบเสนอราคา (flow จองฟรี)
+    awaitingQuoteState: "รอใบเสนอราคาจากทีมงาน",
+    awaitingQuoteHint:
+      "ทีมงานจะตรวจสอบและส่งใบเสนอราคามาให้ภายใน 24 ชั่วโมง ยังไม่มีการเก็บค่าใช้จ่าย",
+    quoteReadyTitle: "ใบเสนอราคาพร้อมแล้ว — กดยืนยันเพื่อล็อกคิว",
+    quoteReadySubtitle: "คิวของคุณถูกจองชั่วคราว กดยืนยันราคาเพื่อล็อกคิวจริง",
+    acceptQuote: "ยืนยันราคา",
+    accepting: "กำลังยืนยัน…",
+    quoteAccepted: "ยืนยันราคาเรียบร้อย — คิวของคุณถูกล็อกแล้ว!",
+    slotLocked: "ล็อกคิวแล้ว",
+
+    // ยกเลิกการจอง
+    cancelBooking: "ยกเลิกการจอง",
+    cancelBookingTitle: "ยกเลิกการจองนี้?",
+    cancelBookingBody:
+      "หากยกเลิกก่อนเวลานัด 24 ชั่วโมงขึ้นไป สามารถขอคืนเงินมัดจำได้ ภายใน 24 ชั่วโมงจะไม่สามารถคืนเงินมัดจำ",
+    cancellationReason: "เหตุผลในการยกเลิก",
+    cancellationReasonPlaceholder:
+      "เช่น ต้องการเลื่อนนัด, ได้ช่างแล้ว, ไม่ต้องการบริการแล้ว…",
+    keepBooking: "ไม่ยกเลิก",
+    confirmCancel: "ยืนยันการยกเลิก",
+    cancelling: "กำลังยกเลิก…",
+    cancelledMessage: "ยกเลิกการจองเรียบร้อย",
+    cancelledRefundable: "เงินมัดจำของคุณจะคืนภายใน 5–7 วันทำการ",
+    cancelledForfeit: "เงินมัดจำไม่สามารถคืนได้ (ภายในช่วง 24 ชั่วโมง)",
   },
 
   cart: {
@@ -345,6 +437,109 @@ const th: Translations = {
     backToBlog: "← กลับไปยังบทความ",
     tags: "แท็ก",
     publishedOn: "เผยแพร่เมื่อ",
+  },
+
+  admin: {
+    // เมนู
+    panel: "หลังบ้าน",
+    dashboard: "แดชบอร์ด",
+    products: "สินค้า",
+    orders: "คำสั่งซื้อ",
+    bookings: "การจอง",
+    calendar: "ปฏิทิน",
+    technicians: "ช่างเทคนิค",
+    customers: "ลูกค้า",
+    blog: "บทความ",
+    settings: "ตั้งค่า",
+    viewSite: "← ดูเว็บไซต์",
+
+    // ทั่วไป
+    new: "เพิ่มใหม่",
+    add: "+ เพิ่ม",
+    edit: "แก้ไข",
+    save: "บันทึก",
+    saving: "กำลังบันทึก…",
+    delete: "ลบ",
+    cancel: "ยกเลิก",
+    view: "ดู",
+    search: "ค้นหา",
+    actions: "การจัดการ",
+    status: "สถานะ",
+    date: "วันที่",
+    total: "ยอดรวม",
+    customer: "ลูกค้า",
+    service: "บริการ",
+    notFound: "ไม่พบข้อมูล",
+
+    // แดชบอร์ด
+    dashStatsOrders: "คำสั่งซื้อทั้งหมด",
+    dashStatsOrdersSub: (n: number) => `รอดำเนินการ ${n}`,
+    dashStatsRevenue: "รายได้ (ชำระแล้ว)",
+    dashStatsBookings: "การจอง",
+    dashStatsBookingsSub: (n: number) => `ยังไม่ยืนยัน ${n}`,
+    dashStatsCustomers: "ลูกค้า",
+    dashRecentOrders: "คำสั่งซื้อล่าสุด",
+    dashUpcomingBookings: "การจองที่จะเข้ามา",
+    dashViewAll: "ดูทั้งหมด",
+    dashNoOrders: "ยังไม่มีคำสั่งซื้อ",
+    dashNoBookings: "ยังไม่มีการจองที่ยืนยัน",
+    dashLowStock: (n: number) => `สินค้า ${n} รายการต่ำกว่าเกณฑ์สต็อก`,
+    dashViewProducts: "ดูสินค้า →",
+    technician: "ช่างเทคนิค",
+    unassigned: "ยังไม่ได้มอบหมาย",
+    payment: "การชำระเงิน",
+    featured: "แนะนำ",
+    yes: "ใช่",
+    no: "ไม่",
+    lowStockBadge: "ใกล้หมด",
+    addProduct: "+ เพิ่มสินค้า",
+    newPost: "เขียนบทความ",
+    addTechnician: "เพิ่มช่าง",
+    bookingNumber: "เลขที่การจอง",
+    orderNumber: "เลขที่คำสั่งซื้อ",
+    scheduled: "นัดหมาย",
+    statusAll: "ทั้งหมด",
+  },
+
+  confirmation: {
+    // Shared
+    backHome: "กลับสู่หน้าหลัก",
+    nextStepsTitle: "ขั้นตอนถัดไป",
+
+    // Order
+    orderPlaced: "สั่งซื้อสำเร็จ!",
+    orderReceivedPrefix: "คำสั่งซื้อของคุณ",
+    orderReceivedSuffix: "ได้รับเรียบร้อยแล้ว เราจะติดต่อกลับเพื่อยืนยันในไม่ช้า",
+    orderTotal: "ยอดรวม",
+    items: "สินค้า",
+    shipping: "ค่าจัดส่ง",
+    freeShipping: "จัดส่งฟรี",
+    shipTo: "จัดส่งไปที่",
+    payment: "การชำระเงิน",
+    paymentCod: "เก็บเงินปลายทาง",
+    paymentCard: "บัตรเครดิต / เดบิต (Opn Payments)",
+    continueShopping: "เลือกซื้อสินค้าต่อ",
+    bookInstallation: "จองบริการติดตั้ง",
+    orderStep1: "เราจะโทรหรือส่งข้อความหาคุณภายใน 2 ชั่วโมงเพื่อยืนยันคำสั่งซื้อ",
+    orderStep2: "ทีมงานของเราจะแพ็คและจัดส่งภายใน 1–2 วันทำการ",
+    orderStep3: "คุณจะได้รับหมายเลขติดตามเมื่อสินค้าถูกจัดส่ง",
+    orderStep4: "ช่างของเราสามารถติดตั้งให้คุณได้ — จองที่หน้าบริการ",
+
+    // Booking
+    bookingConfirmed: "ยืนยันการจองสำเร็จ!",
+    bookingReferencePrefix: "หมายเลขการจองของคุณคือ",
+    bookingReferenceSuffix: " เราจะโทรเพื่อยืนยันการนัดหมาย",
+    service: "บริการ",
+    date: "วันที่",
+    time: "เวลา",
+    technician: "ช่างผู้ให้บริการ",
+    address: "ที่อยู่",
+    viewMyBookings: "ดูการจองของฉัน",
+    callUs: "โทรหาเรา",
+    bookingStep1: "เราจะโทรหาคุณภายใน 2 ชั่วโมงเพื่อยืนยันการนัดหมาย",
+    bookingStep2: "คุณจะได้รับ SMS แจ้งเตือนล่วงหน้า 24 ชั่วโมงก่อนเข้ารับบริการ",
+    bookingStep3: "ช่างจะมาถึงในช่วงเวลาที่นัดหมาย",
+    bookingStep4: "หลังรับบริการ คุณสามารถรีวิวเพื่อช่วยผู้อื่นได้",
   },
 
   about: {

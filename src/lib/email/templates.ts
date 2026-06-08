@@ -3,11 +3,13 @@ import { siteConfig } from "@/config/site";
 
 const brand = {
   primary: "#2563eb",
-  bg: "#f8fafc",
+  primaryDark: "#1e3a8a",
+  accent: "#0ea5e9",
+  bg: "#f1f5f9",
   card: "#ffffff",
-  text: "#111827",
-  muted: "#6b7280",
-  border: "#e5e7eb",
+  text: "#0f172a",
+  muted: "#64748b",
+  border: "#e2e8f0",
   success: "#16a34a",
 };
 
@@ -17,38 +19,78 @@ function base(title: string, body: string): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="x-apple-disable-message-reformatting" />
   <title>${title}</title>
 </head>
-<body style="margin:0;padding:0;background:${brand.bg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:${brand.bg};padding:40px 0;">
+<body style="margin:0;padding:0;background:${brand.bg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+  <!-- Preheader (hidden) -->
+  <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:${brand.bg};">${title}</div>
+
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:${brand.bg};padding:32px 16px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+        <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="max-width:600px;width:100%;">
 
-          <!-- Header -->
+          <!-- Header — gradient brand bar with logo -->
           <tr>
-            <td style="background:${brand.primary};border-radius:12px 12px 0 0;padding:28px 32px;">
-              <p style="margin:0;font-size:20px;font-weight:700;color:#ffffff;">
-                ❄ ${siteConfig.name}
-              </p>
-              <p style="margin:4px 0 0;font-size:13px;color:rgba(255,255,255,0.75);">
-                ${siteConfig.tagline}
-              </p>
+            <td style="background:linear-gradient(135deg,${brand.primaryDark} 0%,${brand.primary} 60%,${brand.accent} 100%);border-radius:14px 14px 0 0;padding:30px 32px;">
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  <td>
+                    <table cellpadding="0" cellspacing="0" role="presentation">
+                      <tr>
+                        <td style="vertical-align:middle;padding-right:12px;">
+                          <!-- Inline SVG-ish snowflake using text — supported widely -->
+                          <div style="display:inline-block;width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.18);text-align:center;line-height:36px;font-size:18px;">❄</div>
+                        </td>
+                        <td style="vertical-align:middle;">
+                          <p style="margin:0;font-size:20px;font-weight:700;color:#ffffff;line-height:1.2;">${siteConfig.name}</p>
+                          <p style="margin:2px 0 0;font-size:12px;color:rgba(255,255,255,0.85);line-height:1.3;">${siteConfig.tagline}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
           <!-- Body -->
           <tr>
-            <td style="background:${brand.card};border-radius:0 0 12px 12px;padding:32px;border:1px solid ${brand.border};border-top:none;">
+            <td style="background:${brand.card};padding:36px 32px;border-left:1px solid ${brand.border};border-right:1px solid ${brand.border};">
               ${body}
+            </td>
+          </tr>
 
-              <!-- Footer -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:32px;padding-top:24px;border-top:1px solid ${brand.border};">
+          <!-- Footer card -->
+          <tr>
+            <td style="background:${brand.card};border-radius:0 0 14px 14px;padding:24px 32px 28px;border:1px solid ${brand.border};border-top:1px solid ${brand.border};">
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
                 <tr>
-                  <td style="font-size:12px;color:${brand.muted};text-align:center;">
-                    <p style="margin:0 0 4px;">${siteConfig.name} · ${siteConfig.address.streetAddress}, ${siteConfig.address.addressLocality}</p>
-                    <p style="margin:0 0 4px;">${siteConfig.phone} · ${siteConfig.email}</p>
-                    <p style="margin:0;">Mon–Sat, 8 AM–6 PM</p>
+                  <td style="text-align:center;padding-bottom:12px;border-bottom:1px solid ${brand.border};">
+                    <a href="${siteConfig.url}" style="font-size:13px;color:${brand.primary};text-decoration:none;font-weight:600;">${siteConfig.url.replace(/^https?:\/\//, "")}</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-top:16px;font-size:12px;color:${brand.muted};text-align:center;line-height:1.7;">
+                    <strong style="color:${brand.text};">${siteConfig.name}</strong><br />
+                    ${siteConfig.address.streetAddress}, ${siteConfig.address.addressLocality} ${siteConfig.address.postalCode}<br />
+                    <a href="tel:${siteConfig.phone}" style="color:${brand.muted};text-decoration:none;">${siteConfig.phone}</a> ·
+                    <a href="mailto:${siteConfig.email}" style="color:${brand.muted};text-decoration:none;">${siteConfig.email}</a><br />
+                    Mon–Sat, 8 AM – 6 PM
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-top:12px;text-align:center;">
+                    <a href="${siteConfig.social.facebook}" style="display:inline-block;margin:0 6px;font-size:11px;color:${brand.muted};text-decoration:none;">Facebook</a>
+                    <span style="color:${brand.border};">·</span>
+                    <a href="${siteConfig.social.line}" style="display:inline-block;margin:0 6px;font-size:11px;color:${brand.muted};text-decoration:none;">Line</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-top:14px;font-size:10px;color:${brand.muted};text-align:center;line-height:1.5;">
+                    © ${new Date().getFullYear()} ${siteConfig.name}. All rights reserved.<br />
+                    You received this email because of activity on your account.
                   </td>
                 </tr>
               </table>
@@ -101,10 +143,10 @@ type BookingEmailData = {
 };
 
 export function bookingConfirmationHtml(d: BookingEmailData): string {
-  const date = d.scheduledAt.toLocaleDateString("en-PH", {
+  const date = d.scheduledAt.toLocaleDateString("en-US", {
     weekday: "long", year: "numeric", month: "long", day: "numeric",
   });
-  const time = d.scheduledAt.toLocaleTimeString("en-PH", {
+  const time = d.scheduledAt.toLocaleTimeString("en-US", {
     hour: "2-digit", minute: "2-digit", hour12: true,
   });
   const addressLines = [
@@ -278,6 +320,53 @@ export function orderReceiptHtml(d: OrderEmailData): string {
   `;
 
   return base(`Order Confirmed — ${d.orderNumber}`, body);
+}
+
+// ── Booking Quote Ready ───────────────────────────────────────────────────────
+export function bookingQuoteReadyHtml(d: {
+  bookingNumber: string;
+  customerName: string;
+  serviceTitle: string;
+  depositInSatang: number;
+  quotedTotalInSatang: number;
+  balanceInSatang: number;
+  payBalanceUrl: string;
+}): string {
+  const body = `
+    <h2 style="margin:0 0 8px;font-size:22px;font-weight:700;color:${brand.text};">Your quote is ready</h2>
+    <p style="margin:0 0 24px;font-size:15px;color:${brand.muted};">Hi ${d.customerName},</p>
+    <p style="margin:0 0 24px;font-size:14px;color:${brand.text};line-height:1.6;">
+      Our technician has evaluated your <strong>${d.serviceTitle}</strong> booking
+      <strong style="font-family:monospace;">${d.bookingNumber}</strong> and the final price is now ready.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${brand.border};border-radius:8px;margin-bottom:24px;">
+      <tr>
+        <td style="padding:12px 16px;font-size:14px;color:${brand.muted};">Total quote</td>
+        <td style="padding:12px 16px;font-size:14px;color:${brand.text};font-weight:600;text-align:right;">${formatPrice(d.quotedTotalInSatang)}</td>
+      </tr>
+      <tr style="background:#fafafa;">
+        <td style="padding:12px 16px;font-size:14px;color:${brand.muted};border-top:1px solid ${brand.border};">Deposit paid</td>
+        <td style="padding:12px 16px;font-size:14px;color:${brand.text};font-weight:500;text-align:right;border-top:1px solid ${brand.border};">− ${formatPrice(d.depositInSatang)}</td>
+      </tr>
+      <tr>
+        <td style="padding:14px 16px;font-size:15px;color:${brand.text};font-weight:700;border-top:2px solid ${brand.border};">Balance due</td>
+        <td style="padding:14px 16px;font-size:18px;color:${brand.primary};font-weight:700;text-align:right;border-top:2px solid ${brand.border};">${formatPrice(d.balanceInSatang)}</td>
+      </tr>
+    </table>
+
+    <div style="text-align:center;margin:32px 0;">
+      <a href="${d.payBalanceUrl}" style="display:inline-block;background:${brand.primary};color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 36px;border-radius:8px;">
+        Pay Balance ${formatPrice(d.balanceInSatang)}
+      </a>
+    </div>
+
+    <p style="margin:0;font-size:13px;color:${brand.muted};text-align:center;line-height:1.6;">
+      You can pay using a new or saved card.<br />
+      Questions? Reply to this email or call us.
+    </p>
+  `;
+  return base(`Quote ready — ${d.bookingNumber}`, body);
 }
 
 // ── Password Reset ────────────────────────────────────────────────────────────

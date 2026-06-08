@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import bcrypt from "bcryptjs";
 import { db } from "@/db";
-import { orders, bookings, products } from "@/db/schema";
+import { orders, bookings, products, users, technicians } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { getSession } from "@/lib/session";
 
 // ── Order status ─────────────────────────────────────────────────────────────
 export async function updateOrderStatusAction(orderId: string, status: string) {
@@ -146,4 +148,119 @@ export async function toggleProductStatusAction(id: string, currentStatus: strin
   const next = currentStatus === "active" ? "archived" : "active";
   await db.update(products).set({ status: next as any, updatedAt: new Date() }).where(eq(products.id, id));
   revalidatePath("/admin/products");
+}
+
+// ── Technicians ──────────────────────────────────────────────────────────────
+
+export type TechnicianActionResult =
+  | { success: true; technicianId: string }
+  | { success: false; error: string; fieldErrors?: Record<string, string[]> };
+
+const technicianSchema = z.object({
+  name: z.string().min(2, "Name is required").max(120),
+  email: z.string().email("Valid email required").max(254),
+  phone: z
+    .string()
+    .regex(/^[0-9+\s\-()]{7,20}$/, "Invalid phone number")
+    .max(20),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(72),
+  bio: z.string().max(500).optional(),
+  status: z.enum(["active", "inactive", "on_leave"]),
+  specializations: z
+    .array(z.enum(["cleaning", "repair", "installation", "inspection"]))
+    .min(1, "Choose at least one specialization"),
+});
+
+const DEFAULT_WEEKLY_SCHEDULE = {
+  "0": null, // Sunday off
+  "1": { startTime: "08:00", endTime: "18:00", slotDurationMinutes: 60 },
+  "2": { startTime: "08:00", endTime: "18:00", slotDurationMinutes: 60 },
+  "3": { startTime: "08:00", endTime: "18:00", slotDurationMinutes: 60 },
+  "4": { startTime: "08:00", endTime: "18:00", slotDurationMinutes: 60 },
+  "5": { startTime: "08:00", endTime: "18:00", slotDurationMinutes: 60 },
+  "6": { startTime: "08:00", endTime: "14:00", slotDurationMinutes: 60 },
+};
+
+export async function createTechnicianAction(
+  _prev: TechnicianActionResult,
+  formData: FormData
+): Promise<TechnicianActionResult> {
+  // Admin guard — middleware already protects /admin routes but defense-in-depth.
+  const session = await getSession();
+  if (!session || session.role !== "admin") {
+    return { success: false, error: "Unauthorized." };
+  }
+
+  const raw = {
+    name: formData.get("name"),
+    email: formData.get("email"),
+    phone: formData.get("phone"),
+    password: formData.get("password"),
+    bio: formData.get("bio") || undefined,
+    status: formData.get("status") ?? "active",
+    specializations: formData.getAll("specializations"),
+  };
+
+  const parsed = technicianSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: "Please fix the errors below.",
+      fieldErrors: parsed.error.flatten()
+        .fieldErrors as Record<string, string[]>,
+    };
+  }
+  const data = parsed.data;
+
+  // Pre-check duplicate email (gives a friendlier error than the unique constraint)
+  const [existing] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, data.email.toLowerCase()))
+    .limit(1);
+  if (existing) {
+    return {
+      success: false,
+      error: "Email already in use.",
+      fieldErrors: { email: ["Email already in use."] },
+    };
+  }
+
+  try {
+    const technicianId = await db.transaction(async (tx) => {
+      const [user] = await tx
+        .insert(users)
+        .values({
+          name: data.name,
+          email: data.email.toLowerCase(),
+          passwordHash: await bcrypt.hash(data.password, 12),
+          role: "technician",
+          phone: data.phone,
+          emailVerified: true,
+        })
+        .returning({ id: users.id });
+
+      const [tech] = await tx
+        .insert(technicians)
+        .values({
+          userId: user.id,
+          status: data.status,
+          bio: data.bio,
+          specializations: data.specializations,
+          weeklySchedule: DEFAULT_WEEKLY_SCHEDULE,
+        })
+        .returning({ id: technicians.id });
+
+      return tech.id;
+    });
+
+    revalidatePath("/admin/technicians");
+    return { success: true, technicianId };
+  } catch (err) {
+    console.error("[admin] createTechnicianAction failed:", err);
+    return { success: false, error: "Failed to create technician." };
+  }
 }
