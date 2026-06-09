@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { randomUUID } from "node:crypto";
 import { db } from "@/db";
-import { orders, orderItems, products } from "@/db/schema";
+import { orders, orderItems, products, users } from "@/db/schema";
 import { eq, sql, and } from "drizzle-orm";
 import { getSession } from "@/lib/session";
 import { checkoutSchema, cartItemsSchema } from "@/lib/validations/checkout";
@@ -31,6 +31,9 @@ export async function createOrderAction(
   formData: FormData
 ): Promise<OrderActionResult> {
   const session = await getSession();
+  if (!session) {
+    return { success: false, error: "Please log in to place an order." };
+  }
 
   // ── 1. Validate cart shape ────────────────────────────────────────────────
   const cartRaw = formData.get("cartItems");
@@ -59,11 +62,8 @@ export async function createOrderAction(
     return { success: false, error: "Duplicate items in cart." };
   }
 
-  // ── 2. Validate contact / address ─────────────────────────────────────────
+  // ── 2. Validate address (contact comes from account) ─────────────────────
   const raw = {
-    fullName: formData.get("fullName"),
-    email: formData.get("email"),
-    phone: formData.get("phone"),
     addressLine1: formData.get("addressLine1"),
     addressLine2: formData.get("addressLine2") || undefined,
     city: formData.get("city"),
@@ -81,7 +81,32 @@ export async function createOrderAction(
         .fieldErrors as Record<string, string[]>,
     };
   }
-  const data = parsed.data;
+  const address = parsed.data;
+
+  // Contact info is the account info — fetched fresh from DB so the client
+  // can't override it via a hidden field.
+  const [account] = await db
+    .select({ name: users.name, email: users.email, phone: users.phone })
+    .from(users)
+    .where(eq(users.id, session.userId))
+    .limit(1);
+
+  if (!account) {
+    return { success: false, error: "Account not found." };
+  }
+  if (!account.phone) {
+    return {
+      success: false,
+      error: "Please add a phone number to your account before placing an order.",
+    };
+  }
+
+  const data = {
+    ...address,
+    fullName: account.name,
+    email: account.email,
+    phone: account.phone,
+  };
 
   // ── 3. Re-price from DB (don't trust client prices) + create inquiry ─────
   const SHIPPING_THRESHOLD = 500000;

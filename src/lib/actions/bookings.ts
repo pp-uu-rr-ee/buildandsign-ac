@@ -45,8 +45,6 @@ export async function createBookingAction(
     technicianId: formData.get("technicianId"),
     scheduledAt: formData.get("scheduledAt"),
     durationMinutes: Number(formData.get("durationMinutes")),
-    fullName: formData.get("fullName"),
-    phone: formData.get("phone"),
     addressLine1: formData.get("addressLine1"),
     addressLine2: formData.get("addressLine2") || undefined,
     city: formData.get("city"),
@@ -65,7 +63,30 @@ export async function createBookingAction(
         .fieldErrors as Record<string, string[]>,
     };
   }
-  const data = parsed.data;
+  const address = parsed.data;
+
+  // Contact info comes from the customer's account row.
+  const [account] = await db
+    .select({ name: users.name, email: users.email, phone: users.phone })
+    .from(users)
+    .where(eq(users.id, session.userId))
+    .limit(1);
+
+  if (!account) {
+    return { success: false, error: "Account not found." };
+  }
+  if (!account.phone) {
+    return {
+      success: false,
+      error: "Please add a phone number to your account before booking.",
+    };
+  }
+
+  const data = {
+    ...address,
+    fullName: account.name,
+    phone: account.phone,
+  };
 
   let booking: { id: string; bookingNumber: string };
   try {
@@ -111,11 +132,16 @@ export async function createBookingAction(
   redirect(`/bookings/${booking.id}/confirmation`);
 }
 
+type ConfirmationData = ReturnType<typeof bookingSchema.parse> & {
+  fullName: string;
+  phone: string;
+};
+
 async function maybeSendConfirmation(
   bookingId: string,
   bookingNumber: string,
   userId: string,
-  data: ReturnType<typeof bookingSchema.parse>
+  data: ConfirmationData
 ) {
   try {
     const [user] = await db

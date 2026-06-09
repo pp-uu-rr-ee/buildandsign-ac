@@ -24,12 +24,8 @@ export const bookingSchema = z.object({
     ),
   durationMinutes: z.number().int().positive(),
 
-  // Contact + address
-  fullName: z.string().trim().min(2, "Full name is required").max(120),
-  phone: z
-    .string()
-    .trim()
-    .regex(/^[0-9+\s\-()]{7,20}$/, "Invalid phone number"),
+  // Contact (name/phone) comes from the logged-in user's account row.
+  // Address is captured per-booking.
   addressLine1: z.string().trim().min(3, "Address is required").max(200),
   addressLine2: z.string().trim().max(200).optional(),
   city: z.string().trim().min(2, "City is required").max(100),

@@ -268,6 +268,82 @@ export async function getAdminProducts({
   return { rows, total, pages: Math.ceil(total / limit), page };
 }
 
+// ── Customers admin ──────────────────────────────────────────────────────────
+export async function getCustomers({
+  page = 1,
+  limit = 15,
+  search,
+  verified,
+}: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  /** "yes" / "no" — undefined means "no filter" */
+  verified?: string;
+}) {
+  const conditions = [eq(users.role, "customer")];
+
+  const q = search?.trim();
+  if (q) {
+    const like = `%${q}%`;
+    conditions.push(
+      or(
+        ilike(users.name, like),
+        ilike(users.email, like),
+        ilike(users.phone, like)
+      )!
+    );
+  }
+
+  if (verified === "yes") {
+    conditions.push(eq(users.emailVerified, true));
+  } else if (verified === "no") {
+    conditions.push(eq(users.emailVerified, false));
+  }
+
+  const where = and(...conditions);
+  const offset = (page - 1) * limit;
+
+  // Aggregate columns via correlated subqueries against the outer `users` row.
+  // We write the inner SQL as plain text (not Drizzle ${table} interpolation)
+  // so that "orders.user_id = users.id" definitely refers to the outer users
+  // row from the FROM clause — interpolating ${users.id} via Drizzle inside a
+  // nested SELECT produced a 0/NULL result in practice.
+  // totalSpentInSatang only counts orders past pending.
+  const [rows, [{ total }]] = await Promise.all([
+    db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        phone: users.phone,
+        emailVerified: users.emailVerified,
+        createdAt: users.createdAt,
+        orderCount: sql<number>`(
+          SELECT count(*)::int FROM orders WHERE orders.user_id = users.id
+        )`,
+        bookingCount: sql<number>`(
+          SELECT count(*)::int FROM bookings WHERE bookings.user_id = users.id
+        )`,
+        totalSpentInSatang: sql<number>`(
+          SELECT coalesce(sum(total_in_satang), 0)::int
+          FROM orders
+          WHERE orders.user_id = users.id
+            AND orders.status IN ('confirmed','processing','shipped','delivered')
+        )`,
+      })
+      .from(users)
+      .where(where)
+      .orderBy(desc(users.createdAt))
+      .limit(limit)
+      .offset(offset),
+
+    db.select({ total: count() }).from(users).where(where),
+  ]);
+
+  return { rows, total, pages: Math.ceil(total / limit), page };
+}
+
 // ── Technicians admin ────────────────────────────────────────────────────────
 export async function getAdminTechnicians() {
   return db

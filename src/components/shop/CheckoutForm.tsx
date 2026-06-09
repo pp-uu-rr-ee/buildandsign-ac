@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, startTransition } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ShoppingCart, MessageCircle, ExternalLink, Phone } from "lucide-react";
+import { ShoppingCart, MessageCircle, ExternalLink, Phone, User, Mail, Pencil } from "lucide-react";
 import { useCart, cartTotal } from "@/lib/store/cart";
 import { createOrderAction } from "@/lib/actions/orders";
 import type { OrderActionResult } from "@/lib/actions/orders";
@@ -15,7 +15,13 @@ const SHIPPING_FLAT = 49900;
 
 const initialState: OrderActionResult = { success: true, orderId: "" };
 
-export function CheckoutForm() {
+type Props = {
+  accountName: string;
+  accountEmail: string;
+  accountPhone: string | null;
+};
+
+export function CheckoutForm({ accountName, accountEmail, accountPhone }: Props) {
   const { t, lang } = useLanguage();
   const { items, clearCart } = useCart();
   const subtotal = cartTotal(items);
@@ -83,14 +89,48 @@ export function CheckoutForm() {
             <p className="text-xs leading-relaxed">{inquiryNote}</p>
           </div>
 
-          {/* Contact */}
-          <section className="space-y-4">
-            <h2 className="font-semibold text-gray-900 dark:text-white">{t.checkout.contactInfo}</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label={t.checkout.fullName} name="fullName" required error={fieldErrors?.fullName?.[0]} />
-              <Field label={t.checkout.phone} name="phone" type="tel" required error={fieldErrors?.phone?.[0]} />
+          {/* Contact — pulled from the account, read-only */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <h2 className="font-semibold text-gray-900 dark:text-white">
+                {t.checkout.contactInfo}
+              </h2>
+              <Link
+                href="/account"
+                className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+              >
+                <Pencil className="h-3 w-3" />
+                {lang === "th" ? "แก้ไขข้อมูลบัญชี" : "Edit account"}
+              </Link>
             </div>
-            <Field label={t.checkout.email} name="email" type="email" required error={fieldErrors?.email?.[0]} />
+            <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40 divide-y divide-gray-200 dark:divide-gray-700">
+              <ContactRow
+                icon={<User className="h-4 w-4" />}
+                label={t.checkout.fullName}
+                value={accountName}
+              />
+              <ContactRow
+                icon={<Mail className="h-4 w-4" />}
+                label={t.checkout.email}
+                value={accountEmail}
+              />
+              <ContactRow
+                icon={<Phone className="h-4 w-4" />}
+                label={t.checkout.phone}
+                value={
+                  accountPhone || (
+                    <Link
+                      href="/account"
+                      className="text-red-600 dark:text-red-400 hover:underline text-xs"
+                    >
+                      {lang === "th"
+                        ? "ยังไม่มีเบอร์ — เพิ่มที่บัญชีก่อน"
+                        : "Missing — add a phone number first"}
+                    </Link>
+                  )
+                }
+              />
+            </div>
           </section>
 
           {/* Shipping address */}
@@ -241,6 +281,30 @@ export function CheckoutForm() {
         </aside>
       </div>
     </form>
+  );
+}
+
+function ContactRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3">
+      <span className="text-gray-400 dark:text-gray-500 shrink-0">{icon}</span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500">
+          {label}
+        </p>
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+          {value}
+        </p>
+      </div>
+    </div>
   );
 }
 

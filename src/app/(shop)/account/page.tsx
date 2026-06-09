@@ -2,8 +2,12 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { getCustomerStats } from "@/lib/queries/account";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { User, ShoppingBag, CalendarCheck, ArrowRight } from "lucide-react";
 import { LogoutButton } from "@/components/account/LogoutButton";
+import { ProfileForm } from "@/components/account/ProfileForm";
 
 export const metadata = { title: "My Account" };
 
@@ -11,7 +15,16 @@ export default async function AccountPage() {
   const session = await getSession();
   if (!session) redirect("/login?callbackUrl=/account");
 
-  const { totalOrders, totalBookings } = await getCustomerStats(session.userId);
+  const [{ totalOrders, totalBookings }, [account]] = await Promise.all([
+    getCustomerStats(session.userId),
+    db
+      .select({ name: users.name, email: users.email, phone: users.phone })
+      .from(users)
+      .where(eq(users.id, session.userId))
+      .limit(1),
+  ]);
+
+  if (!account) redirect("/login");
 
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12">
@@ -24,9 +37,14 @@ export default async function AccountPage() {
           <User className="h-7 w-7 text-blue-600 dark:text-blue-400" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 text-lg truncate dark:text-gray-100">{session.name}</p>
-          <p className="text-gray-500 text-sm truncate dark:text-gray-400">{session.email}</p>
+          <p className="font-semibold text-gray-900 text-lg truncate dark:text-gray-100">{account.name}</p>
+          <p className="text-gray-500 text-sm truncate dark:text-gray-400">{account.email}</p>
         </div>
+      </div>
+
+      {/* Editable contact details */}
+      <div className="mb-6">
+        <ProfileForm name={account.name} email={account.email} phone={account.phone} />
       </div>
 
       {/* Stats + quick links */}

@@ -1,12 +1,13 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { eq, and, gt, isNull } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 import { db } from "@/db";
 import { users, passwordResetTokens } from "@/db/schema";
-import { createSession, deleteSession } from "@/lib/session";
+import { createSession, deleteSession, getSession } from "@/lib/session";
 import { registerSchema, loginSchema } from "@/lib/validations/auth";
 import { sendPasswordReset } from "@/lib/email";
 import { siteConfig } from "@/config/site";
@@ -122,6 +123,60 @@ export async function loginAction(
 export async function logoutAction(): Promise<void> {
   await deleteSession();
   redirect("/");
+}
+
+// ── Update profile (name + phone) ────────────────────────────────────────────
+const profileSchema = z.object({
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(120),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^[0-9+\s\-()]{7,20}$/, "Invalid phone number"),
+});
+
+export type UpdateProfileResult =
+  | { success: true }
+  | { success: false; error: string; fieldErrors?: Record<string, string[]> };
+
+export async function updateProfileAction(
+  _prev: UpdateProfileResult,
+  formData: FormData
+): Promise<UpdateProfileResult> {
+  const session = await getSession();
+  if (!session) {
+    return { success: false, error: "Please log in." };
+  }
+
+  const raw = {
+    name: formData.get("name"),
+    phone: formData.get("phone"),
+  };
+
+  const parsed = profileSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: "Please fix the errors below.",
+      fieldErrors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    };
+  }
+
+  const { name, phone } = parsed.data;
+
+  await db
+    .update(users)
+    .set({ name, phone, updatedAt: new Date() })
+    .where(eq(users.id, session.userId));
+
+  // Refresh the session cookie so the new name shows in nav immediately.
+  await createSession({
+    userId: session.userId,
+    role: session.role,
+    name,
+    email: session.email,
+  });
+
+  return { success: true };
 }
 
 // ── Forgot password ───────────────────────────────────────────────────────────

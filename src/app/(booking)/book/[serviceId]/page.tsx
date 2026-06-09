@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
@@ -6,6 +6,10 @@ import { getService } from "@/config/services";
 import { BookingWizard } from "@/components/booking/BookingWizard";
 import { formatPrice } from "@/lib/helpers/price";
 import { getT, getLang } from "@/lib/helpers/lang";
+import { getSession } from "@/lib/session";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 type Props = { params: Promise<{ serviceId: string }> };
 
@@ -23,6 +27,16 @@ export default async function BookServicePage({ params }: Props) {
   const { serviceId } = await params;
   const service = getService(serviceId);
   if (!service) notFound();
+
+  const session = await getSession();
+  if (!session) redirect(`/login?callbackUrl=/book/${serviceId}`);
+
+  const [account] = await db
+    .select({ name: users.name, email: users.email, phone: users.phone })
+    .from(users)
+    .where(eq(users.id, session.userId))
+    .limit(1);
+  if (!account) redirect("/login");
 
   const [t, lang] = await Promise.all([getT(), getLang()]);
 
@@ -65,6 +79,9 @@ export default async function BookServicePage({ params }: Props) {
               includes,
               group: service.group,
             }}
+            accountName={account.name}
+            accountEmail={account.email}
+            accountPhone={account.phone}
           />
         </div>
 

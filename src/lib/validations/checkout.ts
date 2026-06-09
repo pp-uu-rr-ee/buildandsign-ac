@@ -1,12 +1,9 @@
 import { z } from "zod";
 
+// Customer name/email/phone are pulled from the logged-in user's account row
+// (not from the form) — keeping them out of the schema means the client can't
+// override what's tied to the account.
 export const checkoutSchema = z.object({
-  fullName: z.string().min(2, "Full name is required").max(120),
-  email: z.string().email("Valid email required").max(254),
-  phone: z
-    .string()
-    .regex(/^[0-9+\s\-()]{7,20}$/, "Invalid phone number")
-    .max(20),
   addressLine1: z.string().min(5, "Address is required").max(200),
   addressLine2: z.string().max(200).optional(),
   city: z.string().min(2, "City is required").max(100),
