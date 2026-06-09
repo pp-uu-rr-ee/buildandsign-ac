@@ -142,6 +142,41 @@ export async function toggleProductStatusAction(id: string, currentStatus: strin
   revalidatePath("/admin/products");
 }
 
+export type DeleteProductResult =
+  | { success: true }
+  | { success: false; error: string };
+
+/**
+ * Hard-delete a product. order_items.product_id has ON DELETE SET NULL so
+ * historical orders keep their product-name snapshot. product_images cascade.
+ * R2 image blobs are left as orphans (cheap; can be reaped later).
+ */
+export async function deleteProductAction(id: string): Promise<DeleteProductResult> {
+  const session = await getSession();
+  if (!session || session.role !== "admin") {
+    return { success: false, error: "Unauthorized." };
+  }
+
+  try {
+    const result = await db
+      .delete(products)
+      .where(eq(products.id, id))
+      .returning({ id: products.id, slug: products.slug });
+
+    if (result.length === 0) {
+      return { success: false, error: "Product not found." };
+    }
+
+    revalidatePath("/admin/products");
+    revalidatePath("/products");
+    revalidatePath(`/products/${result[0].slug}`);
+    return { success: true };
+  } catch (err) {
+    console.error("[admin] deleteProductAction failed:", err);
+    return { success: false, error: "Failed to delete product." };
+  }
+}
+
 // ── Technicians ──────────────────────────────────────────────────────────────
 
 export type TechnicianActionResult =

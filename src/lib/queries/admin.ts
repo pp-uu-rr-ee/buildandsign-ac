@@ -3,7 +3,7 @@ import {
   orders, orderItems, bookings, products,
   technicians, users, productImages,
 } from "@/db/schema";
-import { desc, eq, sql, and, ilike, count, gte, lt } from "drizzle-orm";
+import { desc, eq, sql, and, or, ilike, count, gte, lt } from "drizzle-orm";
 
 // ── Dashboard stats ──────────────────────────────────────────────────────────
 export async function getDashboardStats() {
@@ -47,8 +47,40 @@ export async function getRecentOrders(limit = 8) {
 }
 
 // ── Orders list (paginated + filterable) ─────────────────────────────────────
-export async function getOrders({ page = 1, limit = 15, status }: { page?: number; limit?: number; status?: string }) {
-  const where = status ? eq(orders.status, status as any) : undefined;
+export async function getOrders({
+  page = 1,
+  limit = 15,
+  status,
+  search,
+}: {
+  page?: number;
+  limit?: number;
+  status?: string;
+  search?: string;
+}) {
+  const conditions = [];
+
+  if (status) {
+    conditions.push(eq(orders.status, status as any));
+  }
+
+  // Smart search: order number + JSONB fields on shippingAddress (fullName,
+  // phone, email, city). Lowercased on both sides for case-insensitive match.
+  const q = search?.trim();
+  if (q) {
+    const like = `%${q.toLowerCase()}%`;
+    conditions.push(
+      or(
+        ilike(orders.orderNumber, `%${q}%`),
+        sql`lower(${orders.shippingAddress}->>'fullName') LIKE ${like}`,
+        sql`lower(${orders.shippingAddress}->>'phone') LIKE ${like}`,
+        sql`lower(${orders.shippingAddress}->>'email') LIKE ${like}`,
+        sql`lower(${orders.shippingAddress}->>'city') LIKE ${like}`
+      )!
+    );
+  }
+
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
   const offset = (page - 1) * limit;
 
   const [rows, [{ total }]] = await Promise.all([
@@ -80,10 +112,44 @@ export async function getOrderById(id: string) {
 }
 
 // ── Bookings list (paginated + filterable) ───────────────────────────────────
-export async function getBookings({ page = 1, limit = 15, status }: { page?: number; limit?: number; status?: string }) {
-  const where = status ? eq(bookings.status, status as any) : undefined;
+export async function getBookings({
+  page = 1,
+  limit = 15,
+  status,
+  search,
+}: {
+  page?: number;
+  limit?: number;
+  status?: string;
+  search?: string;
+}) {
+  const conditions = [];
+
+  if (status) {
+    conditions.push(eq(bookings.status, status as any));
+  }
+
+  // Smart search: booking number, JSONB serviceAddress fields, AND technician
+  // name (which requires the join). The select below already joins technicians
+  // and users, so we can reference users.name in the WHERE.
+  const q = search?.trim();
+  if (q) {
+    const like = `%${q.toLowerCase()}%`;
+    conditions.push(
+      or(
+        ilike(bookings.bookingNumber, `%${q}%`),
+        sql`lower(${bookings.serviceAddress}->>'fullName') LIKE ${like}`,
+        sql`lower(${bookings.serviceAddress}->>'phone') LIKE ${like}`,
+        sql`lower(${bookings.serviceAddress}->>'city') LIKE ${like}`,
+        ilike(users.name, `%${q}%`)
+      )!
+    );
+  }
+
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
   const offset = (page - 1) * limit;
 
+  // Need the same join for count query when search includes technician name.
   const [rows, [{ total }]] = await Promise.all([
     db.select({
       id: bookings.id,
@@ -105,7 +171,12 @@ export async function getBookings({ page = 1, limit = 15, status }: { page?: num
     .limit(limit)
     .offset(offset),
 
-    db.select({ total: count() }).from(bookings).where(where),
+    db
+      .select({ total: count() })
+      .from(bookings)
+      .leftJoin(technicians, eq(technicians.id, bookings.technicianId))
+      .leftJoin(users, eq(users.id, technicians.userId))
+      .where(where),
   ]);
 
   return { rows, total, pages: Math.ceil(total / limit), page };
@@ -126,8 +197,48 @@ export async function getBookingById(id: string) {
 }
 
 // ── Products admin ───────────────────────────────────────────────────────────
-export async function getAdminProducts({ page = 1, limit = 15, search }: { page?: number; limit?: number; search?: string }) {
-  const where = search ? ilike(products.name, `%${search}%`) : undefined;
+export async function getAdminProducts({
+  page = 1,
+  limit = 15,
+  search,
+  status,
+  category,
+}: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  category?: string;
+}) {
+  const conditions = [];
+
+  // Smart search — match the query across name/nameTh/slug/sku/shortDescription.
+  // Trimmed + ILIKE for case-insensitive partial match. Empty / whitespace
+  // strings are treated as "no search".
+  const q = search?.trim();
+  if (q) {
+    const like = `%${q}%`;
+    conditions.push(
+      or(
+        ilike(products.name, like),
+        ilike(products.nameTh, like),
+        ilike(products.slug, like),
+        ilike(products.sku, like),
+        ilike(products.shortDescription, like),
+        ilike(products.shortDescriptionTh, like)
+      )!
+    );
+  }
+
+  if (status) {
+    conditions.push(eq(products.status, status as any));
+  }
+
+  if (category) {
+    conditions.push(eq(products.category, category as any));
+  }
+
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
   const offset = (page - 1) * limit;
 
   const [rows, [{ total }]] = await Promise.all([
