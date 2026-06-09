@@ -5,12 +5,14 @@ import Image from "next/image";
 import { Trash2, ShoppingCart, ArrowRight } from "lucide-react";
 import { useCart, cartTotal } from "@/lib/store/cart";
 import { formatPrice } from "@/lib/helpers/price";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 const SHIPPING_THRESHOLD = 500000; // ₱5,000 — free shipping above this
 const SHIPPING_FLAT = 49900;       // ₱499
 
 export function CartPageClient() {
   const { items, removeItem, updateQty, clearCart } = useCart();
+  const { t, lang } = useLanguage();
   const subtotal = cartTotal(items);
   const shipping = subtotal >= SHIPPING_THRESHOLD ? 0 : SHIPPING_FLAT;
   const total = subtotal + shipping;
@@ -152,9 +154,14 @@ export function CartPageClient() {
             href="/checkout"
             className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors"
           >
-            Checkout
+            {t.cart.proceedCheckout}
             <ArrowRight className="h-4 w-4" />
           </Link>
+          <p className="text-xs text-gray-400 text-center">
+            {lang === "th"
+              ? "ไม่มีการชำระเงินออนไลน์ ทีมงานจะติดต่อกลับ"
+              : "No online payment — our team will contact you."}
+          </p>
 
           <Link
             href="/products"

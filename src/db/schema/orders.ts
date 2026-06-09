@@ -14,21 +14,12 @@ import { users } from "./users";
 import { products } from "./products";
 
 export const orderStatusEnum = pgEnum("order_status", [
-  "pending",       // awaiting payment
-  "confirmed",     // payment received
+  "pending",       // inquiry submitted, awaiting admin contact
+  "confirmed",     // admin has confirmed the order after contact
   "processing",    // being packed
   "shipped",       // in transit
   "delivered",     // received by customer
   "cancelled",
-  "refunded",
-]);
-
-export const paymentStatusEnum = pgEnum("payment_status", [
-  "unpaid",
-  "paid",
-  "partial",
-  "refunded",
-  "failed",
 ]);
 
 export const orders = pgTable("orders", {
@@ -37,11 +28,9 @@ export const orders = pgTable("orders", {
   userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
 
   status: orderStatusEnum("status").notNull().default("pending"),
-  paymentStatus: paymentStatusEnum("payment_status").notNull().default("unpaid"),
-  paymentMethod: varchar("payment_method", { length: 100 }),
-  paymentReference: varchar("payment_reference", { length: 255 }),
 
-  // Totals in satang (1 THB = 100 satang)
+  // Totals in satang (1 THB = 100 satang) — these are an estimate; final
+  // price is confirmed by staff after the inquiry contact.
   subtotalInSatang: integer("subtotal_in_satang").notNull(),
   shippingInSatang: integer("shipping_in_satang").notNull().default(0),
   taxInSatang: integer("tax_in_satang").notNull().default(0),

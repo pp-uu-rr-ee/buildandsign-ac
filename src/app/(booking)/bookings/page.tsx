@@ -8,7 +8,6 @@ import {
   CalendarCheck,
   ArrowRight,
   ChevronRight,
-  CreditCard,
   CheckCircle2,
 } from "lucide-react";
 
@@ -77,21 +76,13 @@ export default async function BookingsPage() {
                 : booking.status.charAt(0).toUpperCase() + booking.status.slice(1);
             const serviceLabel =
               SERVICE_LABELS[booking.serviceType] ?? booking.serviceType;
-            const price = booking.finalPriceInSatang ?? booking.quotedPriceInSatang;
+            const price = booking.quotedPriceInSatang;
 
             const canAcceptQuote =
               booking.quoteConfirmedAt != null &&
               booking.quoteAcceptedAt == null &&
               booking.status !== "cancelled";
-            const canPayBalance =
-              booking.quoteAcceptedAt != null &&
-              booking.balancePaymentStatus !== "paid" &&
-              (booking.balanceInSatang ?? 0) > 0;
-
-            const isFullyPaid =
-              booking.depositPaymentStatus === "paid" &&
-              (booking.balanceInSatang == null ||
-                booking.balancePaymentStatus === "paid");
+            const quoteAccepted = booking.quoteAcceptedAt != null;
 
             return (
               <div
@@ -114,10 +105,10 @@ export default async function BookingsPage() {
                       <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${statusClass}`}>
                         {statusLabel}
                       </span>
-                      {isFullyPaid && (
-                        <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800">
+                      {quoteAccepted && (
+                        <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800">
                           <CheckCircle2 className="h-3 w-3" />
-                          {t.booking.paid}
+                          {t.booking.quoteAccepted ?? "Quote accepted"}
                         </span>
                       )}
                     </div>
@@ -172,29 +163,6 @@ export default async function BookingsPage() {
                   </div>
                 )}
 
-                {/* Pay-balance CTA */}
-                {canPayBalance && (
-                  <div className="mt-4 pt-4 border-t border-amber-200 dark:border-amber-900/40 flex flex-col sm:flex-row sm:items-center gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">
-                        {t.booking.balance} {t.booking.due}
-                      </p>
-                      <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                        {formatPrice(booking.balanceInSatang!)}
-                      </p>
-                      <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-                        {t.booking.payBalanceSubtitle}
-                      </p>
-                    </div>
-                    <Link
-                      href={`/bookings/${booking.id}`}
-                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 transition-colors shrink-0"
-                    >
-                      <CreditCard className="h-4 w-4" />
-                      {t.booking.payAmount(formatPrice(booking.balanceInSatang!))}
-                    </Link>
-                  </div>
-                )}
               </div>
             );
           })}

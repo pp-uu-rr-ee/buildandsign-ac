@@ -10,17 +10,9 @@ import { getSession } from "@/lib/session";
 
 // ── Order status ─────────────────────────────────────────────────────────────
 export async function updateOrderStatusAction(orderId: string, status: string) {
-  const valid = z.enum(["pending","confirmed","processing","shipped","delivered","cancelled","refunded"]).safeParse(status);
+  const valid = z.enum(["pending","confirmed","processing","shipped","delivered","cancelled"]).safeParse(status);
   if (!valid.success) return { error: "Invalid status" };
   await db.update(orders).set({ status: valid.data, updatedAt: new Date() }).where(eq(orders.id, orderId));
-  revalidatePath("/admin/orders");
-  revalidatePath(`/admin/orders/${orderId}`);
-}
-
-export async function updatePaymentStatusAction(orderId: string, paymentStatus: string) {
-  const valid = z.enum(["unpaid","paid","partial","refunded","failed"]).safeParse(paymentStatus);
-  if (!valid.success) return { error: "Invalid status" };
-  await db.update(orders).set({ paymentStatus: valid.data, updatedAt: new Date() }).where(eq(orders.id, orderId));
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
 }

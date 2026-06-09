@@ -9,20 +9,15 @@ import { useLanguage } from "@/components/providers/LanguageProvider";
 
 interface Props {
   bookingId: string;
-  /** scheduledAt ISO string — used to show the deposit-refund window status */
   scheduledAt: string;
 }
 
-export function CancelBookingButton({ bookingId, scheduledAt }: Props) {
+export function CancelBookingButton({ bookingId }: Props) {
   const router = useRouter();
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [isPending, startTransition] = useTransition();
-
-  const hoursUntilService =
-    (new Date(scheduledAt).getTime() - Date.now()) / (1000 * 60 * 60);
-  const withinWindow = hoursUntilService < 24;
 
   const onConfirm = () => {
     if (!reason.trim()) {
@@ -32,11 +27,7 @@ export function CancelBookingButton({ bookingId, scheduledAt }: Props) {
     startTransition(async () => {
       const res = await cancelBookingAction(bookingId, reason);
       if (res.success) {
-        toast.success(
-          res.refundEligible
-            ? `${t.booking.cancelledMessage} ${t.booking.cancelledRefundable}`
-            : `${t.booking.cancelledMessage} ${t.booking.cancelledForfeit}`
-        );
+        toast.success(t.booking.cancelledMessage);
         setOpen(false);
         router.refresh();
       } else {
@@ -77,19 +68,6 @@ export function CancelBookingButton({ bookingId, scheduledAt }: Props) {
                   {t.booking.cancelBookingBody}
                 </p>
               </div>
-            </div>
-
-            {/* Refund window indicator */}
-            <div
-              className={`text-xs rounded-md px-3 py-2 ${
-                withinWindow
-                  ? "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300"
-                  : "bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-300"
-              }`}
-            >
-              {withinWindow
-                ? t.booking.cancelledForfeit
-                : t.booking.cancelledRefundable}
             </div>
 
             <div>

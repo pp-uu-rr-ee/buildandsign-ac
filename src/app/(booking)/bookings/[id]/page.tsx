@@ -1,22 +1,20 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import {
-  CheckCircle2,
   CalendarDays,
   Clock,
   MapPin,
   Phone,
-  CreditCard,
   ChevronLeft,
 } from "lucide-react";
 import { db } from "@/db";
-import { bookings, technicians, users, savedCards } from "@/db/schema";
+import { bookings, technicians, users } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { formatPrice } from "@/lib/helpers/price";
 import { getService } from "@/config/services";
 import { getSession } from "@/lib/session";
 import { getT, getLang } from "@/lib/helpers/lang";
-import { BookingPayBalance } from "@/components/booking/BookingPayBalance";
+import { BookingContactToPay } from "@/components/booking/BookingPayBalance";
 import { CancelBookingButton } from "@/components/booking/CancelBookingButton";
 import { AcceptQuoteCard } from "@/components/booking/AcceptQuoteCard";
 
@@ -45,34 +43,18 @@ export default async function BookingDetailPage({ params }: Props) {
   if (!row) notFound();
   const { booking, technicianName } = row;
 
-  const userSavedCards = await db
-    .select({
-      id: savedCards.id,
-      last4: savedCards.last4,
-      brand: savedCards.brand,
-      expMonth: savedCards.expMonth,
-      expYear: savedCards.expYear,
-      isDefault: savedCards.isDefault,
-    })
-    .from(savedCards)
-    .where(eq(savedCards.userId, session.userId))
-    .orderBy(savedCards.createdAt);
-
   const service = getService(booking.serviceType);
   const serviceTitle =
     lang === "th" && service?.titleTh ? service.titleTh : service?.title ?? booking.serviceType;
   const scheduledDate = new Date(booking.scheduledAt);
   const locale = lang === "th" ? "th-TH" : "en-US";
 
-  const depositPaid = booking.depositPaymentStatus === "paid";
-  const balancePaid = booking.balancePaymentStatus === "paid";
   const quoteReady =
     booking.quoteConfirmedAt != null && booking.quotedPriceInSatang != null;
   const quoteAccepted = booking.quoteAcceptedAt != null;
   const awaitingQuote = !quoteReady && booking.status === "pending";
   const canAcceptQuote = quoteReady && !quoteAccepted && booking.status !== "cancelled";
-  const canPayBalance =
-    quoteAccepted && !balancePaid && (booking.balanceInSatang ?? 0) > 0;
+  const showContactToPay = quoteAccepted && booking.quotedPriceInSatang != null;
 
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
@@ -139,55 +121,31 @@ export default async function BookingDetailPage({ params }: Props) {
             />
           )}
 
-          {/* State 3: Quote accepted, balance can be paid online */}
-          {canPayBalance && (
-            <BookingPayBalance
-              bookingId={booking.id}
-              balanceInSatang={booking.balanceInSatang!}
-              opnPublicKey={process.env.PAYMENT_PUBLIC_KEY ?? ""}
-              savedCards={userSavedCards}
+          {/* State 3: Quote accepted — settle offline via Line/FB/phone */}
+          {showContactToPay && (
+            <BookingContactToPay
+              bookingNumber={booking.bookingNumber}
+              quotedTotalInSatang={booking.quotedPriceInSatang!}
             />
           )}
         </div>
 
-        {/* Right — payments */}
+        {/* Right — quote summary */}
         <aside>
           <Card title={t.booking.paymentSummary}>
-            <PaymentRow
-              label={t.booking.deposit}
-              amountInSatang={booking.depositInSatang ?? 0}
-              paid={depositPaid}
-              when={booking.depositPaidAt}
-              paidLabel={t.booking.paid}
-              dueLabel={t.booking.due}
-            />
-            {booking.quotedPriceInSatang != null && (
-              <div className="flex justify-between text-sm pt-2 border-t border-gray-100 dark:border-gray-800">
+            {booking.quotedPriceInSatang != null ? (
+              <div className="flex justify-between text-sm">
                 <span className="text-gray-500">{t.booking.totalQuote}</span>
                 <span className="font-semibold text-gray-900 dark:text-gray-100">
                   {formatPrice(booking.quotedPriceInSatang)}
                 </span>
               </div>
-            )}
-            {booking.balanceInSatang != null && (
-              <PaymentRow
-                label={t.booking.balance}
-                amountInSatang={booking.balanceInSatang}
-                paid={balancePaid}
-                when={booking.balancePaidAt}
-                paidLabel={t.booking.paid}
-                dueLabel={t.booking.due}
-              />
-            )}
-            {balancePaid && booking.finalPriceInSatang != null && (
-              <div className="flex justify-between text-sm pt-3 mt-3 border-t border-gray-100 dark:border-gray-800">
-                <span className="font-semibold text-gray-900 dark:text-gray-100">
-                  {t.booking.totalPaid}
-                </span>
-                <span className="font-bold text-green-600">
-                  {formatPrice(booking.finalPriceInSatang)}
-                </span>
-              </div>
+            ) : (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {lang === "th"
+                  ? "รอใบเสนอราคาจากทีมงาน"
+                  : "Awaiting quote from our team."}
+              </p>
             )}
           </Card>
 
@@ -238,46 +196,6 @@ function Row({
       <div className="min-w-0">
         <p className="text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500">{label}</p>
         <div className="text-sm text-gray-700 dark:text-gray-200">{children}</div>
-      </div>
-    </div>
-  );
-}
-
-function PaymentRow({
-  label, amountInSatang, paid, when, paidLabel, dueLabel,
-}: {
-  label: string;
-  amountInSatang: number;
-  paid: boolean;
-  when: Date | null;
-  paidLabel: string;
-  dueLabel: string;
-}) {
-  return (
-    <div className="flex items-start justify-between gap-2 text-sm">
-      <div>
-        <p className="text-gray-700 dark:text-gray-200 font-medium">{label}</p>
-        {paid && when && (
-          <p className="text-[11px] text-gray-400">
-            {paidLabel} {new Date(when).toLocaleDateString()}
-          </p>
-        )}
-      </div>
-      <div className="text-right">
-        <p className="font-semibold text-gray-900 dark:text-gray-100">
-          {formatPrice(amountInSatang)}
-        </p>
-        <p className={`text-[10px] uppercase font-semibold ${paid ? "text-green-600" : "text-orange-500"}`}>
-          {paid ? (
-            <span className="inline-flex items-center gap-1">
-              <CheckCircle2 className="h-3 w-3" /> {paidLabel}
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1">
-              <CreditCard className="h-3 w-3" /> {dueLabel}
-            </span>
-          )}
-        </p>
       </div>
     </div>
   );

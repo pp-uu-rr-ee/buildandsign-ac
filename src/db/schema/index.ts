@@ -5,4 +5,3 @@ export * from "./orders";
 export * from "./technicians";
 export * from "./bookings";
 export * from "./blog";
-export * from "./savedCards";

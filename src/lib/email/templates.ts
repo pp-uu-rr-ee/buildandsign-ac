@@ -233,8 +233,7 @@ type OrderEmailData = {
 
 const PAYMENT_LABELS: Record<string, string> = {
   cod: "Cash on Delivery",
-  gcash: "GCash",
-  bank_transfer: "Bank Transfer",
+  inquiry: "Inquiry — staff will follow up",
 };
 
 export function orderReceiptHtml(d: OrderEmailData): string {
@@ -327,42 +326,33 @@ export function bookingQuoteReadyHtml(d: {
   bookingNumber: string;
   customerName: string;
   serviceTitle: string;
-  depositInSatang: number;
   quotedTotalInSatang: number;
-  balanceInSatang: number;
-  payBalanceUrl: string;
+  acceptUrl: string;
 }): string {
   const body = `
     <h2 style="margin:0 0 8px;font-size:22px;font-weight:700;color:${brand.text};">Your quote is ready</h2>
     <p style="margin:0 0 24px;font-size:15px;color:${brand.muted};">Hi ${d.customerName},</p>
     <p style="margin:0 0 24px;font-size:14px;color:${brand.text};line-height:1.6;">
-      Our technician has evaluated your <strong>${d.serviceTitle}</strong> booking
-      <strong style="font-family:monospace;">${d.bookingNumber}</strong> and the final price is now ready.
+      Our team has reviewed your <strong>${d.serviceTitle}</strong> booking
+      <strong style="font-family:monospace;">${d.bookingNumber}</strong>.
+      Accept the quote to lock your slot — we'll arrange payment with you directly.
     </p>
 
     <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${brand.border};border-radius:8px;margin-bottom:24px;">
       <tr>
-        <td style="padding:12px 16px;font-size:14px;color:${brand.muted};">Total quote</td>
-        <td style="padding:12px 16px;font-size:14px;color:${brand.text};font-weight:600;text-align:right;">${formatPrice(d.quotedTotalInSatang)}</td>
-      </tr>
-      <tr style="background:#fafafa;">
-        <td style="padding:12px 16px;font-size:14px;color:${brand.muted};border-top:1px solid ${brand.border};">Deposit paid</td>
-        <td style="padding:12px 16px;font-size:14px;color:${brand.text};font-weight:500;text-align:right;border-top:1px solid ${brand.border};">− ${formatPrice(d.depositInSatang)}</td>
-      </tr>
-      <tr>
-        <td style="padding:14px 16px;font-size:15px;color:${brand.text};font-weight:700;border-top:2px solid ${brand.border};">Balance due</td>
-        <td style="padding:14px 16px;font-size:18px;color:${brand.primary};font-weight:700;text-align:right;border-top:2px solid ${brand.border};">${formatPrice(d.balanceInSatang)}</td>
+        <td style="padding:14px 16px;font-size:15px;color:${brand.text};font-weight:700;">Total quote</td>
+        <td style="padding:14px 16px;font-size:18px;color:${brand.primary};font-weight:700;text-align:right;">${formatPrice(d.quotedTotalInSatang)}</td>
       </tr>
     </table>
 
     <div style="text-align:center;margin:32px 0;">
-      <a href="${d.payBalanceUrl}" style="display:inline-block;background:${brand.primary};color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 36px;border-radius:8px;">
-        Pay Balance ${formatPrice(d.balanceInSatang)}
+      <a href="${d.acceptUrl}" style="display:inline-block;background:${brand.primary};color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 36px;border-radius:8px;">
+        Review &amp; Accept Quote
       </a>
     </div>
 
     <p style="margin:0;font-size:13px;color:${brand.muted};text-align:center;line-height:1.6;">
-      You can pay using a new or saved card.<br />
+      Payment is arranged offline via Line, Facebook, or phone.<br />
       Questions? Reply to this email or call us.
     </p>
   `;

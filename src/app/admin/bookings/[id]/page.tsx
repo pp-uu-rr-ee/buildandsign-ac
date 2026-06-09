@@ -49,9 +49,6 @@ export default async function AdminBookingDetailPage({ params }: Props) {
               {booking.quotedPriceInSatang && (
                 <div><p className="text-xs text-gray-400 mb-0.5">Quoted Price</p><p className="font-medium">{formatPrice(booking.quotedPriceInSatang)}</p></div>
               )}
-              {booking.finalPriceInSatang && (
-                <div><p className="text-xs text-gray-400 mb-0.5">Final Price</p><p className="font-medium">{formatPrice(booking.finalPriceInSatang)}</p></div>
-              )}
               {booking.customerNotes && (
                 <div className="col-span-2"><p className="text-xs text-gray-400 mb-0.5">Customer Notes</p><p className="text-gray-700">{booking.customerNotes}</p></div>
               )}
@@ -118,13 +115,10 @@ export default async function AdminBookingDetailPage({ params }: Props) {
             </div>
           )}
 
-          {/* Quote form — show on all bookings now (deposit may be 0) */}
+          {/* Quote form */}
           <BookingQuoteForm
             bookingId={booking.id}
-            depositInSatang={booking.depositInSatang ?? 0}
             quotedPriceInSatang={booking.quotedPriceInSatang}
-            balanceInSatang={booking.balanceInSatang}
-            balancePaymentStatus={booking.balancePaymentStatus}
             quoteConfirmedAt={booking.quoteConfirmedAt}
           />
 

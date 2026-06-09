@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ShoppingCart, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/lib/store/cart";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 type Props = {
   productId: string;
@@ -25,8 +26,10 @@ export function AddToCartButton({
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const addItem = useCart((s) => s.addItem);
+  const { lang } = useLanguage();
 
   const isOutOfStock = stock === 0;
+  const inquireLabel = lang === "th" ? "สอบถาม" : "Inquire";
 
   const handleAdd = () => {
     addItem({ productId, name: productName, slug, imageUrl, unitPriceInSatang: priceInSatang, quantity: qty });
@@ -93,7 +96,7 @@ export function AddToCartButton({
               : "border-blue-600 text-blue-600 hover:bg-blue-50"
           }`}
         >
-          Buy Now
+          {inquireLabel}
         </a>
       </div>
     </div>

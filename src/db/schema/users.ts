@@ -27,7 +27,6 @@ export const users = pgTable("users", {
   role: userRoleEnum("role").notNull().default("customer"),
   emailVerified: boolean("email_verified").notNull().default(false),
   avatarUrl: text("avatar_url"),
-  opnCustomerId: varchar("opn_customer_id", { length: 255 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

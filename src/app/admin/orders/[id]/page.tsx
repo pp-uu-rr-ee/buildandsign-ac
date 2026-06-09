@@ -26,7 +26,6 @@ export default async function AdminOrderDetailPage({ params }: Props) {
           <p className="text-xs text-gray-400">{new Date(order.createdAt).toLocaleString("en-US")}</p>
         </div>
         <div className="flex gap-2 ml-auto flex-wrap">
-          <StatusBadge status={order.paymentStatus} />
           <StatusBadge status={order.status} />
         </div>
       </div>
@@ -75,7 +74,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
           </div>
 
           {/* Update status */}
-          <OrderStatusUpdater orderId={order.id} currentStatus={order.status} currentPayment={order.paymentStatus} />
+          <OrderStatusUpdater orderId={order.id} currentStatus={order.status} />
         </div>
 
         {/* Sidebar */}
@@ -91,11 +90,6 @@ export default async function AdminOrderDetailPage({ params }: Props) {
               {addr.addressLine2 && <><br />{addr.addressLine2}</>}
               <br />{addr.city}, {addr.province} {addr.postalCode}
             </p>
-          </InfoCard>
-
-          <InfoCard title="Payment">
-            <p className="text-sm text-gray-700 capitalize">{order.paymentMethod?.replace("_"," ")}</p>
-            {order.paymentReference && <p className="text-xs text-gray-400 mt-0.5">Ref: {order.paymentReference}</p>}
           </InfoCard>
 
           {order.notes && (

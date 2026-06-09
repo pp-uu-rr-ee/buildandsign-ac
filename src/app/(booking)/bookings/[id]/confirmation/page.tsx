@@ -1,13 +1,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle2, Calendar, Clock, MapPin, Phone, CreditCard } from "lucide-react";
+import { CheckCircle2, Calendar, Clock, MapPin, Phone } from "lucide-react";
 import { db } from "@/db";
 import { bookings, technicians, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getService } from "@/config/services";
 import { siteConfig } from "@/config/site";
 import { getT, getLang } from "@/lib/helpers/lang";
-import { formatPrice } from "@/lib/helpers/price";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -24,10 +23,6 @@ export default async function BookingConfirmationPage({ params }: Props) {
       durationMinutes: bookings.durationMinutes,
       serviceAddress: bookings.serviceAddress,
       status: bookings.status,
-      depositInSatang: bookings.depositInSatang,
-      depositPaymentStatus: bookings.depositPaymentStatus,
-      depositPaidAt: bookings.depositPaidAt,
-      depositPaymentReference: bookings.depositPaymentReference,
       technicianName: users.name,
     })
     .from(bookings)
@@ -112,42 +107,6 @@ export default async function BookingConfirmationPage({ params }: Props) {
           />
         </div>
       </div>
-
-      {/* Payment receipt — deposit paid */}
-      {booking.depositInSatang != null && booking.depositPaymentStatus === "paid" && (
-        <div className="rounded-2xl border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/20 text-left overflow-hidden mb-8">
-          <div className="px-5 py-3 bg-green-100/60 dark:bg-green-900/30 border-b border-green-200 dark:border-green-900 flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-            <p className="text-sm font-semibold text-green-800 dark:text-green-300">
-              {t.booking.paid}
-            </p>
-          </div>
-          <div className="px-5 py-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2">
-                <CreditCard className="h-4 w-4" />
-                {t.booking.deposit}
-              </span>
-              <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                {formatPrice(booking.depositInSatang)}
-              </span>
-            </div>
-            {booking.depositPaidAt && (
-              <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                {new Date(booking.depositPaidAt).toLocaleString(locale, {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })}
-              </p>
-            )}
-            {booking.depositPaymentReference && (
-              <p className="text-[10px] text-gray-400 dark:text-gray-500 font-mono break-all">
-                Ref: {booking.depositPaymentReference}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* What happens next */}
       <div className="rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-5 text-left mb-8">

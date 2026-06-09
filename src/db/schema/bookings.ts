@@ -7,12 +7,10 @@ import {
   timestamp,
   pgEnum,
   jsonb,
-  boolean,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { users } from "./users";
 import { technicians } from "./technicians";
-import { paymentStatusEnum } from "./orders";
 
 export const serviceTypeEnum = pgEnum("service_type", [
   "cleaning",       // routine AC cleaning/maintenance
@@ -49,27 +47,9 @@ export const bookings = pgTable("bookings", {
   scheduledAt: timestamp("scheduled_at").notNull(),
   durationMinutes: integer("duration_minutes").notNull().default(60),
 
-  // ── Pricing & payments (all in satang, 1 THB = 100 satang) ─────────────
-  // Admin's total quote for the job (set after on-site evaluation for repair).
+  // ── Pricing (all in satang, 1 THB = 100 satang) ─────────────────────────
+  // Admin's quote for the job. Settlement is offline via Line/Facebook/phone.
   quotedPriceInSatang: integer("quoted_price_in_satang"),
-  // What the customer actually paid in total (deposit + balance).
-  finalPriceInSatang: integer("final_price_in_satang"),
-
-  // Deposit — charged at booking time.
-  depositInSatang: integer("deposit_in_satang"),
-  depositPaidAt: timestamp("deposit_paid_at"),
-  depositPaymentReference: varchar("deposit_payment_reference", { length: 255 }),
-  depositPaymentStatus: paymentStatusEnum("deposit_payment_status")
-    .notNull()
-    .default("unpaid"),
-
-  // Balance — charged after admin confirms the quote.
-  balanceInSatang: integer("balance_in_satang"),
-  balancePaidAt: timestamp("balance_paid_at"),
-  balancePaymentReference: varchar("balance_payment_reference", { length: 255 }),
-  balancePaymentStatus: paymentStatusEnum("balance_payment_status")
-    .notNull()
-    .default("unpaid"),
 
   // When admin confirmed the quote (price ready, awaiting customer accept).
   quoteConfirmedAt: timestamp("quote_confirmed_at"),

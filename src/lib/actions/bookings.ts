@@ -3,13 +3,12 @@
 import { redirect } from "next/navigation";
 import { randomUUID } from "node:crypto";
 import { db } from "@/db";
-import { bookings, users, savedCards } from "@/db/schema";
+import { bookings, users } from "@/db/schema";
 import { and, eq, sql } from "drizzle-orm";
 import { getSession } from "@/lib/session";
 import { bookingSchema } from "@/lib/validations/booking";
 import { sendBookingConfirmation, sendBookingQuoteReady } from "@/lib/email";
-import { calculateBookingDeposit, getService } from "@/config/services";
-import { createCharge } from "@/lib/payment/opn";
+import { getService } from "@/config/services";
 
 function generateBookingNumber(): string {
   const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -31,9 +30,6 @@ export async function createBookingAction(
     return { success: false, error: "Please log in to book a service." };
   }
 
-  // ── Parse units from formData ────────────────────────────────────────────
-  // The wizard submits unitsJson (a JSON-encoded array of units) so we can
-  // pass repeating fields cleanly through a single FormData entry.
   let unitsParsed: unknown = [];
   const unitsJson = formData.get("unitsJson");
   if (typeof unitsJson === "string" && unitsJson.length > 0) {
@@ -71,7 +67,6 @@ export async function createBookingAction(
   }
   const data = parsed.data;
 
-  // ── Insert booking — NO payment at this stage ────────────────────────────
   let booking: { id: string; bookingNumber: string };
   try {
     const [row] = await db
@@ -81,7 +76,7 @@ export async function createBookingAction(
         userId: session.userId,
         technicianId: data.technicianId,
         serviceType: data.serviceType,
-        status: "pending", // waiting for admin quote
+        status: "pending",
         scheduledAt: new Date(data.scheduledAt),
         durationMinutes: data.durationMinutes,
         serviceAddress: {
@@ -114,19 +109,6 @@ export async function createBookingAction(
   );
 
   redirect(`/bookings/${booking.id}/confirmation`);
-}
-
-// ─── Mark deposit as paid (idempotent) ───────────────────────────────────────
-
-export async function markDepositPaid(bookingId: string) {
-  await db
-    .update(bookings)
-    .set({
-      depositPaymentStatus: "paid",
-      depositPaidAt: new Date(),
-      status: "confirmed",
-    })
-    .where(eq(bookings.id, bookingId));
 }
 
 async function maybeSendConfirmation(
@@ -169,11 +151,6 @@ async function maybeSendConfirmation(
 }
 
 // ─── Technician: own-booking status + notes ─────────────────────────────────
-//
-// Technicians can move bookings forward through the workflow and add
-// "technicianNotes" — but only for bookings ASSIGNED to them.
-//
-// They cannot move backwards (e.g. completed → pending) or assign to others.
 
 import { technicians as techniciansTable } from "@/db/schema";
 
@@ -283,22 +260,9 @@ export async function updateBookingTechNotesAction(
 // ─── Customer: cancel own booking ───────────────────────────────────────────
 
 export type CancelBookingResult =
-  | { success: true; refundEligible: boolean }
+  | { success: true }
   | { success: false; error: string };
 
-/**
- * Customer cancels their own booking.
- *
- *  - Refund eligibility (deposit) follows the 24h rule shown in /terms:
- *    cancellations 24h+ before scheduled time → refund-eligible (admin
- *    processes the refund in Opn dashboard).
- *  - Within 24h or if status is already in_progress/completed → no refund
- *    (deposit forfeit).
- *  - Sets cancellationReason from the form.
- *
- * NOTE: we don't auto-refund. The flag is for admin to know. Actual money
- * movement happens manually in Opn dashboard until we add a refund flow.
- */
 export async function cancelBookingAction(
   bookingId: string,
   reason: string
@@ -318,9 +282,6 @@ export async function cancelBookingAction(
     .select({
       id: bookings.id,
       status: bookings.status,
-      scheduledAt: bookings.scheduledAt,
-      depositPaymentStatus: bookings.depositPaymentStatus,
-      balancePaymentStatus: bookings.balancePaymentStatus,
     })
     .from(bookings)
     .where(
@@ -343,16 +304,6 @@ export async function cancelBookingAction(
     };
   }
 
-  // 24-hour rule for refund eligibility
-  // Only flagged true if customer already paid (deposit or balance) AND the
-  // service is still 24h+ away. Admin handles the actual refund in Opn.
-  const hoursUntilService =
-    (new Date(booking.scheduledAt).getTime() - Date.now()) / (1000 * 60 * 60);
-  const refundEligible =
-    hoursUntilService >= 24 &&
-    (booking.depositPaymentStatus === "paid" ||
-      booking.balancePaymentStatus === "paid");
-
   await db
     .update(bookings)
     .set({
@@ -363,10 +314,12 @@ export async function cancelBookingAction(
     })
     .where(eq(bookings.id, bookingId));
 
-  return { success: true, refundEligible };
+  return { success: true };
 }
 
-// ─── Admin: set / confirm the quote ──────────────────────────────────────────
+// ─── Admin: set the quote ────────────────────────────────────────────────────
+// Quote is just a price estimate now — no deposit/balance split. Customer
+// accepts the quote to lock the slot; settlement happens offline via Line/FB.
 
 export type SetQuoteResult =
   | { success: true }
@@ -396,7 +349,6 @@ export async function setBookingQuoteAction(
       id: bookings.id,
       bookingNumber: bookings.bookingNumber,
       serviceType: bookings.serviceType,
-      depositInSatang: bookings.depositInSatang,
       userId: bookings.userId,
       serviceAddress: bookings.serviceAddress,
     })
@@ -406,32 +358,15 @@ export async function setBookingQuoteAction(
 
   if (!booking) return { success: false, error: "Booking not found." };
 
-  const deposit = booking.depositInSatang ?? 0;
-
-  if (quotedTotalInSatang < deposit) {
-    return {
-      success: false,
-      error: "Quote total cannot be less than the deposit already paid.",
-    };
-  }
-
-  // Balance = full quote minus any deposit that was already collected
-  // (deposit may be 0 in the new free-booking flow).
-  const balance = quotedTotalInSatang - deposit;
-
   await db
     .update(bookings)
     .set({
       quotedPriceInSatang: quotedTotalInSatang,
-      balanceInSatang: balance,
-      balancePaymentStatus: balance === 0 ? "paid" : "unpaid",
-      balancePaidAt: balance === 0 ? new Date() : null,
       quoteConfirmedAt: new Date(),
       updatedAt: new Date(),
     })
     .where(eq(bookings.id, bookingId));
 
-  // Notify the customer — they now need to accept the quote.
   if (booking.userId) {
     try {
       const [user] = await db
@@ -447,9 +382,7 @@ export async function setBookingQuoteAction(
           bookingNumber: booking.bookingNumber,
           customerName: booking.serviceAddress.fullName,
           serviceTitle: service?.title ?? booking.serviceType,
-          depositInSatang: deposit,
           quotedTotalInSatang,
-          balanceInSatang: balance,
           bookingId: booking.id,
         });
       }
@@ -461,7 +394,7 @@ export async function setBookingQuoteAction(
   return { success: true };
 }
 
-// ─── Customer: accept admin's quote (new flow) ─────────────────────────────
+// ─── Customer: accept admin's quote ─────────────────────────────────────────
 
 export type AcceptQuoteResult =
   | { success: true }
@@ -469,8 +402,7 @@ export type AcceptQuoteResult =
 
 /**
  * Customer accepts the admin's quote — slot becomes confirmed.
- * Payment is NOT taken here; it happens later via payBookingBalanceAction
- * (or offline on service day, per business preference).
+ * Settlement happens offline via Line/Facebook/phone; this just locks the slot.
  */
 export async function acceptBookingQuoteAction(
   bookingId: string
@@ -480,7 +412,6 @@ export async function acceptBookingQuoteAction(
 
   try {
     await db.transaction(async (tx) => {
-      // Lock the row so two concurrent accepts on the same booking serialise.
       const [booking] = await tx
         .select({
           id: bookings.id,
@@ -514,9 +445,8 @@ export async function acceptBookingQuoteAction(
         throw new Error("No technician assigned.");
       }
 
-      // ── Conflict check: is the slot still free? ─────────────────────────
-      // Look for any OTHER booking with status IN (confirmed/in_progress/
-      // completed) that overlaps with this slot for the same technician.
+      // Slot-conflict check: any OTHER booking already confirmed for this
+      // technician overlapping our window?
       const slotStart = new Date(booking.scheduledAt);
       const slotEnd = new Date(
         slotStart.getTime() + booking.durationMinutes * 60 * 1000
@@ -530,8 +460,6 @@ export async function acceptBookingQuoteAction(
             eq(bookings.technicianId, booking.technicianId),
             sql`${bookings.id} != ${bookingId}`,
             sql`${bookings.status} IN ('confirmed', 'in_progress', 'completed')`,
-            // Overlap test: existing.start < new.end AND existing.end > new.start
-            // Use scheduled_at + duration as end via SQL
             sql`${bookings.scheduledAt} < ${slotEnd.toISOString()}`,
             sql`(${bookings.scheduledAt} + (${bookings.durationMinutes} || ' minutes')::interval) > ${slotStart.toISOString()}`
           )
@@ -559,135 +487,8 @@ export async function acceptBookingQuoteAction(
   }
 }
 
-// ─── Customer: pay the balance ───────────────────────────────────────────────
-
-export type PayBalanceResult =
-  | { success: true }
-  | { success: false; error: string };
-
-export async function payBookingBalanceAction(
-  bookingId: string,
-  payment: { opnToken?: string; savedCardId?: string }
-): Promise<PayBalanceResult> {
-  const session = await getSession();
-  if (!session) return { success: false, error: "Please log in." };
-
-  if (!payment.opnToken && !payment.savedCardId) {
-    return { success: false, error: "No payment method selected." };
-  }
-
-  const [booking] = await db
-    .select()
-    .from(bookings)
-    .where(
-      and(eq(bookings.id, bookingId), eq(bookings.userId, session.userId))
-    )
-    .limit(1);
-
-  if (!booking) return { success: false, error: "Booking not found." };
-  if (!booking.quoteAcceptedAt || booking.balanceInSatang == null) {
-    return {
-      success: false,
-      error: "Please accept the quote first.",
-    };
-  }
-  if (booking.balancePaymentStatus === "paid") {
-    return { success: false, error: "Balance already paid." };
-  }
-  if (booking.balanceInSatang <= 0) {
-    return { success: false, error: "Nothing to pay." };
-  }
-
-  // ── Resolve charge params (saved card vs new token) ──────────────────────
-  let chargeCardParam: string | undefined;
-  let chargeCustomerParam: string | undefined;
-
-  if (payment.savedCardId) {
-    const [savedCard] = await db
-      .select({ opnCardId: savedCards.opnCardId })
-      .from(savedCards)
-      .where(
-        and(
-          eq(savedCards.id, payment.savedCardId),
-          eq(savedCards.userId, session.userId)
-        )
-      )
-      .limit(1);
-
-    const [user] = await db
-      .select({ opnCustomerId: users.opnCustomerId })
-      .from(users)
-      .where(eq(users.id, session.userId))
-      .limit(1);
-
-    if (!savedCard || !user?.opnCustomerId) {
-      return {
-        success: false,
-        error: "Saved card not found. Please use a new card.",
-      };
-    }
-    chargeCardParam = savedCard.opnCardId;
-    chargeCustomerParam = user.opnCustomerId;
-  } else {
-    chargeCardParam = payment.opnToken;
-  }
-
-  let charge;
-  try {
-    charge = await createCharge({
-      amount: booking.balanceInSatang,
-      currency: "THB",
-      card: chargeCardParam,
-      customer: chargeCustomerParam,
-      capture: true,
-      description: `Booking ${booking.bookingNumber} — balance`,
-      returnUri: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/booking-return`,
-      metadata: { bookingId: booking.id, kind: "balance" },
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Payment failed.";
-    return { success: false, error: message };
-  }
-
-  await db
-    .update(bookings)
-    .set({ balancePaymentReference: charge.id })
-    .where(eq(bookings.id, bookingId));
-
-  if (charge.status === "successful") {
-    if (
-      charge.amount !== booking.balanceInSatang ||
-      charge.currency.toUpperCase() !== "THB" ||
-      charge.metadata?.bookingId !== booking.id
-    ) {
-      return { success: false, error: "Payment validation failed." };
-    }
-    await markBalancePaid(booking.id);
-    return { success: true };
-  }
-
-  if (charge.status === "failed" || charge.status === "expired") {
-    await db
-      .update(bookings)
-      .set({ balancePaymentStatus: "failed" })
-      .where(eq(bookings.id, bookingId));
-    return {
-      success: false,
-      error: charge.failure_message ?? "Payment declined.",
-    };
-  }
-
-  // pending — 3DS: caller should redirect
-  if (charge.authorize_uri) {
-    redirect(charge.authorize_uri);
-  }
-  return { success: false, error: "Payment requires verification." };
-}
-
 /**
  * Cancel bookings that never moved past "pending" within the window.
- * In the new flow, pending = waiting for admin quote → no quote_confirmed_at.
- * Default window is 7 days so admin has time to follow up before auto-cancel.
  */
 export async function cleanupStalePendingBookings(
   olderThanHours = 24 * 7
@@ -705,26 +506,4 @@ export async function cleanupStalePendingBookings(
     .returning({ id: bookings.id });
 
   return result.length;
-}
-
-export async function markBalancePaid(bookingId: string) {
-  const [b] = await db
-    .select({
-      depositInSatang: bookings.depositInSatang,
-      balanceInSatang: bookings.balanceInSatang,
-    })
-    .from(bookings)
-    .where(eq(bookings.id, bookingId))
-    .limit(1);
-
-  const total = (b?.depositInSatang ?? 0) + (b?.balanceInSatang ?? 0);
-
-  await db
-    .update(bookings)
-    .set({
-      balancePaymentStatus: "paid",
-      balancePaidAt: new Date(),
-      finalPriceInSatang: total,
-    })
-    .where(eq(bookings.id, bookingId));
 }
