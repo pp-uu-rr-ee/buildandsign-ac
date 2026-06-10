@@ -22,13 +22,6 @@ const STATUS_STYLES: Record<string, string> = {
   no_show:     "bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700",
 };
 
-const SERVICE_LABELS: Record<string, string> = {
-  cleaning:     "AC Cleaning",
-  repair:       "AC Repair",
-  installation: "AC Installation",
-  inspection:   "AC Inspection",
-};
-
 export default async function BookingsPage() {
   const session = await getSession();
   if (!session) redirect("/login?callbackUrl=/bookings");
@@ -39,28 +32,52 @@ export default async function BookingsPage() {
     getLocale(),
   ]);
 
+  const statusLabels: Record<string, string> = {
+    pending: t.bookingsPage.statusPending,
+    confirmed: t.bookingsPage.statusConfirmed,
+    in_progress: t.bookingsPage.statusInProgress,
+    completed: t.bookingsPage.statusCompleted,
+    cancelled: t.bookingsPage.statusCancelled,
+    no_show: t.bookingsPage.statusNoShow,
+  };
+
+  const serviceLabels: Record<string, string> = {
+    cleaning: t.bookingsPage.cleaningLabel,
+    repair: t.bookingsPage.repairLabel,
+    installation: t.bookingsPage.installationLabel,
+    inspection: t.bookingsPage.inspectionLabel,
+  };
+
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12">
       <div className="flex items-center gap-2 text-sm text-gray-500 mb-6 dark:text-gray-400">
-        <Link href="/account" className="hover:text-gray-700 dark:hover:text-gray-200">Account</Link>
+        <Link href="/account" className="hover:text-gray-700 dark:hover:text-gray-200">
+          {t.bookingsPage.accountBreadcrumb}
+        </Link>
         <ChevronRight className="h-4 w-4" />
-        <span className="text-gray-900 font-medium dark:text-gray-100">My Bookings</span>
+        <span className="text-gray-900 font-medium dark:text-gray-100">
+          {t.bookingsPage.title}
+        </span>
       </div>
 
-      <h1 className="text-3xl font-bold text-gray-900 mb-8 dark:text-gray-50">My Bookings</h1>
+      <h1 className="text-3xl font-bold text-gray-900 mb-8 dark:text-gray-50">
+        {t.bookingsPage.title}
+      </h1>
 
       {bookings.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-gray-300 p-16 text-center dark:border-gray-700">
           <CalendarCheck className="h-12 w-12 text-gray-300 mx-auto mb-4 dark:text-gray-600" />
-          <p className="text-gray-500 font-medium mb-2 dark:text-gray-400">No bookings yet</p>
+          <p className="text-gray-500 font-medium mb-2 dark:text-gray-400">
+            {t.bookingsPage.noBookings}
+          </p>
           <p className="text-sm text-gray-400 mb-6 dark:text-gray-500">
-            Book a service and it will appear here.
+            {t.bookingsPage.noBookingsHint}
           </p>
           <Link
             href="/services"
             className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
           >
-            Book a Service <ArrowRight className="h-4 w-4" />
+            {t.bookingsPage.bookService} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       ) : (
@@ -68,14 +85,8 @@ export default async function BookingsPage() {
           {bookings.map((booking) => {
             const statusClass =
               STATUS_STYLES[booking.status] ?? "bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700";
-            const statusLabel =
-              booking.status === "in_progress"
-                ? "In Progress"
-                : booking.status === "no_show"
-                ? "No Show"
-                : booking.status.charAt(0).toUpperCase() + booking.status.slice(1);
-            const serviceLabel =
-              SERVICE_LABELS[booking.serviceType] ?? booking.serviceType;
+            const statusLabel = statusLabels[booking.status] ?? booking.status;
+            const serviceLabel = serviceLabels[booking.serviceType] ?? booking.serviceType;
             const price = booking.quotedPriceInSatang;
 
             const canAcceptQuote =

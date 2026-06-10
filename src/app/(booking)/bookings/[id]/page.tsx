@@ -43,6 +43,15 @@ export default async function BookingDetailPage({ params }: Props) {
   if (!row) notFound();
   const { booking, technicianName } = row;
 
+  const statusLabels: Record<string, string> = {
+    pending: t.bookingsPage.statusPending,
+    confirmed: t.bookingsPage.statusConfirmed,
+    in_progress: t.bookingsPage.statusInProgress,
+    completed: t.bookingsPage.statusCompleted,
+    cancelled: t.bookingsPage.statusCancelled,
+    no_show: t.bookingsPage.statusNoShow,
+  };
+
   const service = getService(booking.serviceType);
   const serviceTitle =
     lang === "th" && service?.titleTh ? service.titleTh : service?.title ?? booking.serviceType;
@@ -73,7 +82,7 @@ export default async function BookingDetailPage({ params }: Props) {
           </h1>
           <p className="text-sm text-gray-500 mt-1">{serviceTitle}</p>
         </div>
-        <StatusBadge status={booking.status} />
+        <StatusBadge status={booking.status} label={statusLabels[booking.status]} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -142,9 +151,7 @@ export default async function BookingDetailPage({ params }: Props) {
               </div>
             ) : (
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {lang === "th"
-                  ? "รอใบเสนอราคาจากทีมงาน"
-                  : "Awaiting quote from our team."}
+                {t.confirmation.awaitingQuote}
               </p>
             )}
           </Card>
@@ -201,7 +208,7 @@ function Row({
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, label }: { status: string; label?: string }) {
   const colors: Record<string, string> = {
     pending: "bg-yellow-100 text-yellow-700",
     confirmed: "bg-blue-100 text-blue-700",
@@ -212,11 +219,11 @@ function StatusBadge({ status }: { status: string }) {
   };
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
+      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
         colors[status] ?? "bg-gray-100"
       }`}
     >
-      {status.replace("_", " ")}
+      {label ?? status.replace("_", " ")}
     </span>
   );
 }

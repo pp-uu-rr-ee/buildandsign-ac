@@ -6,14 +6,13 @@ import { db } from "@/db";
 import { orders, orderItems } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { formatPrice } from "@/lib/helpers/price";
-import { getT, getLang } from "@/lib/helpers/lang";
+import { getT } from "@/lib/helpers/lang";
 
 type Props = { params: Promise<{ id: string }> };
 
 export default async function OrderConfirmationPage({ params }: Props) {
   const { id } = await params;
   const t = await getT();
-  const lang = await getLang();
 
   const [order] = await db
     .select()
@@ -34,20 +33,12 @@ export default async function OrderConfirmationPage({ params }: Props) {
   const fbUrl = process.env.NEXT_PUBLIC_FACEBOOK_URL ?? "";
   const phone = process.env.NEXT_PUBLIC_BUSINESS_PHONE ?? "";
 
-  const inquirySteps =
-    lang === "th"
-      ? [
-          "เราได้รับคำสอบถามของคุณเรียบร้อยแล้ว",
-          "ทีมงานจะติดต่อกลับภายใน 24 ชั่วโมงเพื่อยืนยันสต็อกและราคา",
-          "นัดวันส่งและสรุปวิธีชำระเงินที่สะดวก",
-          "จัดส่งและติดตั้ง (ถ้าต้องการ)",
-        ]
-      : [
-          "We've received your inquiry.",
-          "Our team will reach out within 24 hours to confirm stock and pricing.",
-          "We'll schedule delivery and agree on a payment method that works for you.",
-          "Delivery and installation (if needed).",
-        ];
+  const inquirySteps = [
+    t.confirmation.inquiryStep1,
+    t.confirmation.inquiryStep2,
+    t.confirmation.inquiryStep3,
+    t.confirmation.inquiryStep4,
+  ];
 
   return (
     <div className="mx-auto max-w-lg px-4 sm:px-6 py-16 text-center">
@@ -60,30 +51,22 @@ export default async function OrderConfirmationPage({ params }: Props) {
       </div>
 
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-        {lang === "th" ? "ส่งคำสอบถามเรียบร้อย" : "Inquiry received"}
+        {t.confirmation.inquiryReceived}
       </h1>
       <p className="text-gray-500 dark:text-gray-400 mb-8">
-        {lang === "th" ? "เลขที่อ้างอิง " : "Reference number "}
+        {t.confirmation.inquiryReferencePrefix}
         <span className="font-mono font-semibold text-gray-900 dark:text-gray-100">
           {order.orderNumber}
-        </span>{" "}
-        {lang === "th"
-          ? "— ทีมงานจะติดต่อกลับโดยเร็วที่สุด"
-          : "— our team will get back to you shortly."}
+        </span>
+        {t.confirmation.inquiryReferenceSuffix}
       </p>
 
       {/* Summary card */}
       <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-left overflow-hidden mb-8">
         <div className="bg-blue-600 px-5 py-4 text-white">
-          <p className="text-blue-100 text-xs">
-            {lang === "th" ? "ราคาประมาณ" : "Estimated total"}
-          </p>
+          <p className="text-blue-100 text-xs">{t.confirmation.estimatedTotal}</p>
           <p className="text-2xl font-bold">{formatPrice(order.totalInSatang)}</p>
-          <p className="text-[11px] text-blue-100 mt-1">
-            {lang === "th"
-              ? "ราคาสุดท้ายยืนยันโดยทีมงาน"
-              : "Final price confirmed by our team"}
-          </p>
+          <p className="text-[11px] text-blue-100 mt-1">{t.confirmation.finalPriceNote}</p>
         </div>
 
         <div className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -119,12 +102,10 @@ export default async function OrderConfirmationPage({ params }: Props) {
       {/* Contact channels */}
       <div className="rounded-2xl border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/20 p-5 text-left mb-8">
         <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-1 text-sm">
-          {lang === "th" ? "ติดต่อทีมงานได้ทันที" : "Reach out to us now"}
+          {t.confirmation.contactTitle}
         </h2>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-          {lang === "th"
-            ? "ทักหาเราพร้อมเลขอ้างอิงด้านบนเพื่อความรวดเร็ว"
-            : "Mention the reference number above for faster service."}
+          {t.confirmation.contactSubtitle}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {lineUrl && (
@@ -164,7 +145,7 @@ export default async function OrderConfirmationPage({ params }: Props) {
       {/* What's next */}
       <div className="rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-5 text-left mb-8">
         <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 text-sm">
-          {lang === "th" ? "ขั้นตอนต่อไป" : "What happens next"}
+          {t.confirmation.nextStepsTitle}
         </h2>
         <ol className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
           {inquirySteps.map((s, i) => (

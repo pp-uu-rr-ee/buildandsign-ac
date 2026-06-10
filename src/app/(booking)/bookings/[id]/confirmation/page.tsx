@@ -137,12 +137,10 @@ export default async function BookingConfirmationPage({ params }: Props) {
       {/* Contact channels */}
       <div className="rounded-2xl border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/20 p-5 text-left mb-8">
         <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-1 text-sm">
-          {lang === "th" ? "ติดต่อทีมงานได้ทันที" : "Reach out to us now"}
+          {t.confirmation.contactTitle}
         </h2>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-          {lang === "th"
-            ? "ทักหาเราพร้อมเลขอ้างอิงด้านบนเพื่อความรวดเร็ว"
-            : "Mention the reference number above for faster service."}
+          {t.confirmation.contactSubtitle}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {lineUrl && (

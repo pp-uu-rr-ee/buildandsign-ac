@@ -540,6 +540,24 @@ const th: Translations = {
     bookingStep2: "คุณจะได้รับ SMS แจ้งเตือนล่วงหน้า 24 ชั่วโมงก่อนเข้ารับบริการ",
     bookingStep3: "ช่างจะมาถึงในช่วงเวลาที่นัดหมาย",
     bookingStep4: "หลังรับบริการ คุณสามารถรีวิวเพื่อช่วยผู้อื่นได้",
+
+    // Inquiry (order without payment)
+    inquiryReceived: "ส่งคำสอบถามเรียบร้อย",
+    inquiryReferencePrefix: "เลขที่อ้างอิง ",
+    inquiryReferenceSuffix: " — ทีมงานจะติดต่อกลับโดยเร็วที่สุด",
+    estimatedTotal: "ราคาประมาณ",
+    finalPriceNote: "ราคาสุดท้ายยืนยันโดยทีมงาน",
+    inquiryStep1: "เราได้รับคำสอบถามของคุณเรียบร้อยแล้ว",
+    inquiryStep2: "ทีมงานจะติดต่อกลับภายใน 24 ชั่วโมงเพื่อยืนยันสต็อกและราคา",
+    inquiryStep3: "นัดวันส่งและสรุปวิธีชำระเงินที่สะดวก",
+    inquiryStep4: "จัดส่งและติดตั้ง (ถ้าต้องการ)",
+
+    // Contact channels
+    contactTitle: "ติดต่อทีมงานได้ทันที",
+    contactSubtitle: "ทักหาเราพร้อมเลขอ้างอิงด้านบนเพื่อความรวดเร็ว",
+
+    // Booking detail
+    awaitingQuote: "รอใบเสนอราคาจากทีมงาน",
   },
 
   about: {

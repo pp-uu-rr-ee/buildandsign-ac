@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckCircle2, Clock, Phone, Sparkles, Wrench, AlertCircle } from "lucide-react";
-import { ImageSlot } from "@/components/ui/image-slot";
+import { ServicesHeroSlideshow } from "@/components/booking/ServicesHeroSlideshow";
 import { servicesConfig, type ServiceConfig } from "@/config/services";
 import { LocalBusinessJsonLd } from "@/components/seo/LocalBusinessJsonLd";
 import { formatPrice } from "@/lib/helpers/price";
@@ -22,6 +22,30 @@ export default async function ServicesPage() {
     t.services.badgeCertified,
     t.services.badgeGuarantee,
     t.services.badgePricing,
+  ];
+
+  // Hero slideshow — uses the photos in /public/images.
+  const slides = [
+    {
+      src: "/images/hero.jpg",
+      alt: lang === "th" ? "บริการแอร์ครบวงจร" : "Full-service air conditioning",
+    },
+    {
+      src: "/images/cleaning.jpg",
+      alt: lang === "th" ? "ล้างแอร์" : "AC cleaning",
+    },
+    {
+      src: "/images/repair.jpg",
+      alt: lang === "th" ? "ซ่อมแอร์" : "AC repair",
+    },
+    {
+      src: "/images/installation.jpg",
+      alt: lang === "th" ? "ติดตั้งแอร์" : "AC installation",
+    },
+    {
+      src: "/images/inspection.jpg",
+      alt: lang === "th" ? "ตรวจเช็คแอร์" : "AC inspection",
+    },
   ];
 
   const btuServices = servicesConfig.filter((s) => s.group === "btu");
@@ -58,10 +82,9 @@ export default async function ServicesPage() {
             </div>
 
             <div className="hidden lg:block">
-              <ImageSlot
-                hint="1200 × 900 px"
-                onDark
-                className="aspect-[4/3] rounded-2xl bg-white/10 border-2 border-dashed border-white/30"
+              <ServicesHeroSlideshow
+                slides={slides}
+                className="aspect-[4/3] rounded-2xl ring-1 ring-white/30 shadow-2xl"
               />
             </div>
           </div>

@@ -540,6 +540,24 @@ const en = {
     bookingStep2: "You'll receive an SMS reminder 24 hours before the visit.",
     bookingStep3: "The technician will arrive in the scheduled time window.",
     bookingStep4: "After the service, you can leave a review to help others.",
+
+    // Inquiry (order without payment)
+    inquiryReceived: "Inquiry received",
+    inquiryReferencePrefix: "Reference number ",
+    inquiryReferenceSuffix: " — our team will get back to you shortly.",
+    estimatedTotal: "Estimated total",
+    finalPriceNote: "Final price confirmed by our team",
+    inquiryStep1: "We've received your inquiry.",
+    inquiryStep2: "Our team will reach out within 24 hours to confirm stock and pricing.",
+    inquiryStep3: "We'll schedule delivery and agree on a payment method that works for you.",
+    inquiryStep4: "Delivery and installation (if needed).",
+
+    // Contact channels
+    contactTitle: "Reach out to us now",
+    contactSubtitle: "Mention the reference number above for faster service.",
+
+    // Booking detail
+    awaitingQuote: "Awaiting quote from our team.",
   },
 
   about: {
