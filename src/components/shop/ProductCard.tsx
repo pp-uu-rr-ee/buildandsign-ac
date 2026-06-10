@@ -15,19 +15,25 @@ type Props = {
     shortDescription: string | null;
     shortDescriptionTh?: string | null;
     category: string;
-    priceInSatang: number;
-    comparePriceInSatang: number | null;
-    stock: number;
     isFeatured: boolean;
+    minPriceInSatang: number;
+    maxPriceInSatang: number;
+    maxComparePriceInSatang: number | null;
+    totalStock: number;
+    variantCount: number;
     primaryImage: { url: string; altText: string | null } | null;
   };
 };
 
 export function ProductCard({ product }: Props) {
   const { lang, t } = useLanguage();
-  const discount = discountPercent(product.comparePriceInSatang, product.priceInSatang);
-  const isLowStock = product.stock > 0 && product.stock <= 5;
-  const isOutOfStock = product.stock === 0;
+
+  // Discount is computed against the cheapest variant for display consistency.
+  const discount = discountPercent(
+    product.maxComparePriceInSatang,
+    product.minPriceInSatang
+  );
+  const isOutOfStock = product.totalStock === 0;
 
   const displayName =
     lang === "th" && product.nameTh ? product.nameTh : product.name;
@@ -35,6 +41,9 @@ export function ProductCard({ product }: Props) {
     lang === "th" && product.shortDescriptionTh
       ? product.shortDescriptionTh
       : product.shortDescription;
+
+  const hasPriceRange =
+    product.maxPriceInSatang > product.minPriceInSatang;
 
   return (
     <Link
@@ -105,18 +114,23 @@ export function ProductCard({ product }: Props) {
 
         <div className="mt-auto pt-3 flex items-end justify-between gap-2">
           <div>
-            <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
-              {formatPrice(product.priceInSatang)}
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              {lang === "th" ? "เริ่มต้น" : "From"}
             </p>
-            {product.comparePriceInSatang && (
-              <p className="text-xs text-gray-400 dark:text-gray-500 line-through">
-                {formatPrice(product.comparePriceInSatang)}
+            <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+              {formatPrice(product.minPriceInSatang)}
+            </p>
+            {hasPriceRange && (
+              <p className="text-[11px] text-gray-400 dark:text-gray-500">
+                – {formatPrice(product.maxPriceInSatang)}
               </p>
             )}
           </div>
-          {isLowStock && (
-            <span className="text-xs text-orange-500 dark:text-orange-400 font-medium whitespace-nowrap">
-              {t.products.onlyLeft(product.stock)}
+          {product.variantCount > 1 && (
+            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
+              {lang === "th"
+                ? `${product.variantCount} ขนาด`
+                : `${product.variantCount} sizes`}
             </span>
           )}
         </div>

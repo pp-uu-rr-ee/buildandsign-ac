@@ -1,18 +1,37 @@
 import { db } from "@/db";
-import { products, productImages } from "@/db/schema";
+import { products, productImages, productVariants } from "@/db/schema";
 import { and, asc, desc, eq, gte, ilike, lte, inArray, sql } from "drizzle-orm";
 import type { ProductCategoryEnum } from "@/types";
 
 export type ProductFilters = {
   category?: ProductCategoryEnum[];
-  minPrice?: number; // in cents
-  maxPrice?: number; // in cents
+  minPrice?: number; // in satang
+  maxPrice?: number; // in satang
   search?: string;
   featured?: boolean;
   sort?: "price_asc" | "price_desc" | "newest" | "name_asc";
   page?: number;
   limit?: number;
 };
+
+/**
+ * Aggregated columns from variants:
+ *   minPriceInSatang        — cheapest variant price (the "from ..." label)
+ *   maxPriceInSatang        — for showing price range
+ *   maxComparePriceInSatang — highest crossed-out price across variants
+ *   totalStock              — sum of all variant stock (0 = whole series oos)
+ *   variantCount            — how many sizes available
+ */
+const variantAggSubquery = sql`(
+  SELECT
+    min(price_in_satang)::int          AS min_price,
+    max(price_in_satang)::int          AS max_price,
+    max(compare_price_in_satang)::int  AS max_compare,
+    coalesce(sum(stock), 0)::int       AS total_stock,
+    count(*)::int                      AS variant_count
+  FROM product_variants pv
+  WHERE pv.product_id = ${products.id}
+)`;
 
 export async function getProducts(filters: ProductFilters = {}) {
   const {
@@ -31,17 +50,22 @@ export async function getProducts(filters: ProductFilters = {}) {
     category && category.length > 0
       ? inArray(products.category, category)
       : undefined,
-    minPrice !== undefined ? gte(products.priceInSatang, minPrice) : undefined,
-    maxPrice !== undefined ? lte(products.priceInSatang, maxPrice) : undefined,
     search ? ilike(products.name, `%${search}%`) : undefined,
     featured !== undefined ? eq(products.isFeatured, featured) : undefined,
+    // Price filter applies to the cheapest variant of each series.
+    minPrice !== undefined
+      ? sql`(SELECT min(price_in_satang) FROM product_variants WHERE product_id = ${products.id}) >= ${minPrice}`
+      : undefined,
+    maxPrice !== undefined
+      ? sql`(SELECT min(price_in_satang) FROM product_variants WHERE product_id = ${products.id}) <= ${maxPrice}`
+      : undefined,
   );
 
   const orderBy =
     sort === "price_asc"
-      ? asc(products.priceInSatang)
+      ? sql`(SELECT min(price_in_satang) FROM product_variants WHERE product_id = ${products.id}) ASC NULLS LAST`
       : sort === "price_desc"
-      ? desc(products.priceInSatang)
+      ? sql`(SELECT min(price_in_satang) FROM product_variants WHERE product_id = ${products.id}) DESC NULLS LAST`
       : sort === "name_asc"
       ? asc(products.name)
       : desc(products.createdAt);
@@ -58,10 +82,12 @@ export async function getProducts(filters: ProductFilters = {}) {
         shortDescription: products.shortDescription,
         shortDescriptionTh: products.shortDescriptionTh,
         category: products.category,
-        priceInSatang: products.priceInSatang,
-        comparePriceInSatang: products.comparePriceInSatang,
-        stock: products.stock,
         isFeatured: products.isFeatured,
+        minPriceInSatang: sql<number>`(SELECT min(price_in_satang)::int FROM product_variants WHERE product_id = ${products.id})`,
+        maxPriceInSatang: sql<number>`(SELECT max(price_in_satang)::int FROM product_variants WHERE product_id = ${products.id})`,
+        maxComparePriceInSatang: sql<number | null>`(SELECT max(compare_price_in_satang)::int FROM product_variants WHERE product_id = ${products.id})`,
+        totalStock: sql<number>`(SELECT coalesce(sum(stock), 0)::int FROM product_variants WHERE product_id = ${products.id})`,
+        variantCount: sql<number>`(SELECT count(*)::int FROM product_variants WHERE product_id = ${products.id})`,
         primaryImage: {
           url: productImages.url,
           altText: productImages.altText,
@@ -103,13 +129,20 @@ export async function getProductBySlug(slug: string) {
 
   if (!product) return null;
 
-  const images = await db
-    .select()
-    .from(productImages)
-    .where(eq(productImages.productId, product.id))
-    .orderBy(asc(productImages.sortOrder));
+  const [images, variants] = await Promise.all([
+    db
+      .select()
+      .from(productImages)
+      .where(eq(productImages.productId, product.id))
+      .orderBy(asc(productImages.sortOrder)),
+    db
+      .select()
+      .from(productVariants)
+      .where(eq(productVariants.productId, product.id))
+      .orderBy(asc(productVariants.sortOrder)),
+  ]);
 
-  return { ...product, images };
+  return { ...product, images, variants };
 }
 
 export async function getRelatedProducts(
@@ -123,8 +156,8 @@ export async function getRelatedProducts(
       name: products.name,
       nameTh: products.nameTh,
       slug: products.slug,
-      priceInSatang: products.priceInSatang,
-      comparePriceInSatang: products.comparePriceInSatang,
+      minPriceInSatang: sql<number>`(SELECT min(price_in_satang)::int FROM product_variants WHERE product_id = ${products.id})`,
+      maxComparePriceInSatang: sql<number | null>`(SELECT max(compare_price_in_satang)::int FROM product_variants WHERE product_id = ${products.id})`,
       primaryImage: {
         url: productImages.url,
         altText: productImages.altText,
@@ -148,3 +181,6 @@ export async function getRelatedProducts(
     .orderBy(sql`random()`)
     .limit(limit);
 }
+
+// Keep the unused subquery exported in case other queries want it.
+export { variantAggSubquery };

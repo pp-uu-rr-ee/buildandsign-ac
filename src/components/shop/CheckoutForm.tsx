@@ -213,7 +213,7 @@ export function CheckoutForm({ accountName, accountEmail, accountPhone }: Props)
 
             <ul className="space-y-3 max-h-64 overflow-y-auto">
               {items.map((item) => (
-                <li key={item.productId} className="flex items-center gap-3">
+                <li key={item.variantId} className="flex items-center gap-3">
                   <div className="relative h-12 w-12 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden shrink-0">
                     {item.imageUrl ? (
                       <Image src={item.imageUrl} alt={item.name} fill sizes="48px" className="object-cover" />
@@ -227,7 +227,14 @@ export function CheckoutForm({ accountName, accountEmail, accountPhone }: Props)
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 line-clamp-2">{item.name}</p>
+                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 line-clamp-2">
+                      {item.name}
+                      {item.size && (
+                        <span className="ml-1 text-blue-600 dark:text-blue-400 font-semibold">
+                          · {item.size}
+                        </span>
+                      )}
+                    </p>
                   </div>
                   <p className="text-sm font-semibold text-gray-900 dark:text-white shrink-0">
                     {formatPrice(item.unitPriceInSatang * item.quantity)}

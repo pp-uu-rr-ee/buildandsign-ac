@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import {
-  orders, orderItems, bookings, products,
+  orders, orderItems, bookings, products, productVariants,
   technicians, users, productImages,
 } from "@/db/schema";
 import { desc, eq, sql, and, or, ilike, count, gte, lt } from "drizzle-orm";
@@ -23,7 +23,18 @@ export async function getDashboardStats() {
     db.select({ totalBookings: count() }).from(bookings),
     db.select({ pendingBookings: count() }).from(bookings).where(eq(bookings.status, "pending")),
     db.select({ totalProducts: count() }).from(products),
-    db.select({ lowStock: count() }).from(products).where(sql`stock <= low_stock_threshold AND status = 'active'`),
+    // Low stock = count of variants (SKUs) where stock ≤ low_stock_threshold
+    // and the parent series is still active. Maps to what ops needs to reorder.
+    db
+      .select({ lowStock: count() })
+      .from(productVariants)
+      .innerJoin(products, eq(products.id, productVariants.productId))
+      .where(
+        and(
+          sql`${productVariants.stock} <= ${productVariants.lowStockThreshold}`,
+          eq(products.status, "active")
+        )
+      ),
     db.select({ totalCustomers: count() }).from(users).where(eq(users.role, "customer")),
   ]);
 
@@ -223,9 +234,13 @@ export async function getAdminProducts({
         ilike(products.name, like),
         ilike(products.nameTh, like),
         ilike(products.slug, like),
-        ilike(products.sku, like),
         ilike(products.shortDescription, like),
-        ilike(products.shortDescriptionTh, like)
+        ilike(products.shortDescriptionTh, like),
+        // Search across variant SKUs too — admins type the SKU often.
+        sql`EXISTS (
+          SELECT 1 FROM product_variants pv
+          WHERE pv.product_id = ${products.id} AND pv.sku ILIKE ${like}
+        )`
       )!
     );
   }
@@ -248,12 +263,13 @@ export async function getAdminProducts({
       slug: products.slug,
       category: products.category,
       status: products.status,
-      priceInSatang: products.priceInSatang,
-      stock: products.stock,
-      lowStockThreshold: products.lowStockThreshold,
       isFeatured: products.isFeatured,
       createdAt: products.createdAt,
       primaryImage: { url: productImages.url },
+      minPriceInSatang: sql<number | null>`(SELECT min(price_in_satang)::int FROM product_variants WHERE product_id = ${products.id})`,
+      maxPriceInSatang: sql<number | null>`(SELECT max(price_in_satang)::int FROM product_variants WHERE product_id = ${products.id})`,
+      totalStock: sql<number>`(SELECT coalesce(sum(stock), 0)::int FROM product_variants WHERE product_id = ${products.id})`,
+      variantCount: sql<number>`(SELECT count(*)::int FROM product_variants WHERE product_id = ${products.id})`,
     })
     .from(products)
     .leftJoin(productImages, and(eq(productImages.productId, products.id), eq(productImages.isPrimary, true)))

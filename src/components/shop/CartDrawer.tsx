@@ -48,7 +48,7 @@ export function CartDrawer() {
           ) : (
             <ul className="space-y-4">
               {items.map((item) => (
-                <li key={item.productId} className="flex gap-3">
+                <li key={item.variantId} className="flex gap-3">
                   <div className="relative h-16 w-16 rounded-lg border border-gray-200 bg-gray-50 overflow-hidden shrink-0 dark:border-gray-700 dark:bg-gray-800">
                     {item.imageUrl ? (
                       <Image src={item.imageUrl} alt={item.name} fill sizes="64px" className="object-cover" />
@@ -65,6 +65,11 @@ export function CartDrawer() {
                       className="text-sm font-medium text-gray-900 hover:text-blue-600 line-clamp-2 leading-tight dark:text-gray-100 dark:hover:text-blue-400"
                     >
                       {item.name}
+                      {item.size && (
+                        <span className="ml-1 text-blue-600 dark:text-blue-400">
+                          · {item.size}
+                        </span>
+                      )}
                     </Link>
                     <p className="text-sm font-semibold text-gray-900 mt-1 dark:text-gray-100">
                       {formatPrice(item.unitPriceInSatang * item.quantity)}
@@ -73,7 +78,7 @@ export function CartDrawer() {
                     <div className="flex items-center gap-2 mt-2">
                       <div className="flex items-center border border-gray-200 rounded overflow-hidden dark:border-gray-700">
                         <button
-                          onClick={() => updateQty(item.productId, item.quantity - 1)}
+                          onClick={() => updateQty(item.variantId, item.quantity - 1)}
                           className="px-2 py-0.5 text-gray-500 hover:bg-gray-100 text-sm transition-colors dark:text-gray-400 dark:hover:bg-gray-800"
                         >
                           −
@@ -82,14 +87,14 @@ export function CartDrawer() {
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() => updateQty(item.productId, item.quantity + 1)}
+                          onClick={() => updateQty(item.variantId, item.quantity + 1)}
                           className="px-2 py-0.5 text-gray-500 hover:bg-gray-100 text-sm transition-colors dark:text-gray-400 dark:hover:bg-gray-800"
                         >
                           +
                         </button>
                       </div>
                       <button
-                        onClick={() => removeItem(item.productId)}
+                        onClick={() => removeItem(item.variantId)}
                         className="p-1 text-gray-400 hover:text-red-500 transition-colors dark:text-gray-500 dark:hover:text-red-400"
                         aria-label={t.cart.clearCart}
                       >

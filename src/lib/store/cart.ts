@@ -7,8 +7,8 @@ import type { CartItem } from "@/types";
 type CartState = {
   items: CartItem[];
   addItem: (item: CartItem) => void;
-  removeItem: (productId: string) => void;
-  updateQty: (productId: string, qty: number) => void;
+  removeItem: (variantId: string) => void;
+  updateQty: (variantId: string, qty: number) => void;
   clearCart: () => void;
 };
 
@@ -19,11 +19,11 @@ export const useCart = create<CartState>()(
 
       addItem: (incoming) => {
         const { items } = get();
-        const existing = items.find((i) => i.productId === incoming.productId);
+        const existing = items.find((i) => i.variantId === incoming.variantId);
         if (existing) {
           set({
             items: items.map((i) =>
-              i.productId === incoming.productId
+              i.variantId === incoming.variantId
                 ? { ...i, quantity: i.quantity + incoming.quantity }
                 : i
             ),
@@ -33,17 +33,17 @@ export const useCart = create<CartState>()(
         }
       },
 
-      removeItem: (productId) =>
-        set({ items: get().items.filter((i) => i.productId !== productId) }),
+      removeItem: (variantId) =>
+        set({ items: get().items.filter((i) => i.variantId !== variantId) }),
 
-      updateQty: (productId, qty) => {
+      updateQty: (variantId, qty) => {
         if (qty <= 0) {
-          get().removeItem(productId);
+          get().removeItem(variantId);
           return;
         }
         set({
           items: get().items.map((i) =>
-            i.productId === productId ? { ...i, quantity: qty } : i
+            i.variantId === variantId ? { ...i, quantity: qty } : i
           ),
         });
       },
@@ -52,23 +52,35 @@ export const useCart = create<CartState>()(
     }),
     {
       name: "ac-cart",
-      version: 2,
+      version: 3,
       migrate: (persistedState: unknown, version: number) => {
-        const state = persistedState as { items: Record<string, unknown>[] };
-        if (version < 2) {
-          // Migrate: rename unitPriceInCents → unitPriceInSatang
-          return {
-            ...state,
-            items: (state.items ?? []).map((item) => ({
-              ...item,
-              unitPriceInSatang:
-                (item.unitPriceInSatang as number | undefined) ??
-                (item.unitPriceInCents as number | undefined) ??
-                0,
-            })),
-          };
+        const state = persistedState as {
+          items?: Array<Record<string, unknown>>;
+        };
+        const items = state.items ?? [];
+
+        if (version < 3) {
+          // v1 → v2: rename unitPriceInCents → unitPriceInSatang
+          // v2 → v3: cart now keys by variantId; drop legacy items missing it
+          //          (they no longer point at any addressable SKU).
+          const migrated = items
+            .map((item) => {
+              const it = item as Record<string, unknown>;
+              return {
+                ...it,
+                unitPriceInSatang:
+                  (it.unitPriceInSatang as number | undefined) ??
+                  (it.unitPriceInCents as number | undefined) ??
+                  0,
+              };
+            })
+            .filter(
+              (item) => typeof (item as Record<string, unknown>).variantId === "string"
+            );
+
+          return { ...state, items: migrated } as unknown as CartState;
         }
-        return state as CartState;
+        return state as unknown as CartState;
       },
     }
   )

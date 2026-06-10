@@ -11,7 +11,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { users } from "./users";
-import { products } from "./products";
+import { products, productVariants } from "./products";
 
 export const orderStatusEnum = pgEnum("order_status", [
   "pending",       // inquiry submitted, awaiting admin contact
@@ -65,9 +65,16 @@ export const orderItems = pgTable("order_items", {
   productId: uuid("product_id").references(() => products.id, {
     onDelete: "set null",
   }),
+  productVariantId: uuid("product_variant_id").references(
+    () => productVariants.id,
+    { onDelete: "set null" }
+  ),
 
   // Snapshot product details at purchase time — products may change later
   productName: varchar("product_name", { length: 255 }).notNull(),
+  // Variant label snapshot (e.g. "1.5 HP") so historical orders stay readable
+  // even if the variant row is deleted.
+  productVariantSize: varchar("product_variant_size", { length: 50 }),
   productSku: varchar("product_sku", { length: 100 }),
   unitPriceInSatang: integer("unit_price_in_satang").notNull(),
   quantity: integer("quantity").notNull(),
@@ -84,5 +91,9 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
   product: one(products, {
     fields: [orderItems.productId],
     references: [products.id],
+  }),
+  variant: one(productVariants, {
+    fields: [orderItems.productVariantId],
+    references: [productVariants.id],
   }),
 }));

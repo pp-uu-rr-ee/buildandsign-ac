@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { randomUUID } from "node:crypto";
 import { db } from "@/db";
-import { orders, orderItems, products, users } from "@/db/schema";
+import { orders, orderItems, products, productVariants, users } from "@/db/schema";
 import { eq, sql, and } from "drizzle-orm";
 import { getSession } from "@/lib/session";
 import { checkoutSchema, cartItemsSchema } from "@/lib/validations/checkout";
@@ -57,8 +57,8 @@ export async function createOrderAction(
   }
   const cartItems = cartResult.data;
 
-  const productIdSet = new Set(cartItems.map((i) => i.productId));
-  if (productIdSet.size !== cartItems.length) {
+  const variantIdSet = new Set(cartItems.map((i) => i.variantId));
+  if (variantIdSet.size !== cartItems.length) {
     return { success: false, error: "Duplicate items in cart." };
   }
 
@@ -114,7 +114,9 @@ export async function createOrderAction(
 
   type ValidatedItem = {
     productId: string;
+    productVariantId: string;
     productName: string;
+    productVariantSize: string;
     productSku: string | null;
     unitPriceInSatang: number;
     quantity: number;
@@ -132,33 +134,40 @@ export async function createOrderAction(
     let subSum = 0;
 
     for (const item of cartItems) {
-      const [product] = await db
+      // Re-price by variantId. Join products so we can also snapshot the
+      // series name and confirm the product is still active.
+      const [row] = await db
         .select({
-          id: products.id,
-          name: products.name,
-          sku: products.sku,
-          priceInSatang: products.priceInSatang,
-          status: products.status,
+          variantId: productVariants.id,
+          size: productVariants.size,
+          sku: productVariants.sku,
+          priceInSatang: productVariants.priceInSatang,
+          productId: products.id,
+          productName: products.name,
+          productStatus: products.status,
         })
-        .from(products)
-        .where(eq(products.id, item.productId))
+        .from(productVariants)
+        .innerJoin(products, eq(products.id, productVariants.productId))
+        .where(eq(productVariants.id, item.variantId))
         .limit(1);
 
-      if (!product || product.status !== "active") {
+      if (!row || row.productStatus !== "active") {
         throw new Error(`Product unavailable.`);
       }
 
-      const lineTotal = product.priceInSatang * item.quantity;
+      const lineTotal = row.priceInSatang * item.quantity;
       if (lineTotal < 0 || !Number.isSafeInteger(lineTotal)) {
         throw new Error("Invalid item total.");
       }
       subSum += lineTotal;
 
       validated.push({
-        productId: product.id,
-        productName: product.name,
-        productSku: product.sku,
-        unitPriceInSatang: product.priceInSatang,
+        productId: row.productId,
+        productVariantId: row.variantId,
+        productName: row.productName,
+        productVariantSize: row.size,
+        productSku: row.sku,
+        unitPriceInSatang: row.priceInSatang,
         quantity: item.quantity,
         totalInSatang: lineTotal,
       });
@@ -244,24 +253,24 @@ export async function createOrderAction(
 
 /**
  * Admin uses this to confirm an inquiry after talking to the customer.
- * Atomically reserves stock and marks the order confirmed + paid.
+ * Atomically decrements VARIANT stock and marks the order confirmed.
  */
 export async function confirmOrderAtomic(
   orderId: string,
-  items: { productId: string; quantity: number }[]
+  items: { productVariantId: string; quantity: number }[]
 ) {
   await db.transaction(async (tx) => {
     for (const item of items) {
       const result = await tx
-        .update(products)
-        .set({ stock: sql`${products.stock} - ${item.quantity}` })
+        .update(productVariants)
+        .set({ stock: sql`${productVariants.stock} - ${item.quantity}` })
         .where(
           and(
-            eq(products.id, item.productId),
-            sql`${products.stock} >= ${item.quantity}`
+            eq(productVariants.id, item.productVariantId),
+            sql`${productVariants.stock} >= ${item.quantity}`
           )
         )
-        .returning({ id: products.id });
+        .returning({ id: productVariants.id });
 
       if (result.length === 0) {
         console.error(

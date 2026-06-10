@@ -57,6 +57,13 @@
       "when": 1780982594010,
       "tag": "0007_next_quasar",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781072312372,
+      "tag": "0008_cold_venom",
+      "breakpoints": true
     }
   ]
 }

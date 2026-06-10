@@ -1,0 +1,427 @@
+/**
+ * Import products + variants from a published Google Sheet CSV.
+ *
+ * ─── Setup ────────────────────────────────────────────────────────────────────
+ * 1. In Google Sheets:  File → Share → Publish to web → Sheet1 → CSV → Publish
+ * 2. Copy the published URL.
+ *
+ * ─── Usage ────────────────────────────────────────────────────────────────────
+ *   npm run db:import-sheet -- "<published_csv_url>"             # upsert (default)
+ *   npm run db:import-sheet -- "<published_csv_url>" --replace   # wipe + insert
+ *
+ * Examples:
+ *   npm run db:import-sheet -- "https://docs.google.com/spreadsheets/d/e/2PACX-…/pub?output=csv"
+ *   npm run db:import-sheet -- ./aircon_master_list.csv          # local file works too
+ *
+ * ─── Required CSV columns (one row per VARIANT) ──────────────────────────────
+ *   series_name      — Product series name (e.g. "Carrier Inverter Split Type")
+ *   slug             — URL slug. Auto-generated from series_name if blank.
+ *   category         — split | window | portable | central | cassette | ducted
+ *   size             — Variant size label, e.g. "1.0 HP"
+ *   price_baht       — Variant price in BAHT (not satang!)
+ *
+ * ─── Optional columns ────────────────────────────────────────────────────────
+ *   Series-level (same value across all rows of the same series):
+ *     series_name_th             Thai series name
+ *     short_description          English short description
+ *     short_description_th
+ *     description                English long description
+ *     description_th
+ *     status                     active | draft | archived | out_of_stock (default: active)
+ *     is_featured                TRUE / 1 / yes (anything else = false)
+ *     image_url                  URL or /images path for the primary image
+ *     spec.<KEY>                 Series-shared spec, e.g. "spec.Brand", "spec.EER"
+ *
+ *   Variant-level:
+ *     sort_order                 Integer for display order (default: row index × 100)
+ *     sku                        Variant SKU
+ *     compare_price_baht         Crossed-out price in BAHT
+ *     stock                      Integer (default: 0)
+ *     low_stock_threshold        Integer (default: 5)
+ *     variant_spec.<KEY>         Variant-specific spec, e.g. "variant_spec.Capacity"
+ */
+import "dotenv/config";
+import { db } from "./index";
+import { products, productImages, productVariants } from "./schema";
+import { eq } from "drizzle-orm";
+import { readFileSync } from "node:fs";
+
+// ─── CLI args ────────────────────────────────────────────────────────────────
+const args = process.argv.slice(2);
+const replaceMode = args.includes("--replace");
+const source = args.find((a) => !a.startsWith("--"));
+
+if (!source) {
+  console.error(
+    "Usage: npm run db:import-sheet -- <csv_url_or_path> [--replace]"
+  );
+  process.exit(1);
+}
+
+// ─── Minimal CSV parser (handles quoted fields + escaped quotes + commas/newlines in quotes) ──
+// ─── Header alias map ────────────────────────────────────────────────────────
+// Maps the canonical column name we want to a list of acceptable aliases
+// (English variants + Thai). All comparisons are lowercased and have
+// non-alphanumerics stripped, so "Series Name", "series_name", "ชื่อรุ่น"
+// all match. The script renames every header to the canonical form before
+// downstream code touches the row.
+const HEADER_ALIASES: Record<string, string[]> = {
+  series_name: ["series", "seriesname", "name", "productname", "ชื่อรุ่น", "ชื่อสินค้า", "รุ่น"],
+  series_name_th: ["seriesnameth", "nameth", "ชื่อรุ่นไทย", "ชื่อภาษาไทย"],
+  slug: ["url", "urlslug"],
+  category: ["cat", "type", "ประเภท", "หมวด", "หมวดหมู่"],
+  size: ["variantsize", "ขนาด", "btu"],
+  sort_order: ["sortorder", "order", "ลำดับ"],
+  sku: ["รหัส", "รหัสสินค้า"],
+  price_baht: ["price", "ราคา"],
+  compare_price_baht: ["compareprice", "originalprice", "ราคาเดิม", "ราคาเปรียบเทียบ"],
+  stock: ["qty", "quantity", "จำนวน", "สต็อก", "สต๊อก"],
+  low_stock_threshold: ["lowstock", "lowstockthreshold"],
+  short_description: ["shortdesc", "shortdescription"],
+  short_description_th: ["shortdescth", "shortdescriptionth", "คำอธิบายสั้น"],
+  description: ["desc", "longdesc"],
+  description_th: ["descth", "descriptionth", "คำอธิบาย"],
+  status: ["state", "สถานะ"],
+  is_featured: ["featured", "isfeatured", "แนะนำ"],
+  image_url: ["image", "imageurl", "img", "รูป"],
+};
+
+/** Strip everything that isn't a letter/digit and lowercase, for fuzzy header matching. */
+function normalizeHeader(s: string): string {
+  return s
+    .replace(/^﻿/, "") // strip leading BOM
+    .toLowerCase()
+    .replace(/[\s._-]+/g, "")
+    .trim();
+}
+
+/** Resolve a raw header to its canonical name (or keep raw for spec.* / variant_spec.*). */
+function canonicalizeHeader(raw: string): string {
+  const r = raw.trim();
+  if (!r) return r;
+
+  // spec.<key> and variant_spec.<key> stay as-is (only the prefix matters).
+  if (/^spec\./i.test(r)) return "spec." + r.slice(5).trim();
+  if (/^variant_spec\./i.test(r)) return "variant_spec." + r.slice(13).trim();
+
+  const norm = normalizeHeader(r);
+  for (const [canonical, aliases] of Object.entries(HEADER_ALIASES)) {
+    if (norm === normalizeHeader(canonical)) return canonical;
+    if (aliases.some((a) => normalizeHeader(a) === norm)) return canonical;
+  }
+  return r;
+}
+
+function parseCsv(text: string): {
+  rows: Record<string, string>[];
+  headers: string[];
+  rawHeaders: string[];
+} {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let inQuotes = false;
+  let i = 0;
+  // Strip BOM if present
+  if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
+
+  while (i < text.length) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"' && text[i + 1] === '"') {
+        field += '"';
+        i += 2;
+      } else if (c === '"') {
+        inQuotes = false;
+        i++;
+      } else {
+        field += c;
+        i++;
+      }
+    } else {
+      if (c === '"') {
+        inQuotes = true;
+        i++;
+      } else if (c === ",") {
+        row.push(field);
+        field = "";
+        i++;
+      } else if (c === "\r") {
+        // ignore — handled by \n
+        i++;
+      } else if (c === "\n") {
+        row.push(field);
+        rows.push(row);
+        row = [];
+        field = "";
+        i++;
+      } else {
+        field += c;
+        i++;
+      }
+    }
+  }
+  if (field.length > 0 || row.length > 0) {
+    row.push(field);
+    rows.push(row);
+  }
+
+  if (rows.length === 0) return { rows: [], headers: [], rawHeaders: [] };
+  const rawHeaders = rows[0].map((h) => h.trim());
+  const headers = rawHeaders.map(canonicalizeHeader);
+
+  const data = rows.slice(1)
+    .filter((r) => r.some((cell) => cell.trim() !== ""))
+    .map((r) => {
+      const obj: Record<string, string> = {};
+      headers.forEach((h, idx) => {
+        obj[h] = (r[idx] ?? "").trim();
+      });
+      return obj;
+    });
+  return { rows: data, headers, rawHeaders };
+}
+
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 100);
+}
+
+function truthy(v: string | undefined): boolean {
+  if (!v) return false;
+  const x = v.trim().toLowerCase();
+  return x === "true" || x === "1" || x === "yes" || x === "y";
+}
+
+function toInt(v: string | undefined, fallback = 0): number {
+  const n = parseInt((v ?? "").replace(/[, ]/g, ""), 10);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function toBahtCents(v: string | undefined): number | null {
+  if (v == null || v.trim() === "") return null;
+  const n = parseFloat((v ?? "").replace(/[, ]/g, ""));
+  if (!Number.isFinite(n) || n < 0) return null;
+  return Math.round(n * 100);
+}
+
+const VALID_CATEGORIES = [
+  "split", "window", "portable", "central", "cassette", "ducted",
+] as const;
+type Category = (typeof VALID_CATEGORIES)[number];
+
+const VALID_STATUSES = [
+  "active", "draft", "archived", "out_of_stock",
+] as const;
+type Status = (typeof VALID_STATUSES)[number];
+
+function pickSpecs(row: Record<string, string>, prefix: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(row)) {
+    if (!k.startsWith(prefix)) continue;
+    if (!v || !v.trim()) continue;
+    const key = k.slice(prefix.length).trim();
+    if (key) out[key] = v.trim();
+  }
+  return out;
+}
+
+// ─── Main ────────────────────────────────────────────────────────────────────
+async function loadCsv(src: string): Promise<string> {
+  if (src.startsWith("http://") || src.startsWith("https://")) {
+    const res = await fetch(src);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch CSV (HTTP ${res.status}): ${src}`);
+    }
+    return await res.text();
+  }
+  return readFileSync(src, "utf8");
+}
+
+async function importSheet() {
+  console.log(`📥 Reading: ${source}`);
+  const csv = await loadCsv(source!);
+  const { rows, headers, rawHeaders } = parseCsv(csv);
+  console.log(`   ${rows.length} variant row(s) parsed`);
+
+  // Show what we picked up — helps debug column-name issues quickly.
+  console.log(`   Headers found (raw → canonical):`);
+  for (let i = 0; i < rawHeaders.length; i++) {
+    const raw = rawHeaders[i];
+    const canon = headers[i];
+    const marker = raw === canon ? " " : "→";
+    console.log(`     ${marker} "${raw}"${raw === canon ? "" : ` → "${canon}"`}`);
+  }
+
+  if (rows.length === 0) {
+    throw new Error("No rows in CSV.");
+  }
+
+  // Validate the bare minimum.
+  const required = ["series_name", "category", "size", "price_baht"];
+  const missing = required.filter((col) => !headers.includes(col));
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required column(s): ${missing.join(", ")}\n` +
+        `   Saw headers: ${rawHeaders.join(", ")}\n` +
+        `   Tip: rename your sheet columns to: ${required.join(", ")} ` +
+        `(or use Thai aliases — see HEADER_ALIASES in the script).`
+    );
+  }
+
+  // Group rows by slug (auto-generated from series_name if blank).
+  type SeriesGroup = {
+    slug: string;
+    seriesName: string;
+    rows: Record<string, string>[];
+  };
+  const groups = new Map<string, SeriesGroup>();
+  for (const r of rows) {
+    const seriesName = r.series_name?.trim();
+    if (!seriesName) continue;
+    const slug = (r.slug?.trim() || slugify(seriesName)).toLowerCase();
+    if (!slug) continue;
+    if (!groups.has(slug)) {
+      groups.set(slug, { slug, seriesName, rows: [] });
+    }
+    groups.get(slug)!.rows.push(r);
+  }
+
+  console.log(`   ${groups.size} series found`);
+  console.log(replaceMode ? "🧹 Mode: REPLACE (wipe existing)" : "🔁 Mode: UPSERT");
+
+  if (replaceMode) {
+    await db.delete(productImages);
+    await db.delete(productVariants);
+    await db.delete(products);
+  }
+
+  let createdCount = 0;
+  let updatedCount = 0;
+
+  for (const group of groups.values()) {
+    const first = group.rows[0];
+
+    const category = first.category?.trim().toLowerCase() as Category;
+    if (!VALID_CATEGORIES.includes(category)) {
+      console.warn(`  ⚠ Skipping "${group.seriesName}": invalid category "${category}"`);
+      continue;
+    }
+    const statusRaw = (first.status?.trim().toLowerCase() || "active") as Status;
+    const status = VALID_STATUSES.includes(statusRaw) ? statusRaw : "active";
+
+    const seriesData = {
+      name: group.seriesName,
+      nameTh: first.series_name_th?.trim() || null,
+      slug: group.slug,
+      shortDescription: first.short_description?.trim() || null,
+      shortDescriptionTh: first.short_description_th?.trim() || null,
+      description: first.description?.trim() || null,
+      descriptionTh: first.description_th?.trim() || null,
+      category,
+      status,
+      specifications: Object.keys(pickSpecs(first, "spec.")).length
+        ? pickSpecs(first, "spec.")
+        : null,
+      isFeatured: truthy(first.is_featured),
+      updatedAt: new Date(),
+    };
+
+    // Upsert series.
+    let productId: string;
+    const [existing] = await db
+      .select({ id: products.id })
+      .from(products)
+      .where(eq(products.slug, group.slug))
+      .limit(1);
+
+    if (existing) {
+      await db
+        .update(products)
+        .set(seriesData)
+        .where(eq(products.id, existing.id));
+      productId = existing.id;
+      // Wipe & re-insert variants so the CSV is the source of truth.
+      await db.delete(productVariants).where(eq(productVariants.productId, productId));
+      updatedCount++;
+    } else {
+      const [created] = await db
+        .insert(products)
+        .values(seriesData)
+        .returning({ id: products.id });
+      productId = created.id;
+      createdCount++;
+    }
+
+    // Primary image — only insert if URL is provided AND no image exists yet.
+    const imageUrl = first.image_url?.trim();
+    if (imageUrl) {
+      const [hasImage] = await db
+        .select({ id: productImages.id })
+        .from(productImages)
+        .where(eq(productImages.productId, productId))
+        .limit(1);
+      if (!hasImage) {
+        await db.insert(productImages).values({
+          productId,
+          url: imageUrl,
+          altText: group.seriesName,
+          isPrimary: true,
+          sortOrder: 0,
+        });
+      }
+    }
+
+    // Variants — one row per CSV row in this group.
+    const variantValues = group.rows
+      .map((r, idx) => {
+        const size = r.size?.trim();
+        const price = toBahtCents(r.price_baht);
+        if (!size || price == null) return null;
+        const sortOrder = toInt(r.sort_order, (idx + 1) * 100);
+        const sku = r.sku?.trim() || null;
+        const compare = toBahtCents(r.compare_price_baht);
+        const stock = toInt(r.stock, 0);
+        const lowStockThreshold = toInt(r.low_stock_threshold, 5);
+        const variantSpecs = pickSpecs(r, "variant_spec.");
+
+        return {
+          productId,
+          size,
+          sortOrder,
+          sku,
+          priceInSatang: price,
+          comparePriceInSatang: compare,
+          stock,
+          lowStockThreshold,
+          specifications:
+            Object.keys(variantSpecs).length > 0 ? variantSpecs : null,
+        };
+      })
+      .filter((v): v is NonNullable<typeof v> => v !== null);
+
+    if (variantValues.length === 0) {
+      console.warn(`  ⚠ "${group.seriesName}": no valid variants — skipping variants`);
+    } else {
+      await db.insert(productVariants).values(variantValues);
+    }
+
+    console.log(
+      `  ✓ ${group.seriesName} (${variantValues.length} variant${variantValues.length === 1 ? "" : "s"})`
+    );
+  }
+
+  console.log("");
+  console.log(`✅ Done. Created ${createdCount}, updated ${updatedCount}.`);
+  process.exit(0);
+}
+
+importSheet().catch((err) => {
+  console.error("❌ Import failed:", err);
+  process.exit(1);
+});

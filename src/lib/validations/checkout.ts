@@ -17,9 +17,9 @@ export type CheckoutInput = z.infer<typeof checkoutSchema>;
 // ─── Cart item schema ───────────────────────────────────────────────────────
 // Server NEVER trusts the client's `unitPriceInSatang` / `name` / `imageUrl`
 // — those are looked up fresh from the DB. We only validate the two fields
-// that *drive a DB query*: productId (must be a UUID) and quantity.
+// that *drive a DB query*: variantId (must be a UUID) and quantity.
 export const cartItemSchema = z.object({
-  productId: z.string().uuid("Invalid product id"),
+  variantId: z.string().uuid("Invalid variant id"),
   quantity: z
     .number()
     .int("Quantity must be whole")

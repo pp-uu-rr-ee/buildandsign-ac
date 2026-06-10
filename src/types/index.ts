@@ -2,6 +2,7 @@ import type {
   users,
   products,
   productImages,
+  productVariants,
   orders,
   orderItems,
   bookings,
@@ -19,6 +20,8 @@ export type NewUser = typeof users.$inferInsert;
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
 export type ProductImage = typeof productImages.$inferSelect;
+export type ProductVariant = typeof productVariants.$inferSelect;
+export type NewProductVariant = typeof productVariants.$inferInsert;
 
 export type Order = typeof orders.$inferSelect;
 export type NewOrder = typeof orders.$inferInsert;
@@ -34,6 +37,10 @@ export type NewPost = typeof posts.$inferInsert;
 
 // ─── Composite / joined types ────────────────────────────────────────────────
 export type ProductWithImages = Product & { images: ProductImage[] };
+export type ProductWithVariants = Product & {
+  images: ProductImage[];
+  variants: ProductVariant[];
+};
 
 export type OrderWithItems = Order & {
   items: OrderItem[];
@@ -46,10 +53,13 @@ export type BookingWithDetails = Booking & {
 };
 
 // ─── Cart (client-side only, not persisted to DB) ────────────────────────────
+// Cart is keyed by variantId — each size of a series is a separate line item.
 export type CartItem = {
+  variantId: string;
   productId: string;
-  name: string;
-  slug: string;
+  name: string;            // product (series) name snapshot
+  size: string;            // variant size snapshot, e.g. "1.5 HP"
+  slug: string;            // product slug for link
   imageUrl: string | null;
   unitPriceInSatang: number;
   quantity: number;

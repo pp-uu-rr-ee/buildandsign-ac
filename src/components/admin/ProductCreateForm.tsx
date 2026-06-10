@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createProductAction, type CreateProductResult } from "@/lib/actions/admin";
+import { SpecsEditor, SERIES_SPEC_SUGGESTIONS } from "./SpecsEditor";
 
 const initialState: CreateProductResult = { success: false, error: "" };
 
@@ -101,33 +102,18 @@ export function ProductCreateForm() {
         <SelectField label="Status"   name="status"   options={STATUSES}   defaultValue="draft" />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Field
-          label="Price (₱)"
-          name="priceInPesos"
-          type="number"
-          required
-          placeholder="28999"
-          hint="Enter peso amount, e.g. 28999 for ₱28,999"
-          error={fe.priceInPesos?.[0]}
-        />
-        <Field
-          label="Compare Price (₱)"
-          name="comparePriceInPesos"
-          type="number"
-          placeholder="35000"
-          hint="Crossed-out original price (optional)"
-          error={fe.comparePriceInPesos?.[0]}
-        />
-        <Field
-          label="Stock"
-          name="stock"
-          type="number"
-          required
-          defaultValue="0"
-          error={fe.stock?.[0]}
-        />
+      <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-900 dark:bg-blue-950 dark:border-blue-900 dark:text-blue-200">
+        After creating the series, add sizes (variants) on the edit page. Price,
+        SKU, and stock live on each variant.
       </div>
+
+      {/* Series-shared specs — Brand, Type, Voltage, EER, Warranty… */}
+      <SpecsEditor
+        name="specifications"
+        label="Specifications (shared across all sizes)"
+        hint="Brand, Type, Voltage, Refrigerant, EER, Warranty, …"
+        suggestedKeys={SERIES_SPEC_SUGGESTIONS}
+      />
 
       <div className="flex items-center gap-2">
         <input

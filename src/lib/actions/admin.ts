@@ -40,7 +40,9 @@ export async function assignTechnicianAction(bookingId: string, technicianId: st
   revalidatePath(`/admin/bookings/${bookingId}`);
 }
 
-// ── Product management ───────────────────────────────────────────────────────
+// ── Product (series-level) management ────────────────────────────────────────
+// Price / stock / SKU live on `product_variants` and have their own actions
+// below. The product (series) admin form only owns the series-shared fields.
 const productSchema = z.object({
   name: z.string().min(2),
   nameTh: z.string().optional(),
@@ -51,12 +53,32 @@ const productSchema = z.object({
   descriptionTh: z.string().optional(),
   category: z.enum(["split","window","portable","central","cassette","ducted"]),
   status: z.enum(["active","draft","archived","out_of_stock"]),
-  // User enters peso amounts; multiply by 100 to store as centavos
-  priceInPesos: z.coerce.number().positive("Price must be a positive number"),
-  comparePriceInPesos: z.coerce.number().positive().optional().or(z.literal("")),
-  stock: z.coerce.number().int().min(0),
   isFeatured: z.coerce.boolean().optional(),
+  // Series-shared specs as a JSON string. The client (SpecsEditor) serialises
+  // a Record<string, string>. Empty / malformed input becomes NULL.
+  specifications: z.string().optional(),
 });
+
+/**
+ * Parse the specifications JSON string the form sends. Returns null when
+ * empty or invalid, so the column stays NULL instead of `{}`.
+ */
+function parseSpecsJson(raw: string | undefined): Record<string, string> | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      const entries = Object.entries(parsed as Record<string, unknown>)
+        .filter(([k, v]) => k.trim() && typeof v === "string")
+        .map(([k, v]) => [k.trim(), String(v)] as const);
+      if (entries.length === 0) return null;
+      return Object.fromEntries(entries);
+    }
+  } catch {
+    // fall through to null
+  }
+  return null;
+}
 
 export type ProductFormResult =
   | { success: true }
@@ -73,7 +95,7 @@ export async function updateProductAction(
   const id = formData.get("id") as string;
   const raw = Object.fromEntries(
     ["name","nameTh","slug","shortDescription","shortDescriptionTh","description","descriptionTh",
-     "category","status","priceInPesos","comparePriceInPesos","stock","isFeatured"]
+     "category","status","isFeatured","specifications"]
       .map((k) => [k, formData.get(k)])
   );
   raw.isFeatured = formData.get("isFeatured") === "on" ? "true" : "false";
@@ -83,22 +105,21 @@ export async function updateProductAction(
     return { success: false, error: "Validation failed", fieldErrors: parsed.error.flatten().fieldErrors as any };
   }
 
-  const { priceInPesos, comparePriceInPesos, ...rest } = parsed.data;
+  const data = parsed.data;
+  const { specifications, ...rest } = data;
+
   await db.update(products).set({
     ...rest,
     nameTh: rest.nameTh || null,
     shortDescriptionTh: rest.shortDescriptionTh || null,
     descriptionTh: rest.descriptionTh || null,
-    priceInSatang: Math.round(priceInPesos * 100),
-    comparePriceInSatang: comparePriceInPesos !== "" && comparePriceInPesos
-      ? Math.round(Number(comparePriceInPesos) * 100)
-      : null,
     isFeatured: rest.isFeatured ?? false,
+    specifications: parseSpecsJson(specifications),
     updatedAt: new Date(),
   }).where(eq(products.id, id));
 
   revalidatePath("/admin/products");
-  revalidatePath(`/products/${rest.slug}`);
+  revalidatePath(`/products/${data.slug}`);
   return { success: true };
 }
 
@@ -108,7 +129,7 @@ export async function createProductAction(
 ): Promise<CreateProductResult> {
   const raw = Object.fromEntries(
     ["name","nameTh","slug","shortDescription","shortDescriptionTh",
-     "category","status","priceInPesos","comparePriceInPesos","stock","isFeatured"]
+     "category","status","isFeatured","specifications"]
       .map((k) => [k, formData.get(k)])
   );
   raw.isFeatured = formData.get("isFeatured") === "on" ? "true" : "false";
@@ -118,17 +139,15 @@ export async function createProductAction(
     return { success: false, error: "Validation failed", fieldErrors: parsed.error.flatten().fieldErrors as any };
   }
 
-  const { priceInPesos, comparePriceInPesos, ...rest } = parsed.data;
+  const data = parsed.data;
+  const { specifications, ...rest } = data;
 
   const [product] = await db.insert(products).values({
     ...rest,
     nameTh: rest.nameTh || null,
     shortDescriptionTh: rest.shortDescriptionTh || null,
-    priceInSatang: Math.round(priceInPesos * 100),
-    comparePriceInSatang: comparePriceInPesos !== "" && comparePriceInPesos
-      ? Math.round(Number(comparePriceInPesos) * 100)
-      : null,
     isFeatured: rest.isFeatured ?? false,
+    specifications: parseSpecsJson(specifications),
   }).returning({ id: products.id });
 
   revalidatePath("/admin/products");
@@ -140,6 +159,126 @@ export async function toggleProductStatusAction(id: string, currentStatus: strin
   const next = currentStatus === "active" ? "archived" : "active";
   await db.update(products).set({ status: next as any, updatedAt: new Date() }).where(eq(products.id, id));
   revalidatePath("/admin/products");
+}
+
+// ── Variant management ──────────────────────────────────────────────────────
+const variantSchema = z.object({
+  size: z.string().trim().min(1, "Size is required").max(50),
+  sortOrder: z.coerce.number().int().min(0),
+  sku: z.string().trim().max(100).optional().or(z.literal("")),
+  priceInBaht: z.coerce.number().positive("Price must be positive"),
+  comparePriceInBaht: z.coerce.number().positive().optional().or(z.literal("")),
+  stock: z.coerce.number().int().min(0),
+});
+
+export type VariantActionResult =
+  | { success: true }
+  | { success: false; error: string };
+
+export async function addVariantAction(
+  productId: string,
+  formData: FormData
+): Promise<VariantActionResult> {
+  const session = await getSession();
+  if (!session || session.role !== "admin") {
+    return { success: false, error: "Unauthorized." };
+  }
+
+  const raw = {
+    size: formData.get("size"),
+    sortOrder: formData.get("sortOrder") || "0",
+    sku: formData.get("sku") || "",
+    priceInBaht: formData.get("priceInBaht"),
+    comparePriceInBaht: formData.get("comparePriceInBaht") || "",
+    stock: formData.get("stock") || "0",
+  };
+
+  const parsed = variantSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid variant.",
+    };
+  }
+
+  const { productVariants } = await import("@/db/schema");
+  await db.insert(productVariants).values({
+    productId,
+    size: parsed.data.size,
+    sortOrder: parsed.data.sortOrder,
+    sku: parsed.data.sku ? parsed.data.sku : null,
+    priceInSatang: Math.round(parsed.data.priceInBaht * 100),
+    comparePriceInSatang:
+      parsed.data.comparePriceInBaht !== "" && parsed.data.comparePriceInBaht
+        ? Math.round(Number(parsed.data.comparePriceInBaht) * 100)
+        : null,
+    stock: parsed.data.stock,
+  });
+
+  revalidatePath("/admin/products");
+  return { success: true };
+}
+
+export async function updateVariantAction(
+  variantId: string,
+  formData: FormData
+): Promise<VariantActionResult> {
+  const session = await getSession();
+  if (!session || session.role !== "admin") {
+    return { success: false, error: "Unauthorized." };
+  }
+
+  const raw = {
+    size: formData.get("size"),
+    sortOrder: formData.get("sortOrder") || "0",
+    sku: formData.get("sku") || "",
+    priceInBaht: formData.get("priceInBaht"),
+    comparePriceInBaht: formData.get("comparePriceInBaht") || "",
+    stock: formData.get("stock") || "0",
+  };
+
+  const parsed = variantSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid variant.",
+    };
+  }
+
+  const { productVariants } = await import("@/db/schema");
+  await db
+    .update(productVariants)
+    .set({
+      size: parsed.data.size,
+      sortOrder: parsed.data.sortOrder,
+      sku: parsed.data.sku ? parsed.data.sku : null,
+      priceInSatang: Math.round(parsed.data.priceInBaht * 100),
+      comparePriceInSatang:
+        parsed.data.comparePriceInBaht !== "" && parsed.data.comparePriceInBaht
+          ? Math.round(Number(parsed.data.comparePriceInBaht) * 100)
+          : null,
+      stock: parsed.data.stock,
+      updatedAt: new Date(),
+    })
+    .where(eq((await import("@/db/schema")).productVariants.id, variantId));
+
+  revalidatePath("/admin/products");
+  return { success: true };
+}
+
+export async function deleteVariantAction(
+  variantId: string
+): Promise<VariantActionResult> {
+  const session = await getSession();
+  if (!session || session.role !== "admin") {
+    return { success: false, error: "Unauthorized." };
+  }
+
+  const { productVariants } = await import("@/db/schema");
+  await db.delete(productVariants).where(eq(productVariants.id, variantId));
+
+  revalidatePath("/admin/products");
+  return { success: true };
 }
 
 export type DeleteProductResult =

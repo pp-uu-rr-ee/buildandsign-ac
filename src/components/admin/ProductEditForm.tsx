@@ -6,6 +6,7 @@ import { updateProductAction } from "@/lib/actions/admin";
 import type { ProductFormResult } from "@/lib/actions/admin";
 import type { Product } from "@/types";
 import { useEffect } from "react";
+import { SpecsEditor, SERIES_SPEC_SUGGESTIONS } from "./SpecsEditor";
 
 const initialState: ProductFormResult = { success: true };
 
@@ -100,25 +101,19 @@ export function ProductEditForm({ product }: { product: Product }) {
         <SelectField label="Status" name="status" defaultValue={product.status} options={STATUSES} />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Field
-          label="Price (₱ — enter in pesos)"
-          name="priceInPesos"
-          type="number"
-          defaultValue={String(product.priceInSatang / 100)}
-          required
-          error={fieldErrors?.priceInPesos?.[0]}
-          hint="e.g. 28999 for ₱28,999"
-        />
-        <Field
-          label="Compare Price (₱)"
-          name="comparePriceInPesos"
-          type="number"
-          defaultValue={product.comparePriceInSatang ? String(product.comparePriceInSatang / 100) : ""}
-          hint="Crossed-out original price"
-        />
-        <Field label="Stock" name="stock" type="number" defaultValue={String(product.stock)} required error={fieldErrors?.stock?.[0]} />
+      <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-900 dark:bg-blue-950 dark:border-blue-900 dark:text-blue-200">
+        Price, SKU, and stock are managed per <strong>variant</strong> (size).
+        Open the Variants panel below to edit them.
       </div>
+
+      {/* Series-shared specifications */}
+      <SpecsEditor
+        name="specifications"
+        label="Specifications (shared across all sizes)"
+        hint="Brand, Type, Voltage, Refrigerant, EER, Warranty, …"
+        defaultValue={product.specifications}
+        suggestedKeys={SERIES_SPEC_SUGGESTIONS}
+      />
 
       <div className="flex items-center gap-2">
         <input

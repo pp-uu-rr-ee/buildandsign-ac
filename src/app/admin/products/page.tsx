@@ -136,19 +136,26 @@ export default async function AdminProductsPage({
                   </td>
                   <td className="px-4 py-3 capitalize text-gray-600">{p.category}</td>
                   <td className="px-4 py-3 font-semibold text-gray-900">
-                    {formatPrice(p.priceInSatang)}
+                    {p.minPriceInSatang != null ? (
+                      <>
+                        <span className="text-xs text-gray-400 font-normal">From </span>
+                        {formatPrice(p.minPriceInSatang)}
+                      </>
+                    ) : (
+                      <span className="text-gray-300 font-normal">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <span
                       className={`text-sm font-medium ${
-                        p.stock <= p.lowStockThreshold ? "text-orange-500" : "text-gray-700"
+                        p.totalStock === 0 ? "text-red-500" : p.totalStock <= 5 ? "text-orange-500" : "text-gray-700"
                       }`}
                     >
-                      {p.stock}
+                      {p.totalStock}
                     </span>
-                    {p.stock <= p.lowStockThreshold && (
-                      <span className="ml-1 text-xs text-orange-400">Low</span>
-                    )}
+                    <span className="ml-1 text-xs text-gray-400">
+                      ({p.variantCount} {p.variantCount === 1 ? "size" : "sizes"})
+                    </span>
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={p.status} />

@@ -48,7 +48,7 @@ export function CartPageClient() {
 
         {items.map((item) => (
           <div
-            key={item.productId}
+            key={item.variantId}
             className="flex gap-4 py-5 border-b border-gray-100"
           >
             {/* Image */}
@@ -75,6 +75,11 @@ export function CartPageClient() {
                 className="font-medium text-gray-900 hover:text-blue-600 transition-colors line-clamp-2"
               >
                 {item.name}
+                {item.size && (
+                  <span className="ml-1.5 text-sm font-semibold text-blue-600">
+                    · {item.size}
+                  </span>
+                )}
               </Link>
               <p className="text-sm text-gray-500 mt-0.5">
                 {formatPrice(item.unitPriceInSatang)} each
@@ -84,7 +89,7 @@ export function CartPageClient() {
                 {/* Qty */}
                 <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
                   <button
-                    onClick={() => updateQty(item.productId, item.quantity - 1)}
+                    onClick={() => updateQty(item.variantId, item.quantity - 1)}
                     className="px-3 py-1.5 text-gray-500 hover:bg-gray-100 transition-colors"
                   >
                     −
@@ -93,7 +98,7 @@ export function CartPageClient() {
                     {item.quantity}
                   </span>
                   <button
-                    onClick={() => updateQty(item.productId, item.quantity + 1)}
+                    onClick={() => updateQty(item.variantId, item.quantity + 1)}
                     className="px-3 py-1.5 text-gray-500 hover:bg-gray-100 transition-colors"
                   >
                     +
@@ -105,7 +110,7 @@ export function CartPageClient() {
                     {formatPrice(item.unitPriceInSatang * item.quantity)}
                   </span>
                   <button
-                    onClick={() => removeItem(item.productId)}
+                    onClick={() => removeItem(item.variantId)}
                     className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
                     aria-label="Remove"
                   >
