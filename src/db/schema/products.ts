@@ -8,6 +8,7 @@ import {
   timestamp,
   pgEnum,
   jsonb,
+  numeric,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { orderItems } from "./orders";
@@ -45,9 +46,19 @@ export const products = pgTable("products", {
   category: productCategoryEnum("category").notNull(),
   status: productStatusEnum("status").notNull().default("draft"),
 
-  // Series-shared specs (Brand, Type, Voltage, Refrigerant, Warranty, EER …).
-  // Variant-specific specs (Capacity, Cooling Capacity, Noise, Dimensions)
-  // live on `product_variants.specifications`.
+  // ── Typed series-level specs ─────────────────────────────────────────────
+  // These are filterable/searchable so we keep them as real columns.
+  brand: varchar("brand", { length: 100 }),
+  // EER as decimal for sorting (e.g. 12.50). Drizzle returns numerics as
+  // strings — formatters handle the cast.
+  eer: numeric("eer", { precision: 5, scale: 2 }),
+  voltage: varchar("voltage", { length: 60 }),
+  refrigerant: varchar("refrigerant", { length: 20 }),
+  warrantyText: text("warranty_text"),
+  energyRating: varchar("energy_rating", { length: 50 }),
+
+  // Anything else goes into JSONB — keeps the schema future-proof for specs
+  // we didn't think of (WiFi, smart features, color options, etc.).
   specifications: jsonb("specifications").$type<Record<string, string>>(),
 
   // SEO
@@ -84,8 +95,21 @@ export const productVariants = pgTable("product_variants", {
   stock: integer("stock").notNull().default(0),
   lowStockThreshold: integer("low_stock_threshold").notNull().default(5),
 
-  // Variant-only specs (e.g. Capacity, Cooling Capacity, Noise Level,
-  // Indoor Dimensions). Merged with `products.specifications` on display.
+  // ── Typed variant-level specs ────────────────────────────────────────────
+  // The most-displayed numbers for AC sizing — kept as real columns so we can
+  // filter ("9,000–12,000 BTU") and sort.
+  coolingCapacityBtu: integer("cooling_capacity_btu"),
+  noiseLevelDb: numeric("noise_level_db", { precision: 4, scale: 1 }),
+  // Free-form text since manufacturers format dimensions differently
+  // (e.g. "1000 × 295 × 230 mm", "39.4 × 11.6 × 9.1 in").
+  dimensions: varchar("dimensions", { length: 120 }),
+  // Recommended room size in square metres. Stored as varchar so admins can
+  // enter ranges like "25-30" or "Up to 18" — they're displayed verbatim and
+  // we don't need to sort/filter on it.
+  roomSizeSqm: varchar("room_size_sqm", { length: 30 }),
+
+  // Variant-specific specs that don't fit the typed columns above (color,
+  // extra features, etc.). Merged with the typed values on display.
   specifications: jsonb("specifications").$type<Record<string, string>>(),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),

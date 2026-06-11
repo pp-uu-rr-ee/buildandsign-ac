@@ -93,13 +93,26 @@ export function VariantsManager({ productId, variants }: Props) {
           action={handleAdd}
           className="px-5 py-4 border-b border-gray-100 bg-blue-50/40 space-y-3"
         >
-          <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 items-end">
+          <div className="grid grid-cols-2 sm:grid-cols-7 gap-2 items-end">
             <Field name="size" label="Size" placeholder="1.0 HP" required />
             <Field name="sortOrder" label="Order" type="number" defaultValue="100" />
             <Field name="sku" label="SKU" placeholder="CAR-INV-10HP" />
             <Field name="priceInBaht" label="Price (฿)" type="number" required />
             <Field name="comparePriceInBaht" label="Compare (฿)" type="number" />
             <Field name="stock" label="Stock" type="number" defaultValue="0" required />
+            <Field
+              name="lowStockThreshold"
+              label="Low @"
+              type="number"
+              defaultValue="5"
+              required
+            />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 items-end">
+            <Field name="coolingCapacityBtu" label="Cooling BTU" type="number" placeholder="9000" />
+            <Field name="noiseLevelDb" label="Noise (dB)" placeholder="19.0" />
+            <Field name="dimensions" label="Dimensions" placeholder="800 × 280 × 200 mm" />
+            <Field name="roomSizeSqm" label="Room size (m²)" placeholder="25-30" />
           </div>
           <div className="flex gap-2">
             <button
@@ -128,7 +141,7 @@ export function VariantsManager({ productId, variants }: Props) {
         <table className="w-full text-sm min-w-[760px]">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              {["Size", "Order", "SKU", "Price (฿)", "Compare (฿)", "Stock", ""].map((h) => (
+              {["Size", "Order", "SKU", "Price (฿)", "Compare (฿)", "Stock", "Cooling BTU", ""].map((h) => (
                 <th
                   key={h}
                   className="px-4 py-2 text-left text-xs font-semibold text-gray-400 uppercase"
@@ -141,7 +154,7 @@ export function VariantsManager({ productId, variants }: Props) {
           <tbody className="divide-y divide-gray-100">
             {variants.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-xs text-gray-400">
+                <td colSpan={8} className="px-4 py-8 text-center text-xs text-gray-400">
                   No variants yet. Add one above to make this product buyable.
                 </td>
               </tr>
@@ -154,62 +167,90 @@ export function VariantsManager({ productId, variants }: Props) {
                       <td colSpan={7} className="px-4 py-3">
                         <form
                           action={(fd) => handleUpdate(v.id, fd)}
-                          className="grid grid-cols-2 sm:grid-cols-7 gap-2 items-end"
+                          className="space-y-2"
                         >
-                          <Field name="size" label="Size" defaultValue={v.size} required />
-                          <Field
-                            name="sortOrder"
-                            label="Order"
-                            type="number"
-                            defaultValue={String(v.sortOrder)}
-                          />
-                          <Field
-                            name="sku"
-                            label="SKU"
-                            defaultValue={v.sku ?? ""}
-                          />
-                          <Field
-                            name="priceInBaht"
-                            label="Price (฿)"
-                            type="number"
-                            defaultValue={String(v.priceInSatang / 100)}
-                            required
-                          />
-                          <Field
-                            name="comparePriceInBaht"
-                            label="Compare (฿)"
-                            type="number"
-                            defaultValue={
-                              v.comparePriceInSatang
-                                ? String(v.comparePriceInSatang / 100)
-                                : ""
-                            }
-                          />
-                          <Field
-                            name="stock"
-                            label="Stock"
-                            type="number"
-                            defaultValue={String(v.stock)}
-                            required
-                          />
-                          <div className="flex gap-1.5">
-                            <button
-                              type="submit"
-                              disabled={isPending}
-                              className="p-1.5 rounded-md text-green-600 hover:bg-green-50 disabled:opacity-50"
-                              title="Save"
-                            >
-                              <Save className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setEditingId(null)}
-                              disabled={isPending}
-                              className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-50"
-                              title="Cancel"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
+                          <div className="grid grid-cols-2 sm:grid-cols-8 gap-2 items-end">
+                            <Field name="size" label="Size" defaultValue={v.size} required />
+                            <Field
+                              name="sortOrder"
+                              label="Order"
+                              type="number"
+                              defaultValue={String(v.sortOrder)}
+                            />
+                            <Field name="sku" label="SKU" defaultValue={v.sku ?? ""} />
+                            <Field
+                              name="priceInBaht"
+                              label="Price (฿)"
+                              type="number"
+                              defaultValue={String(v.priceInSatang / 100)}
+                              required
+                            />
+                            <Field
+                              name="comparePriceInBaht"
+                              label="Compare (฿)"
+                              type="number"
+                              defaultValue={
+                                v.comparePriceInSatang
+                                  ? String(v.comparePriceInSatang / 100)
+                                  : ""
+                              }
+                            />
+                            <Field
+                              name="stock"
+                              label="Stock"
+                              type="number"
+                              defaultValue={String(v.stock)}
+                              required
+                            />
+                            <Field
+                              name="lowStockThreshold"
+                              label="Low @"
+                              type="number"
+                              defaultValue={String(v.lowStockThreshold)}
+                              required
+                            />
+                            <div className="flex gap-1.5">
+                              <button
+                                type="submit"
+                                disabled={isPending}
+                                className="p-1.5 rounded-md text-green-600 hover:bg-green-50 disabled:opacity-50"
+                                title="Save"
+                              >
+                                <Save className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingId(null)}
+                                disabled={isPending}
+                                className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-50"
+                                title="Cancel"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 items-end pt-2 border-t border-gray-200">
+                            <Field
+                              name="coolingCapacityBtu"
+                              label="Cooling BTU"
+                              type="number"
+                              defaultValue={v.coolingCapacityBtu ? String(v.coolingCapacityBtu) : ""}
+                            />
+                            <Field
+                              name="noiseLevelDb"
+                              label="Noise (dB)"
+                              defaultValue={v.noiseLevelDb ?? ""}
+                            />
+                            <Field
+                              name="dimensions"
+                              label="Dimensions"
+                              defaultValue={v.dimensions ?? ""}
+                            />
+                            <Field
+                              name="roomSizeSqm"
+                              label="Room size (m²)"
+                              defaultValue={v.roomSizeSqm ?? ""}
+                            />
                           </div>
                         </form>
                       </td>
@@ -251,6 +292,16 @@ export function VariantsManager({ productId, variants }: Props) {
                       >
                         {v.stock}
                       </span>
+                      <span className="text-[10px] text-gray-400 ml-1">
+                        / low @ {v.lowStockThreshold}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 text-xs text-gray-600">
+                      {v.coolingCapacityBtu ? (
+                        v.coolingCapacityBtu.toLocaleString()
+                      ) : (
+                        <span className="text-gray-300">—</span>
+                      )}
                     </td>
                     <td
                       className="px-4 py-2.5 text-right"

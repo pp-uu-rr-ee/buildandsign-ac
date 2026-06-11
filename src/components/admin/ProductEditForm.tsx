@@ -106,11 +106,32 @@ export function ProductEditForm({ product }: { product: Product }) {
         Open the Variants panel below to edit them.
       </div>
 
-      {/* Series-shared specifications */}
+      {/* Series-level typed specs */}
+      <div className="rounded-lg border border-gray-200 p-4 space-y-4 dark:border-gray-700">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+          Series specifications
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="Brand" name="brand" defaultValue={product.brand ?? ""} placeholder="Carrier, Daikin, …" />
+          <Field label="EER" name="eer" defaultValue={product.eer ?? ""} placeholder="12.50" />
+          <Field label="Voltage" name="voltage" defaultValue={product.voltage ?? ""} placeholder="230V / 50Hz" />
+          <Field label="Refrigerant" name="refrigerant" defaultValue={product.refrigerant ?? ""} placeholder="R-32" />
+          <Field label="Energy Rating" name="energyRating" defaultValue={product.energyRating ?? ""} placeholder="Label 5" />
+        </div>
+        <TextareaField
+          label="Warranty"
+          name="warrantyText"
+          defaultValue={product.warrantyText ?? ""}
+          placeholder="e.g. 5 years compressor, 1 year parts & labor"
+          rows={2}
+        />
+      </div>
+
+      {/* Free-form extras (anything that doesn't fit the typed fields above) */}
       <SpecsEditor
         name="specifications"
-        label="Specifications (shared across all sizes)"
-        hint="Brand, Type, Voltage, Refrigerant, EER, Warranty, …"
+        label="Extra specifications (free-form)"
+        hint="Use this for anything that doesn't fit the typed fields above — WiFi, filter type, smart features, etc."
         defaultValue={product.specifications}
         suggestedKeys={SERIES_SPEC_SUGGESTIONS}
       />

@@ -84,6 +84,20 @@ const HEADER_ALIASES: Record<string, string[]> = {
   status: ["state", "สถานะ"],
   is_featured: ["featured", "isfeatured", "แนะนำ"],
   image_url: ["image", "imageurl", "img", "รูป"],
+
+  // ── Typed series-level specs ────────────────────────────────────────────
+  brand: ["brandname", "ยี่ห้อ"],
+  eer: ["energyefficiencyratio", "seer"],
+  voltage: ["powersupply", "power", "แรงดันไฟฟ้า", "ไฟ"],
+  refrigerant: ["gas", "น้ำยา", "สารทำความเย็น"],
+  warranty_text: ["warranty", "การรับประกัน", "รับประกัน"],
+  energy_rating: ["energyrating", "energylabel", "เบอร์ประหยัดไฟ", "ฉลากประหยัดไฟ", "rating"],
+
+  // ── Typed variant-level specs ───────────────────────────────────────────
+  cooling_capacity_btu: ["coolingcapacity", "coolingcapacitybtu", "btuvalue", "ความสามารถในการทำความเย็น"],
+  noise_level_db: ["noiselevel", "noise", "soundlevel", "ระดับเสียง"],
+  dimensions: ["dim", "indoordimensions", "size_mm", "มิติ"],
+  room_size_sqm: ["roomsize", "roomsizesqm", "roomarea", "coveragearea", "ขนาดห้อง", "พื้นที่"],
 };
 
 /** Strip everything that isn't a letter/digit and lowercase, for fuzzy header matching. */
@@ -215,10 +229,85 @@ const VALID_CATEGORIES = [
 ] as const;
 type Category = (typeof VALID_CATEGORIES)[number];
 
+/** Map friendly category labels in the sheet to our DB enum. */
+const CATEGORY_ALIASES: Record<string, Category> = {
+  // Split type / wall-mounted indoor unit
+  split: "split",
+  "wall-mounted": "split",
+  "wallmounted": "split",
+  wallmount: "split",
+  wall: "split",
+  ติดผนัง: "split",
+  แอร์ผนัง: "split",
+  // Window
+  window: "window",
+  windowtype: "window",
+  หน้าต่าง: "window",
+  // Portable
+  portable: "portable",
+  เคลื่อนที่: "portable",
+  // Central / ducted
+  central: "central",
+  centralac: "central",
+  ducted: "ducted",
+  duct: "ducted",
+  // Cassette / ceiling
+  cassette: "cassette",
+  ceiling: "cassette",
+  ceilingcassette: "cassette",
+  ฝังฝ้า: "cassette",
+  แคสเซท: "cassette",
+};
+
+function normalizeCategory(raw: string | undefined): Category | null {
+  if (!raw) return null;
+  const key = raw
+    .toLowerCase()
+    .replace(/[\s._-]+/g, "")
+    .trim();
+  return CATEGORY_ALIASES[key] ?? null;
+}
+
 const VALID_STATUSES = [
   "active", "draft", "archived", "out_of_stock",
 ] as const;
 type Status = (typeof VALID_STATUSES)[number];
+
+/** Friendly status labels in the sheet → our DB enum. */
+const STATUS_ALIASES: Record<string, Status> = {
+  active: "active",
+  on: "active",
+  enabled: "active",
+  ใช้งาน: "active",
+  ขาย: "active",
+
+  inactive: "archived",
+  off: "archived",
+  disabled: "archived",
+  archived: "archived",
+  hidden: "archived",
+  ไม่ใช้งาน: "archived",
+  ยกเลิก: "archived",
+
+  draft: "draft",
+  pending: "draft",
+  ร่าง: "draft",
+
+  outofstock: "out_of_stock",
+  out_of_stock: "out_of_stock",
+  oos: "out_of_stock",
+  สินค้าหมด: "out_of_stock",
+  หมด: "out_of_stock",
+};
+
+function normalizeStatus(raw: string | undefined): Status {
+  if (!raw) return "active";
+  const key = raw
+    .toLowerCase()
+    .replace(/[\s._-]+/g, "")
+    .trim();
+  return STATUS_ALIASES[key] ?? "active";
+}
 
 function pickSpecs(row: Record<string, string>, prefix: string): Record<string, string> {
   const out: Record<string, string> = {};
@@ -229,6 +318,28 @@ function pickSpecs(row: Record<string, string>, prefix: string): Record<string, 
     if (key) out[key] = v.trim();
   }
   return out;
+}
+
+function trimOrNull(v: string | undefined): string | null {
+  if (!v) return null;
+  const t = v.trim();
+  return t ? t : null;
+}
+
+/** Extract just the leading number from a string (e.g. "12.50 EER" → "12.50"). */
+function extractDecimal(v: string | undefined): string | null {
+  if (!v) return null;
+  const m = v.match(/\d+(\.\d+)?/);
+  return m ? m[0] : null;
+}
+
+/** Extract the most prominent integer (e.g. "9,000 BTU/hr" → 9000). */
+function extractInt(v: string | undefined): number | null {
+  if (!v) return null;
+  const m = v.replace(/,/g, "").match(/\d+/);
+  if (!m) return null;
+  const n = parseInt(m[0], 10);
+  return Number.isFinite(n) ? n : null;
 }
 
 // ─── Main ────────────────────────────────────────────────────────────────────
@@ -274,7 +385,10 @@ async function importSheet() {
     );
   }
 
-  // Group rows by slug (auto-generated from series_name if blank).
+  // Group rows by series_name. The per-row `slug` column (if present) is
+  // typically a variant SKU like "samsung-ar09aghqa" and is NOT used as a
+  // series identifier — we derive the series slug from series_name instead
+  // so all variants of the same series land under one product row.
   type SeriesGroup = {
     slug: string;
     seriesName: string;
@@ -284,12 +398,13 @@ async function importSheet() {
   for (const r of rows) {
     const seriesName = r.series_name?.trim();
     if (!seriesName) continue;
-    const slug = (r.slug?.trim() || slugify(seriesName)).toLowerCase();
-    if (!slug) continue;
-    if (!groups.has(slug)) {
-      groups.set(slug, { slug, seriesName, rows: [] });
+    const key = seriesName.toLowerCase();
+    if (!groups.has(key)) {
+      // Series slug: derive from series_name to keep it stable across variants.
+      const slug = slugify(seriesName);
+      groups.set(key, { slug, seriesName, rows: [] });
     }
-    groups.get(slug)!.rows.push(r);
+    groups.get(key)!.rows.push(r);
   }
 
   console.log(`   ${groups.size} series found`);
@@ -307,24 +422,34 @@ async function importSheet() {
   for (const group of groups.values()) {
     const first = group.rows[0];
 
-    const category = first.category?.trim().toLowerCase() as Category;
-    if (!VALID_CATEGORIES.includes(category)) {
-      console.warn(`  ⚠ Skipping "${group.seriesName}": invalid category "${category}"`);
+    const category = normalizeCategory(first.category);
+    if (!category) {
+      console.warn(
+        `  ⚠ Skipping "${group.seriesName}": unknown category "${first.category}". ` +
+          `Add an alias in CATEGORY_ALIASES.`
+      );
       continue;
     }
-    const statusRaw = (first.status?.trim().toLowerCase() || "active") as Status;
-    const status = VALID_STATUSES.includes(statusRaw) ? statusRaw : "active";
+    const status = normalizeStatus(first.status);
 
     const seriesData = {
       name: group.seriesName,
-      nameTh: first.series_name_th?.trim() || null,
+      nameTh: trimOrNull(first.series_name_th),
       slug: group.slug,
-      shortDescription: first.short_description?.trim() || null,
-      shortDescriptionTh: first.short_description_th?.trim() || null,
-      description: first.description?.trim() || null,
-      descriptionTh: first.description_th?.trim() || null,
+      shortDescription: trimOrNull(first.short_description),
+      shortDescriptionTh: trimOrNull(first.short_description_th),
+      description: trimOrNull(first.description),
+      descriptionTh: trimOrNull(first.description_th),
       category,
       status,
+      // Typed series-level specs
+      brand: trimOrNull(first.brand),
+      eer: extractDecimal(first.eer),
+      voltage: trimOrNull(first.voltage),
+      refrigerant: trimOrNull(first.refrigerant),
+      warrantyText: trimOrNull(first.warranty_text),
+      energyRating: trimOrNull(first.energy_rating),
+      // Anything else under spec.<KEY> goes into JSONB
       specifications: Object.keys(pickSpecs(first, "spec.")).length
         ? pickSpecs(first, "spec.")
         : null,
@@ -399,6 +524,12 @@ async function importSheet() {
           comparePriceInSatang: compare,
           stock,
           lowStockThreshold,
+          // Typed variant-level specs
+          coolingCapacityBtu: extractInt(r.cooling_capacity_btu),
+          noiseLevelDb: extractDecimal(r.noise_level_db),
+          dimensions: trimOrNull(r.dimensions),
+          roomSizeSqm: trimOrNull(r.room_size_sqm),
+          // Anything else under variant_spec.<KEY> → JSONB
           specifications:
             Object.keys(variantSpecs).length > 0 ? variantSpecs : null,
         };

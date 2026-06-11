@@ -17,8 +17,17 @@ type Props = {
   productName: string;
   productSlug: string;
   primaryImageUrl: string | null;
-  /** Series-shared specs displayed before variant-specific specs. */
+  /** Series-shared free-form specs from the JSONB column. */
   sharedSpecs: Record<string, string> | null;
+  /** Typed series-level specs (Brand, EER, Voltage, Refrigerant, Warranty, Energy). */
+  sharedTyped: {
+    Brand?: string | null;
+    EER?: string | null;
+    Voltage?: string | null;
+    Refrigerant?: string | null;
+    Warranty?: string | null;
+    "Energy Rating"?: string | null;
+  };
   variants: ProductVariant[];
   isFeatured: boolean;
   categoryLabel: string;
@@ -30,6 +39,7 @@ export function ProductVariantPicker({
   productSlug,
   primaryImageUrl,
   sharedSpecs,
+  sharedTyped,
   variants,
   isFeatured,
   categoryLabel,
@@ -57,10 +67,39 @@ export function ProductVariantPicker({
     selected.priceInSatang
   );
 
-  // Merge shared + variant-specific specs for display. Variant overrides shared.
+  // Merge typed shared + free-form shared + typed variant + free-form variant
+  // for display. Variant values override series values when keys overlap.
+  // Empty / null typed values are filtered out so the table stays clean.
+  const typedShared: Record<string, string> = {};
+  for (const [k, v] of Object.entries(sharedTyped)) {
+    if (v != null && String(v).trim() !== "") {
+      typedShared[k] = String(v);
+    }
+  }
+  const typedVariant: Record<string, string> = {};
+  if (selected.coolingCapacityBtu != null) {
+    typedVariant["Cooling Capacity"] = `${selected.coolingCapacityBtu.toLocaleString()} BTU/hr`;
+  }
+  if (selected.noiseLevelDb != null) {
+    typedVariant["Noise Level"] = `${selected.noiseLevelDb} dB(A)`;
+  }
+  if (selected.dimensions) {
+    typedVariant["Dimensions"] = selected.dimensions;
+  }
+  if (selected.roomSizeSqm) {
+    // Admin enters the label verbatim (e.g. "25-30" or "Up to 18"); we just
+    // append the unit.
+    typedVariant["Recommended Room Size"] = `${selected.roomSizeSqm} m²`;
+  }
+
+  // Iteration order matters: variant-specific values (BTU, Room Size, Noise,
+  // Dimensions) come FIRST so they sit at the top of the specs table, then the
+  // series-shared values (Brand, EER, Voltage, …) follow.
   const mergedSpecs: Record<string, string> = {
-    ...(sharedSpecs ?? {}),
+    ...typedVariant,
     ...((selected.specifications as Record<string, string> | null) ?? {}),
+    ...typedShared,
+    ...(sharedSpecs ?? {}),
   };
 
   const handleAdd = () => {

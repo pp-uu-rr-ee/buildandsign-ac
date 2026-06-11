@@ -107,11 +107,26 @@ export function ProductCreateForm() {
         SKU, and stock live on each variant.
       </div>
 
-      {/* Series-shared specs — Brand, Type, Voltage, EER, Warranty… */}
+      {/* Series-level typed specs */}
+      <div className="rounded-lg border border-gray-200 p-4 space-y-4 dark:border-gray-700">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+          Series specifications
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="Brand" name="brand" placeholder="Carrier, Daikin, …" />
+          <Field label="EER" name="eer" placeholder="12.50" />
+          <Field label="Voltage" name="voltage" placeholder="230V / 50Hz" />
+          <Field label="Refrigerant" name="refrigerant" placeholder="R-32" />
+          <Field label="Energy Rating" name="energyRating" placeholder="Label 5" />
+          <Field label="Warranty" name="warrantyText" placeholder="5 years compressor" />
+        </div>
+      </div>
+
+      {/* Free-form extras */}
       <SpecsEditor
         name="specifications"
-        label="Specifications (shared across all sizes)"
-        hint="Brand, Type, Voltage, Refrigerant, EER, Warranty, …"
+        label="Extra specifications (free-form)"
+        hint="Anything not covered above — WiFi, color, special features…"
         suggestedKeys={SERIES_SPEC_SUGGESTIONS}
       />
 

@@ -87,6 +87,14 @@ export default async function ProductDetailPage({ params }: Props) {
             productSlug={product.slug}
             primaryImageUrl={primaryImage?.url ?? null}
             sharedSpecs={product.specifications}
+            sharedTyped={{
+              Brand: product.brand,
+              EER: product.eer,
+              Voltage: product.voltage,
+              Refrigerant: product.refrigerant,
+              Warranty: product.warrantyText,
+              "Energy Rating": product.energyRating,
+            }}
             variants={product.variants}
             isFeatured={product.isFeatured}
             categoryLabel={categoryLabel}

@@ -54,10 +54,23 @@ const productSchema = z.object({
   category: z.enum(["split","window","portable","central","cassette","ducted"]),
   status: z.enum(["active","draft","archived","out_of_stock"]),
   isFeatured: z.coerce.boolean().optional(),
-  // Series-shared specs as a JSON string. The client (SpecsEditor) serialises
-  // a Record<string, string>. Empty / malformed input becomes NULL.
+  // Typed series-level specs (all optional). Stored as numeric/varchar/text.
+  brand: z.string().optional(),
+  eer: z.string().optional(), // numeric stored as string by Drizzle
+  voltage: z.string().optional(),
+  refrigerant: z.string().optional(),
+  warrantyText: z.string().optional(),
+  energyRating: z.string().optional(),
+  // Anything else (free-form key/value) goes into JSONB. SpecsEditor sends a
+  // JSON string; parseSpecsJson() validates and trims.
   specifications: z.string().optional(),
 });
+
+function trimOrNull(s: string | undefined): string | null {
+  if (!s) return null;
+  const t = s.trim();
+  return t ? t : null;
+}
 
 /**
  * Parse the specifications JSON string the form sends. Returns null when
@@ -88,15 +101,19 @@ export type CreateProductResult =
   | { success: true; productId: string }
   | { success: false; error: string; fieldErrors?: Record<string, string[]> };
 
+const PRODUCT_FIELDS = [
+  "name","nameTh","slug","shortDescription","shortDescriptionTh","description","descriptionTh",
+  "category","status","isFeatured","specifications",
+  "brand","eer","voltage","refrigerant","warrantyText","energyRating",
+];
+
 export async function updateProductAction(
   _prev: ProductFormResult,
   formData: FormData
 ): Promise<ProductFormResult> {
   const id = formData.get("id") as string;
   const raw = Object.fromEntries(
-    ["name","nameTh","slug","shortDescription","shortDescriptionTh","description","descriptionTh",
-     "category","status","isFeatured","specifications"]
-      .map((k) => [k, formData.get(k)])
+    PRODUCT_FIELDS.map((k) => [k, formData.get(k)])
   );
   raw.isFeatured = formData.get("isFeatured") === "on" ? "true" : "false";
 
@@ -106,14 +123,24 @@ export async function updateProductAction(
   }
 
   const data = parsed.data;
-  const { specifications, ...rest } = data;
+  const {
+    specifications,
+    brand, eer, voltage, refrigerant, warrantyText, energyRating,
+    ...rest
+  } = data;
 
   await db.update(products).set({
     ...rest,
-    nameTh: rest.nameTh || null,
-    shortDescriptionTh: rest.shortDescriptionTh || null,
-    descriptionTh: rest.descriptionTh || null,
+    nameTh: trimOrNull(rest.nameTh),
+    shortDescriptionTh: trimOrNull(rest.shortDescriptionTh),
+    descriptionTh: trimOrNull(rest.descriptionTh),
     isFeatured: rest.isFeatured ?? false,
+    brand: trimOrNull(brand),
+    eer: trimOrNull(eer),
+    voltage: trimOrNull(voltage),
+    refrigerant: trimOrNull(refrigerant),
+    warrantyText: trimOrNull(warrantyText),
+    energyRating: trimOrNull(energyRating),
     specifications: parseSpecsJson(specifications),
     updatedAt: new Date(),
   }).where(eq(products.id, id));
@@ -128,9 +155,7 @@ export async function createProductAction(
   formData: FormData
 ): Promise<CreateProductResult> {
   const raw = Object.fromEntries(
-    ["name","nameTh","slug","shortDescription","shortDescriptionTh",
-     "category","status","isFeatured","specifications"]
-      .map((k) => [k, formData.get(k)])
+    PRODUCT_FIELDS.map((k) => [k, formData.get(k)])
   );
   raw.isFeatured = formData.get("isFeatured") === "on" ? "true" : "false";
 
@@ -140,13 +165,23 @@ export async function createProductAction(
   }
 
   const data = parsed.data;
-  const { specifications, ...rest } = data;
+  const {
+    specifications,
+    brand, eer, voltage, refrigerant, warrantyText, energyRating,
+    ...rest
+  } = data;
 
   const [product] = await db.insert(products).values({
     ...rest,
-    nameTh: rest.nameTh || null,
-    shortDescriptionTh: rest.shortDescriptionTh || null,
+    nameTh: trimOrNull(rest.nameTh),
+    shortDescriptionTh: trimOrNull(rest.shortDescriptionTh),
     isFeatured: rest.isFeatured ?? false,
+    brand: trimOrNull(brand),
+    eer: trimOrNull(eer),
+    voltage: trimOrNull(voltage),
+    refrigerant: trimOrNull(refrigerant),
+    warrantyText: trimOrNull(warrantyText),
+    energyRating: trimOrNull(energyRating),
     specifications: parseSpecsJson(specifications),
   }).returning({ id: products.id });
 
@@ -169,7 +204,39 @@ const variantSchema = z.object({
   priceInBaht: z.coerce.number().positive("Price must be positive"),
   comparePriceInBaht: z.coerce.number().positive().optional().or(z.literal("")),
   stock: z.coerce.number().int().min(0),
+  lowStockThreshold: z.coerce.number().int().min(0),
+  // Typed variant-level specs
+  coolingCapacityBtu: z.coerce.number().int().min(0).optional().or(z.literal("")),
+  noiseLevelDb: z.string().optional(),
+  dimensions: z.string().optional(),
+  roomSizeSqm: z.string().trim().max(30).optional(),
 });
+
+function readVariantTypedFields(formData: FormData) {
+  return {
+    coolingCapacityBtu: formData.get("coolingCapacityBtu") || "",
+    noiseLevelDb: formData.get("noiseLevelDb") || "",
+    dimensions: formData.get("dimensions") || "",
+    roomSizeSqm: formData.get("roomSizeSqm") || "",
+  };
+}
+
+function buildVariantTypedValues(parsed: {
+  coolingCapacityBtu?: number | "";
+  noiseLevelDb?: string;
+  dimensions?: string;
+  roomSizeSqm?: string;
+}) {
+  return {
+    coolingCapacityBtu:
+      typeof parsed.coolingCapacityBtu === "number" && parsed.coolingCapacityBtu > 0
+        ? parsed.coolingCapacityBtu
+        : null,
+    noiseLevelDb: trimOrNull(parsed.noiseLevelDb),
+    dimensions: trimOrNull(parsed.dimensions),
+    roomSizeSqm: trimOrNull(parsed.roomSizeSqm),
+  };
+}
 
 export type VariantActionResult =
   | { success: true }
@@ -191,6 +258,8 @@ export async function addVariantAction(
     priceInBaht: formData.get("priceInBaht"),
     comparePriceInBaht: formData.get("comparePriceInBaht") || "",
     stock: formData.get("stock") || "0",
+    lowStockThreshold: formData.get("lowStockThreshold") || "5",
+    ...readVariantTypedFields(formData),
   };
 
   const parsed = variantSchema.safeParse(raw);
@@ -213,6 +282,8 @@ export async function addVariantAction(
         ? Math.round(Number(parsed.data.comparePriceInBaht) * 100)
         : null,
     stock: parsed.data.stock,
+    lowStockThreshold: parsed.data.lowStockThreshold,
+    ...buildVariantTypedValues(parsed.data),
   });
 
   revalidatePath("/admin/products");
@@ -235,6 +306,8 @@ export async function updateVariantAction(
     priceInBaht: formData.get("priceInBaht"),
     comparePriceInBaht: formData.get("comparePriceInBaht") || "",
     stock: formData.get("stock") || "0",
+    lowStockThreshold: formData.get("lowStockThreshold") || "5",
+    ...readVariantTypedFields(formData),
   };
 
   const parsed = variantSchema.safeParse(raw);
@@ -258,6 +331,8 @@ export async function updateVariantAction(
           ? Math.round(Number(parsed.data.comparePriceInBaht) * 100)
           : null,
       stock: parsed.data.stock,
+      lowStockThreshold: parsed.data.lowStockThreshold,
+      ...buildVariantTypedValues(parsed.data),
       updatedAt: new Date(),
     })
     .where(eq((await import("@/db/schema")).productVariants.id, variantId));
