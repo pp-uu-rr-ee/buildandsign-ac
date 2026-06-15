@@ -53,7 +53,13 @@ const productSchema = z.object({
   descriptionTh: z.string().optional(),
   category: z.enum(["split","window","portable","central","cassette","ducted"]),
   status: z.enum(["active","draft","archived","out_of_stock"]),
-  isFeatured: z.coerce.boolean().optional(),
+  // NB: z.coerce.boolean() can't be used here — it does Boolean(value), and
+  // Boolean("false") is `true` because any non-empty string is truthy.
+  // We accept the literal strings "true"/"false" and transform manually.
+  isFeatured: z
+    .union([z.literal("true"), z.literal("false"), z.boolean()])
+    .optional()
+    .transform((v) => v === true || v === "true"),
   // Typed series-level specs (all optional). Stored as numeric/varchar/text.
   brand: z.string().optional(),
   eer: z.string().optional(), // numeric stored as string by Drizzle
