@@ -66,7 +66,6 @@ const productSchema = z.object({
   voltage: z.string().optional(),
   refrigerant: z.string().optional(),
   warrantyText: z.string().optional(),
-  energyRating: z.string().optional(),
   // Anything else (free-form key/value) goes into JSONB. SpecsEditor sends a
   // JSON string; parseSpecsJson() validates and trims.
   specifications: z.string().optional(),
@@ -110,7 +109,7 @@ export type CreateProductResult =
 const PRODUCT_FIELDS = [
   "name","nameTh","slug","shortDescription","shortDescriptionTh","description","descriptionTh",
   "category","status","isFeatured","specifications",
-  "brand","eer","voltage","refrigerant","warrantyText","energyRating",
+  "brand","eer","voltage","refrigerant","warrantyText",
 ];
 
 export async function updateProductAction(
@@ -131,7 +130,7 @@ export async function updateProductAction(
   const data = parsed.data;
   const {
     specifications,
-    brand, eer, voltage, refrigerant, warrantyText, energyRating,
+    brand, eer, voltage, refrigerant, warrantyText,
     ...rest
   } = data;
 
@@ -146,7 +145,6 @@ export async function updateProductAction(
     voltage: trimOrNull(voltage),
     refrigerant: trimOrNull(refrigerant),
     warrantyText: trimOrNull(warrantyText),
-    energyRating: trimOrNull(energyRating),
     specifications: parseSpecsJson(specifications),
     updatedAt: new Date(),
   }).where(eq(products.id, id));
@@ -173,7 +171,7 @@ export async function createProductAction(
   const data = parsed.data;
   const {
     specifications,
-    brand, eer, voltage, refrigerant, warrantyText, energyRating,
+    brand, eer, voltage, refrigerant, warrantyText,
     ...rest
   } = data;
 
@@ -187,7 +185,6 @@ export async function createProductAction(
     voltage: trimOrNull(voltage),
     refrigerant: trimOrNull(refrigerant),
     warrantyText: trimOrNull(warrantyText),
-    energyRating: trimOrNull(energyRating),
     specifications: parseSpecsJson(specifications),
   }).returning({ id: products.id });
 
@@ -214,7 +211,7 @@ const variantSchema = z.object({
   // Typed variant-level specs
   coolingCapacityBtu: z.coerce.number().int().min(0).optional().or(z.literal("")),
   noiseLevelDb: z.string().optional(),
-  dimensions: z.string().optional(),
+  energyRating: z.string().optional(),
   roomSizeSqm: z.string().trim().max(30).optional(),
 });
 
@@ -222,7 +219,7 @@ function readVariantTypedFields(formData: FormData) {
   return {
     coolingCapacityBtu: formData.get("coolingCapacityBtu") || "",
     noiseLevelDb: formData.get("noiseLevelDb") || "",
-    dimensions: formData.get("dimensions") || "",
+    energyRating: formData.get("energyRating") || "",
     roomSizeSqm: formData.get("roomSizeSqm") || "",
   };
 }
@@ -230,7 +227,7 @@ function readVariantTypedFields(formData: FormData) {
 function buildVariantTypedValues(parsed: {
   coolingCapacityBtu?: number | "";
   noiseLevelDb?: string;
-  dimensions?: string;
+  energyRating?: string;
   roomSizeSqm?: string;
 }) {
   return {
@@ -239,7 +236,7 @@ function buildVariantTypedValues(parsed: {
         ? parsed.coolingCapacityBtu
         : null,
     noiseLevelDb: trimOrNull(parsed.noiseLevelDb),
-    dimensions: trimOrNull(parsed.dimensions),
+    energyRating: trimOrNull(parsed.energyRating),
     roomSizeSqm: trimOrNull(parsed.roomSizeSqm),
   };
 }

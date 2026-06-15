@@ -21,7 +21,7 @@ import { eq } from "drizzle-orm";
 // ─── Series-level mapping ───────────────────────────────────────────────────
 // Each entry: { typed column, list of JSONB keys to look for }.
 const SERIES_KEYS: Array<{
-  column: "brand" | "eer" | "voltage" | "refrigerant" | "warrantyText" | "energyRating";
+  column: "brand" | "eer" | "voltage" | "refrigerant" | "warrantyText";
   keys: string[];
   parse?: (s: string) => string | null;
 }> = [
@@ -50,15 +50,11 @@ const SERIES_KEYS: Array<{
     column: "warrantyText",
     keys: ["Warranty", "การรับประกัน", "รับประกัน"],
   },
-  {
-    column: "energyRating",
-    keys: ["Energy Rating", "Energy Label", "เบอร์ประหยัดไฟ", "ฉลากประหยัดไฟ"],
-  },
 ];
 
 // ─── Variant-level mapping ──────────────────────────────────────────────────
 const VARIANT_KEYS: Array<{
-  column: "coolingCapacityBtu" | "noiseLevelDb" | "dimensions" | "roomSizeSqm";
+  column: "coolingCapacityBtu" | "noiseLevelDb" | "energyRating" | "roomSizeSqm";
   keys: string[];
   parse?: (s: string) => string | number | null;
 }> = [
@@ -87,8 +83,8 @@ const VARIANT_KEYS: Array<{
     },
   },
   {
-    column: "dimensions",
-    keys: ["Dimensions", "Size", "Indoor Dimensions", "ขนาด", "มิติ"],
+    column: "energyRating",
+    keys: ["Energy Rating", "Energy Label", "เบอร์ประหยัดไฟ", "ฉลากประหยัดไฟ"],
   },
   {
     column: "roomSizeSqm",

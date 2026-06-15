@@ -117,7 +117,6 @@ export function ProductCreateForm() {
           <Field label="EER" name="eer" placeholder="12.50" />
           <Field label="Voltage" name="voltage" placeholder="230V / 50Hz" />
           <Field label="Refrigerant" name="refrigerant" placeholder="R-32" />
-          <Field label="Energy Rating" name="energyRating" placeholder="Label 5" />
           <Field label="Warranty" name="warrantyText" placeholder="5 years compressor" />
         </div>
       </div>

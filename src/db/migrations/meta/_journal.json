@@ -85,6 +85,13 @@
       "when": 1781153000000,
       "tag": "0011_room_size_label",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1781154000000,
+      "tag": "0012_move_energy_rating",
+      "breakpoints": true
     }
   ]
 }

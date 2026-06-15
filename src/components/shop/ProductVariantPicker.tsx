@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ShoppingCart, Check, Phone } from "lucide-react";
+import { ShoppingCart, Check, Phone, Star } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/lib/store/cart";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,27 @@ import { useLanguage } from "@/components/providers/LanguageProvider";
 import { siteConfig } from "@/config/site";
 import type { ProductVariant } from "@/types";
 
+/**
+ * Energy ratings are stored as "5", "5*", "5**", "5***". When a value ends in
+ * one-or-more asterisks, render the leading text plus that many filled star
+ * icons instead of literal asterisks. Other spec values render as-is.
+ */
+function renderSpecValue(value: string): React.ReactNode {
+  const match = value.match(/^(.*?)(\*+)$/);
+  if (!match) return value;
+  const [, base, stars] = match;
+  return (
+    <span className="inline-flex items-center gap-1">
+      {base.trim() && <span>{base.trim()}</span>}
+      <span className="inline-flex items-center text-amber-500">
+        {Array.from({ length: stars.length }).map((_, i) => (
+          <Star key={i} className="h-3.5 w-3.5 fill-current" />
+        ))}
+      </span>
+    </span>
+  );
+}
+
 type Props = {
   productId: string;
   productName: string;
@@ -19,14 +40,13 @@ type Props = {
   primaryImageUrl: string | null;
   /** Series-shared free-form specs from the JSONB column. */
   sharedSpecs: Record<string, string> | null;
-  /** Typed series-level specs (Brand, EER, Voltage, Refrigerant, Warranty, Energy). */
+  /** Typed series-level specs (Brand, EER, Voltage, Refrigerant, Warranty). */
   sharedTyped: {
     Brand?: string | null;
     EER?: string | null;
     Voltage?: string | null;
     Refrigerant?: string | null;
     Warranty?: string | null;
-    "Energy Rating"?: string | null;
   };
   variants: ProductVariant[];
   isFeatured: boolean;
@@ -83,8 +103,9 @@ export function ProductVariantPicker({
   if (selected.noiseLevelDb != null) {
     typedVariant["Noise Level"] = `${selected.noiseLevelDb} dB(A)`;
   }
-  if (selected.dimensions) {
-    typedVariant["Dimensions"] = selected.dimensions;
+  if (selected.energyRating) {
+    typedVariant[lang === "th" ? "ฉลากประหยัดไฟ" : "Energy Rating"] =
+      selected.energyRating;
   }
   if (selected.roomSizeSqm) {
     // Admin enters the label verbatim (e.g. "25-30" or "Up to 18"); we just
@@ -328,7 +349,7 @@ export function ProductVariantPicker({
                       {key}
                     </td>
                     <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
-                      {value}
+                      {renderSpecValue(value)}
                     </td>
                   </tr>
                 ))}

@@ -93,7 +93,6 @@ export default async function ProductDetailPage({ params }: Props) {
               Voltage: product.voltage,
               Refrigerant: product.refrigerant,
               Warranty: product.warrantyText,
-              "Energy Rating": product.energyRating,
             }}
             variants={product.variants}
             isFeatured={product.isFeatured}

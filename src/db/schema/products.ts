@@ -55,7 +55,6 @@ export const products = pgTable("products", {
   voltage: varchar("voltage", { length: 60 }),
   refrigerant: varchar("refrigerant", { length: 20 }),
   warrantyText: text("warranty_text"),
-  energyRating: varchar("energy_rating", { length: 50 }),
 
   // Anything else goes into JSONB — keeps the schema future-proof for specs
   // we didn't think of (WiFi, smart features, color options, etc.).
@@ -100,9 +99,9 @@ export const productVariants = pgTable("product_variants", {
   // filter ("9,000–12,000 BTU") and sort.
   coolingCapacityBtu: integer("cooling_capacity_btu"),
   noiseLevelDb: numeric("noise_level_db", { precision: 4, scale: 1 }),
-  // Free-form text since manufacturers format dimensions differently
-  // (e.g. "1000 × 295 × 230 mm", "39.4 × 11.6 × 9.1 in").
-  dimensions: varchar("dimensions", { length: 120 }),
+  // Thai energy efficiency label, picked per size from a fixed set:
+  // "5", "5*", "5**", "5***". Asterisks render as star icons on the storefront.
+  energyRating: varchar("energy_rating", { length: 50 }),
   // Recommended room size in square metres. Stored as varchar so admins can
   // enter ranges like "25-30" or "Up to 18" — they're displayed verbatim and
   // we don't need to sort/filter on it.

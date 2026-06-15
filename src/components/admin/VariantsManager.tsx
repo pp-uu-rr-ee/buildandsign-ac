@@ -111,7 +111,7 @@ export function VariantsManager({ productId, variants }: Props) {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 items-end">
             <Field name="coolingCapacityBtu" label="Cooling BTU" type="number" placeholder="9000" />
             <Field name="noiseLevelDb" label="Noise (dB)" placeholder="19.0" />
-            <Field name="dimensions" label="Dimensions" placeholder="800 × 280 × 200 mm" />
+            <SelectField name="energyRating" label="Energy Rating" options={ENERGY_RATING_OPTIONS} />
             <Field name="roomSizeSqm" label="Room size (m²)" placeholder="25-30" />
           </div>
           <div className="flex gap-2">
@@ -241,10 +241,11 @@ export function VariantsManager({ productId, variants }: Props) {
                               label="Noise (dB)"
                               defaultValue={v.noiseLevelDb ?? ""}
                             />
-                            <Field
-                              name="dimensions"
-                              label="Dimensions"
-                              defaultValue={v.dimensions ?? ""}
+                            <SelectField
+                              name="energyRating"
+                              label="Energy Rating"
+                              defaultValue={v.energyRating ?? ""}
+                              options={ENERGY_RATING_OPTIONS}
                             />
                             <Field
                               name="roomSizeSqm"
@@ -358,6 +359,43 @@ function Field({
         step={type === "number" ? "1" : undefined}
         className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
       />
+    </div>
+  );
+}
+
+// Thai energy-efficiency labels — stored with asterisks; rendered as star
+// icons on the storefront. A fixed list keeps all variants consistent.
+export const ENERGY_RATING_OPTIONS = ["5", "5*", "5**", "5***", "5****", "5*****"];
+
+function SelectField({
+  name,
+  label,
+  defaultValue,
+  options,
+}: {
+  name: string;
+  label: string;
+  defaultValue?: string;
+  options: string[];
+}) {
+  return (
+    <div>
+      <label htmlFor={name} className="block text-[10px] uppercase tracking-wide text-gray-500 mb-0.5">
+        {label}
+      </label>
+      <select
+        id={name}
+        name={name}
+        defaultValue={defaultValue ?? ""}
+        className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+      >
+        <option value="">—</option>
+        {options.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

@@ -116,7 +116,6 @@ export function ProductEditForm({ product }: { product: Product }) {
           <Field label="EER" name="eer" defaultValue={product.eer ?? ""} placeholder="12.50" />
           <Field label="Voltage" name="voltage" defaultValue={product.voltage ?? ""} placeholder="230V / 50Hz" />
           <Field label="Refrigerant" name="refrigerant" defaultValue={product.refrigerant ?? ""} placeholder="R-32" />
-          <Field label="Energy Rating" name="energyRating" defaultValue={product.energyRating ?? ""} placeholder="Label 5" />
         </div>
         <TextareaField
           label="Warranty"

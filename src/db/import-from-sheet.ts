@@ -91,12 +91,11 @@ const HEADER_ALIASES: Record<string, string[]> = {
   voltage: ["powersupply", "power", "แรงดันไฟฟ้า", "ไฟ"],
   refrigerant: ["gas", "น้ำยา", "สารทำความเย็น"],
   warranty_text: ["warranty", "การรับประกัน", "รับประกัน"],
-  energy_rating: ["energyrating", "energylabel", "เบอร์ประหยัดไฟ", "ฉลากประหยัดไฟ", "rating"],
 
   // ── Typed variant-level specs ───────────────────────────────────────────
   cooling_capacity_btu: ["coolingcapacity", "coolingcapacitybtu", "btuvalue", "ความสามารถในการทำความเย็น"],
   noise_level_db: ["noiselevel", "noise", "soundlevel", "ระดับเสียง"],
-  dimensions: ["dim", "indoordimensions", "size_mm", "มิติ"],
+  energy_rating: ["energyrating", "energylabel", "เบอร์ประหยัดไฟ", "ฉลากประหยัดไฟ", "rating"],
   room_size_sqm: ["roomsize", "roomsizesqm", "roomarea", "coveragearea", "ขนาดห้อง", "พื้นที่"],
 };
 
@@ -448,7 +447,6 @@ async function importSheet() {
       voltage: trimOrNull(first.voltage),
       refrigerant: trimOrNull(first.refrigerant),
       warrantyText: trimOrNull(first.warranty_text),
-      energyRating: trimOrNull(first.energy_rating),
       // Anything else under spec.<KEY> goes into JSONB
       specifications: Object.keys(pickSpecs(first, "spec.")).length
         ? pickSpecs(first, "spec.")
@@ -527,7 +525,7 @@ async function importSheet() {
           // Typed variant-level specs
           coolingCapacityBtu: extractInt(r.cooling_capacity_btu),
           noiseLevelDb: extractDecimal(r.noise_level_db),
-          dimensions: trimOrNull(r.dimensions),
+          energyRating: trimOrNull(r.energy_rating),
           roomSizeSqm: trimOrNull(r.room_size_sqm),
           // Anything else under variant_spec.<KEY> → JSONB
           specifications:
