@@ -7,7 +7,16 @@ import {
   passwordResetHtml,
 } from "./templates";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy-init the Resend client. Constructing it at module load throws when
+// RESEND_API_KEY is absent (e.g. during `next build`'s page-data collection),
+// which would fail the whole build. We build it on first use instead, and the
+// send functions already early-return when the key is missing.
+let _resend: Resend | null = null;
+function getResend(): Resend | null {
+  if (!process.env.RESEND_API_KEY) return null;
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
+  return _resend;
+}
 const FROM = process.env.EMAIL_FROM ?? "no-reply@coolairservices.com";
 const APP_URL = siteConfig.url;
 
@@ -32,7 +41,8 @@ export type BookingEmailPayload = {
 };
 
 export async function sendBookingConfirmation(payload: BookingEmailPayload): Promise<void> {
-  if (!process.env.RESEND_API_KEY) return;
+  const resend = getResend();
+  if (!resend) return;
 
   const { error } = await resend.emails.send({
     from: `${siteConfig.name} <${FROM}>`,
@@ -81,7 +91,8 @@ export type OrderEmailPayload = {
 };
 
 export async function sendOrderReceipt(payload: OrderEmailPayload): Promise<void> {
-  if (!process.env.RESEND_API_KEY) return;
+  const resend = getResend();
+  if (!resend) return;
 
   const { error } = await resend.emails.send({
     from: `${siteConfig.name} <${FROM}>`,
@@ -113,7 +124,8 @@ export async function sendBookingQuoteReady(payload: {
   quotedTotalInSatang: number;
   bookingId: string;
 }): Promise<void> {
-  if (!process.env.RESEND_API_KEY) return;
+  const resend = getResend();
+  if (!resend) return;
 
   const { error } = await resend.emails.send({
     from: `${siteConfig.name} <${FROM}>`,
@@ -136,7 +148,8 @@ export async function sendPasswordReset(payload: {
   customerName: string;
   resetUrl: string;
 }): Promise<void> {
-  if (!process.env.RESEND_API_KEY) return;
+  const resend = getResend();
+  if (!resend) return;
 
   const { error } = await resend.emails.send({
     from: `${siteConfig.name} <${FROM}>`,
