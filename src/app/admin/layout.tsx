@@ -4,6 +4,10 @@ import { getSession } from "@/lib/session";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 
+// Admin is auth-gated and shows live DB data — never prerender it at build
+// time (which would also force a DB connection during `next build`).
+export const dynamic = "force-dynamic";
+
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const session = await getSession();
 

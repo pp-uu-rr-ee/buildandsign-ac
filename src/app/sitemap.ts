@@ -17,28 +17,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/contact`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
   ];
 
-  const [productRows, postRows] = await Promise.all([
-    db.select({ slug: products.slug, updatedAt: products.updatedAt })
-      .from(products)
-      .where(eq(products.status, "active")),
-    db.select({ slug: posts.slug, updatedAt: posts.updatedAt })
-      .from(posts)
-      .where(eq(posts.status, "published")),
-  ]);
+  // Don't let a DB hiccup (e.g. missing DATABASE_URL at build, or DB down)
+  // crash the whole build — fall back to just the static pages.
+  try {
+    const [productRows, postRows] = await Promise.all([
+      db.select({ slug: products.slug, updatedAt: products.updatedAt })
+        .from(products)
+        .where(eq(products.status, "active")),
+      db.select({ slug: posts.slug, updatedAt: posts.updatedAt })
+        .from(posts)
+        .where(eq(posts.status, "published")),
+    ]);
 
-  const productPages: MetadataRoute.Sitemap = productRows.map((p) => ({
-    url: `${base}/products/${p.slug}`,
-    lastModified: p.updatedAt,
-    changeFrequency: "weekly",
-    priority: 0.8,
-  }));
+    const productPages: MetadataRoute.Sitemap = productRows.map((p) => ({
+      url: `${base}/products/${p.slug}`,
+      lastModified: p.updatedAt,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    }));
 
-  const blogPages: MetadataRoute.Sitemap = postRows.map((p) => ({
-    url: `${base}/blog/${p.slug}`,
-    lastModified: p.updatedAt,
-    changeFrequency: "monthly",
-    priority: 0.6,
-  }));
+    const blogPages: MetadataRoute.Sitemap = postRows.map((p) => ({
+      url: `${base}/blog/${p.slug}`,
+      lastModified: p.updatedAt,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    }));
 
-  return [...staticPages, ...productPages, ...blogPages];
+    return [...staticPages, ...productPages, ...blogPages];
+  } catch (err) {
+    console.error("[sitemap] DB query failed, returning static pages only:", err);
+    return staticPages;
+  }
 }
