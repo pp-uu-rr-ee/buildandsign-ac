@@ -29,6 +29,8 @@ const en = {
     sameDay: "Same-Day Service Available",
     customers: "500+ Happy Customers",
 
+    brandsTitle: "Brands we carry",
+
     servicesTitle: "Our Services",
     servicesSubtitle:
       "Professional AC services for homes and businesses across Bangkok. All work guaranteed.",
@@ -390,6 +392,7 @@ const en = {
 
   products: {
     outOfStock: "Out of Stock",
+    inStock: "In stock",
     onlyLeft: (n: number) => `Only ${n} left`,
     featured: "Featured",
     type: (cat: string) => `${cat} Type`,
@@ -411,6 +414,7 @@ const en = {
     filtersTitle: "Filters",
     clearAll: "Clear all",
     acType: "AC Type",
+    brand: "Brand",
     priceRange: "Price Range",
     sortBy: "Sort by",
     sortNewest: "Newest",

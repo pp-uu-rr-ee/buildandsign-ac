@@ -5,24 +5,16 @@ import { useCallback, useTransition } from "react";
 import { Separator } from "@/components/ui/separator";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 
-export function ProductFilters() {
+export function ProductFilters({ brands }: { brands: string[] }) {
   const { t } = useLanguage();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  const activeCategories = searchParams.getAll("category");
+  const activeBrands = searchParams.getAll("brand");
   const activeMin = searchParams.get("minPrice");
   const activeMax = searchParams.get("maxPrice");
-
-  const CATEGORIES = [
-    { value: "split", label: t.products.catSplit },
-    { value: "window", label: t.products.catWindow },
-    { value: "portable", label: t.products.catPortable },
-    { value: "central", label: t.products.catCentral },
-    { value: "cassette", label: t.products.catCassette },
-  ];
 
   const PRICE_RANGES = [
     { label: t.products.priceLt20k, min: 0, max: 2000000 },
@@ -51,11 +43,11 @@ export function ProductFilters() {
     [router, pathname, searchParams]
   );
 
-  const toggleCategory = (value: string) => {
-    const next = activeCategories.includes(value)
-      ? activeCategories.filter((c) => c !== value)
-      : [...activeCategories, value];
-    setParam({ category: next.length > 0 ? next : null });
+  const toggleBrand = (value: string) => {
+    const next = activeBrands.includes(value)
+      ? activeBrands.filter((b) => b !== value)
+      : [...activeBrands, value];
+    setParam({ brand: next.length > 0 ? next : null });
   };
 
   const setPriceRange = (min: number, max: number) => {
@@ -72,7 +64,7 @@ export function ProductFilters() {
       router.push(pathname, { scroll: false });
     });
 
-  const hasActiveFilters = activeCategories.length > 0 || activeMin || activeMax;
+  const hasActiveFilters = activeBrands.length > 0 || activeMin || activeMax;
 
   return (
     <aside className={`space-y-6 transition-opacity ${isPending ? "opacity-50" : ""}`}>
@@ -90,37 +82,41 @@ export function ProductFilters() {
         )}
       </div>
 
-      <div>
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-          {t.products.acType}
-        </h3>
-        <div className="space-y-2">
-          {CATEGORIES.map((cat) => {
-            const checked = activeCategories.includes(cat.value);
-            return (
-              <label key={cat.value} className="flex items-center gap-2.5 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => toggleCategory(cat.value)}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 accent-blue-600 cursor-pointer"
-                />
-                <span
-                  className={`text-sm transition-colors ${
-                    checked
-                      ? "text-blue-600 font-medium dark:text-blue-400"
-                      : "text-gray-600 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-100"
-                  }`}
-                >
-                  {cat.label}
-                </span>
-              </label>
-            );
-          })}
-        </div>
-      </div>
+      {brands.length > 0 && (
+        <>
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              {t.products.brand}
+            </h3>
+            <div className="space-y-2">
+              {brands.map((brand) => {
+                const checked = activeBrands.includes(brand);
+                return (
+                  <label key={brand} className="flex items-center gap-2.5 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleBrand(brand)}
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 accent-blue-600 cursor-pointer"
+                    />
+                    <span
+                      className={`text-sm transition-colors ${
+                        checked
+                          ? "text-blue-600 font-medium dark:text-blue-400"
+                          : "text-gray-600 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-100"
+                      }`}
+                    >
+                      {brand}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
 
-      <Separator />
+          <Separator />
+        </>
+      )}
 
       <div>
         <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">

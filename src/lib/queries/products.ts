@@ -1,10 +1,11 @@
 import { db } from "@/db";
 import { products, productImages, productVariants } from "@/db/schema";
-import { and, asc, desc, eq, gte, ilike, lte, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, sql } from "drizzle-orm";
 import type { ProductCategoryEnum } from "@/types";
 
 export type ProductFilters = {
   category?: ProductCategoryEnum[];
+  brand?: string[];
   minPrice?: number; // in satang
   maxPrice?: number; // in satang
   search?: string;
@@ -13,6 +14,23 @@ export type ProductFilters = {
   page?: number;
   limit?: number;
 };
+
+/**
+ * Distinct brands across the active catalogue, for the storefront filter.
+ * Brand is free-text, so we read the values that actually exist rather than
+ * hardcoding a list.
+ */
+export async function getBrands(): Promise<string[]> {
+  const rows = await db
+    .selectDistinct({ brand: products.brand })
+    .from(products)
+    .where(and(eq(products.status, "active"), sql`${products.brand} <> ''`))
+    .orderBy(asc(products.brand));
+
+  return rows
+    .map((r) => r.brand)
+    .filter((b): b is string => b != null && b.trim() !== "");
+}
 
 /**
  * Aggregated columns from variants:
@@ -36,6 +54,7 @@ const variantAggSubquery = sql`(
 export async function getProducts(filters: ProductFilters = {}) {
   const {
     category,
+    brand,
     minPrice,
     maxPrice,
     search,
@@ -50,6 +69,7 @@ export async function getProducts(filters: ProductFilters = {}) {
     category && category.length > 0
       ? inArray(products.category, category)
       : undefined,
+    brand && brand.length > 0 ? inArray(products.brand, brand) : undefined,
     search ? ilike(products.name, `%${search}%`) : undefined,
     featured !== undefined ? eq(products.isFeatured, featured) : undefined,
     // Price filter applies to the cheapest variant of each series.

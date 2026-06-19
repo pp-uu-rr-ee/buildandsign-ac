@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   Wrench,
   Sparkles,
@@ -15,7 +16,7 @@ import {
 import { ImageSlot } from "@/components/ui/image-slot";
 import { siteConfig } from "@/config/site";
 import { servicesConfig } from "@/config/services";
-import { getProducts } from "@/lib/queries/products";
+import { getProducts, getBrands } from "@/lib/queries/products";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { formatPrice } from "@/lib/helpers/price";
 import { getT, getLang } from "@/lib/helpers/lang";
@@ -47,17 +48,49 @@ const testimonials = [
   },
 ];
 
+// Logos we have artwork for, mapped to their exact DB brand name. Only brands
+// that actually exist in the catalogue are rendered (see below), so this can
+// safely list more than what's in stock.
+const BRAND_LOGOS = [
+  { name: "Samsung", logo: "/images/brands/Samsung.png" },
+  { name: "Daikin", logo: "/images/brands/Daikin.png" },
+  { name: "Carrier", logo: "/images/brands/Carrier.png" },
+  { name: "Mitsubishi Electric", logo: "/images/brands/Mitsubishi_Electric.png" },
+  { name: "Gree", logo: "/images/brands/Gree.png" },
+  { name: "Midea", logo: "/images/brands/Midea.png" },
+  { name: "Haier", logo: "/images/brands/Haier.png" },
+  { name: "Hisense", logo: "/images/brands/Hisense.png" },
+  { name: "TCL", logo: "/images/brands/TCL.png" },
+];
+
 export const metadata = {
   title: `${siteConfig.tagline} | ${siteConfig.name}`,
   description: siteConfig.description,
 };
 
 export default async function HomePage() {
-  const [{ products: featuredProducts }, t, lang] = await Promise.all([
+  const [{ products: featuredProducts }, dbBrands, t, lang] = await Promise.all([
     getProducts({ featured: true, limit: 4 }),
+    getBrands(),
     getT(),
     getLang(),
   ]);
+
+  // Match logos to the brands that actually have products, using the real DB
+  // string for the filter link (case-insensitive match).
+  const dbBrandByLower = new Map(dbBrands.map((b) => [b.toLowerCase(), b]));
+  const brandLinks = BRAND_LOGOS.map((b) => ({
+    ...b,
+    dbBrand: dbBrandByLower.get(b.name.toLowerCase()),
+  })).filter((b): b is typeof b & { dbBrand: string } => Boolean(b.dbBrand));
+
+  // Lay brands out in alternating rows of 5 then 4 for a staggered "brick" look.
+  const brandRows: (typeof brandLinks)[] = [];
+  for (let cursor = 0, rowSize = 5; cursor < brandLinks.length; ) {
+    brandRows.push(brandLinks.slice(cursor, cursor + rowSize));
+    cursor += rowSize;
+    rowSize = rowSize === 5 ? 4 : 5;
+  }
 
   return (
     <>
@@ -119,6 +152,43 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── Brand logos ── */}
+      {brandLinks.length > 0 && (
+        <section className="border-b border-gray-100 bg-white py-12 dark:border-gray-800 dark:bg-gray-950">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <p className="mb-10 text-center text-base font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 sm:text-lg">
+              {t.home.brandsTitle}
+            </p>
+            <div className="mx-auto max-w-7xl space-y-10">
+              {brandRows.map((row, idx) => (
+                <div
+                  key={idx}
+                  className="flex flex-wrap items-center justify-center gap-x-6 gap-y-10"
+                >
+                  {row.map((b) => (
+                    <Link
+                      key={b.name}
+                      href={`/products?brand=${encodeURIComponent(b.dbBrand)}`}
+                      aria-label={b.name}
+                      className="group flex h-24 w-28 items-center justify-center sm:w-40 lg:w-44"
+                    >
+                      <Image
+                        src={b.logo}
+                        alt={b.name}
+                        width={240}
+                        height={96}
+                        unoptimized
+                        className="max-h-20 w-auto max-w-full object-contain opacity-70 grayscale transition duration-300 group-hover:opacity-100 group-hover:grayscale-0"
+                      />
+                    </Link>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── Service Highlights ── */}
       <section className="bg-gray-50 py-20 dark:bg-gray-900">

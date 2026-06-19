@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { getProducts } from "@/lib/queries/products";
+import { getProducts, getBrands } from "@/lib/queries/products";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { ProductFilters } from "@/components/shop/ProductFilters";
+import { MobileProductFilters } from "@/components/shop/MobileProductFilters";
 import { ProductSort } from "@/components/shop/ProductSort";
 import { Pagination } from "@/components/shop/Pagination";
 import { getT } from "@/lib/helpers/lang";
-import type { ProductCategoryEnum } from "@/types";
 import type { ProductFilters as Filters } from "@/lib/queries/products";
 
 export const metadata: Metadata = {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 type SearchParams = {
-  category?: string | string[];
+  brand?: string | string[];
   minPrice?: string;
   maxPrice?: string;
   sort?: string;
@@ -32,13 +32,7 @@ export default async function ProductsPage({
   const [sp, t] = await Promise.all([searchParams, getT()]);
 
   const filters: Filters = {
-    category: (
-      Array.isArray(sp.category)
-        ? sp.category
-        : sp.category
-        ? [sp.category]
-        : []
-    ) as ProductCategoryEnum[],
+    brand: Array.isArray(sp.brand) ? sp.brand : sp.brand ? [sp.brand] : [],
     minPrice: sp.minPrice ? Number(sp.minPrice) : undefined,
     maxPrice: sp.maxPrice ? Number(sp.maxPrice) : undefined,
     sort: (sp.sort as Filters["sort"]) ?? "newest",
@@ -46,7 +40,10 @@ export default async function ProductsPage({
     search: sp.search,
   };
 
-  const { products, total, pages, page } = await getProducts(filters);
+  const [{ products, total, pages, page }, brands] = await Promise.all([
+    getProducts(filters),
+    getBrands(),
+  ]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
@@ -62,12 +59,15 @@ export default async function ProductsPage({
       <div className="flex gap-8">
         <aside className="hidden lg:block w-56 shrink-0">
           <Suspense>
-            <ProductFilters />
+            <ProductFilters brands={brands} />
           </Suspense>
         </aside>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center justify-between lg:justify-start gap-3 mb-5">
+            <Suspense>
+              <MobileProductFilters brands={brands} />
+            </Suspense>
             <Suspense>
               <ProductSort />
             </Suspense>

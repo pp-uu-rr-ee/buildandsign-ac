@@ -3,8 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { getProductBySlug, getRelatedProducts } from "@/lib/queries/products";
-import { ImageGallery } from "@/components/shop/ImageGallery";
-import { ProductVariantPicker } from "@/components/shop/ProductVariantPicker";
+import { ProductDetail } from "@/components/shop/ProductDetail";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { getT, getLang } from "@/lib/helpers/lang";
 
@@ -75,46 +74,26 @@ export default async function ProductDetailPage({ params }: Props) {
         <span className="text-gray-900 dark:text-gray-200 line-clamp-1">{displayName}</span>
       </nav>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
-        {/* Left — Image gallery */}
-        <ImageGallery images={product.images} productName={displayName} />
-
-        {/* Right — Variant picker + specs + description */}
-        <div className="flex flex-col gap-5">
-          <ProductVariantPicker
-            productId={product.id}
-            productName={displayName}
-            productSlug={product.slug}
-            primaryImageUrl={primaryImage?.url ?? null}
-            sharedSpecs={product.specifications}
-            sharedTyped={{
-              Brand: product.brand,
-              EER: product.eer,
-              Voltage: product.voltage,
-              Refrigerant: product.refrigerant,
-              Warranty: product.warrantyText,
-            }}
-            variants={product.variants}
-            isFeatured={product.isFeatured}
-            categoryLabel={categoryLabel}
-          />
-
-          {displayShortDesc && (
-            <p className="text-gray-600 dark:text-gray-400">{displayShortDesc}</p>
-          )}
-
-          {displayDesc && (
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                {t.products.aboutProduct}
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                {displayDesc}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
+      <ProductDetail
+        productId={product.id}
+        productName={displayName}
+        productSlug={product.slug}
+        shortDescription={displayShortDesc ?? null}
+        description={displayDesc ?? null}
+        images={product.images}
+        primaryImageUrl={primaryImage?.url ?? null}
+        sharedSpecs={product.specifications}
+        sharedTyped={{
+          Brand: product.brand,
+          EER: product.eer,
+          Voltage: product.voltage,
+          Refrigerant: product.refrigerant,
+          Warranty: product.warrantyText,
+        }}
+        variants={product.variants}
+        isFeatured={product.isFeatured}
+        categoryLabel={categoryLabel}
+      />
 
       {/* Related products */}
       {related.length > 0 && (

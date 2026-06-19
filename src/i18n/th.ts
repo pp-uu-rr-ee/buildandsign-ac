@@ -31,6 +31,8 @@ const th: Translations = {
     sameDay: "บริการได้ภายในวันเดียวกัน",
     customers: "ลูกค้าพึงพอใจกว่า 500 ราย",
 
+    brandsTitle: "แบรนด์ที่เราจำหน่าย",
+
     servicesTitle: "บริการของเรา",
     servicesSubtitle:
       "บริการแอร์มืออาชีพสำหรับบ้านพักและธุรกิจทั่วกรุงเทพฯ รับประกันทุกงาน",
@@ -391,6 +393,7 @@ const th: Translations = {
 
   products: {
     outOfStock: "สินค้าหมด",
+    inStock: "มีสินค้า",
     onlyLeft: (n: number) => `เหลือเพียง ${n} ชิ้น`,
     featured: "แนะนำ",
     type: (cat: string) => `${cat} Type`,
@@ -412,6 +415,7 @@ const th: Translations = {
     filtersTitle: "ตัวกรอง",
     clearAll: "ล้างทั้งหมด",
     acType: "ประเภทแอร์",
+    brand: "ยี่ห้อ",
     priceRange: "ช่วงราคา",
     sortBy: "เรียงตาม",
     sortNewest: "ใหม่ล่าสุด",
