@@ -16,8 +16,9 @@ const protectedRoutes = ["/account", "/bookings", "/orders", "/checkout", "/book
 const adminRoutes = ["/admin"];
 // Routes only for technicians (also used to scope them — see below)
 const technicianRoutes = ["/technician"];
-// Routes that logged-in users should not see
-const authRoutes = ["/login", "/register", "/forgot-password"];
+// Routes that logged-in users should not see. (/forgot-password is intentionally
+// NOT here — logged-in users reach it from /account to change their password.)
+const authRoutes = ["/login", "/register"];
 // Routes a technician is ALLOWED to access (everything else redirects them to
 // their calendar). Keep this list tight — the technician portal is a closed app.
 const technicianAllowedPrefixes = [

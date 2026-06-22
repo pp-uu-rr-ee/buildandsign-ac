@@ -95,7 +95,7 @@ export default async function HomePage() {
   return (
     <>
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-700 via-blue-600 to-sky-500">
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#2563EB] to-[#60A5FA]">
         <div className="absolute inset-0 bg-[url('/images/hero-pattern.svg')] opacity-10" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
           <div className="grid lg:grid-cols-2 gap-12 items-center">

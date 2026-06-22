@@ -213,8 +213,12 @@ export async function requestPasswordResetAction(
   const resetUrl = `${siteConfig.url}/reset-password?token=${token}`;
   try {
     await sendPasswordReset({ to: user.email, customerName: user.name, resetUrl });
-  } catch {
-    // Fire-and-forget — don't block on email failure
+  } catch (err) {
+    // Don't block the user, and keep the response identical to avoid email
+    // enumeration — but log server-side so a misconfigured sender (e.g. the
+    // Resend "onboarding@resend.dev" test address, which only delivers to the
+    // account owner) is actually diagnosable instead of failing silently.
+    console.error("[requestPasswordReset] failed to send reset email:", err);
   }
 
   return { success: true };

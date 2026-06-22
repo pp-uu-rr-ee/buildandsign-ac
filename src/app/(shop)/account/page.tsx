@@ -5,7 +5,7 @@ import { getCustomerStats } from "@/lib/queries/account";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { User, ShoppingBag, CalendarCheck, ArrowRight } from "lucide-react";
+import { User, ShoppingBag, CalendarCheck, ArrowRight, KeyRound } from "lucide-react";
 import { LogoutButton } from "@/components/account/LogoutButton";
 import { ProfileForm } from "@/components/account/ProfileForm";
 
@@ -40,6 +40,13 @@ export default async function AccountPage() {
           <p className="font-semibold text-gray-900 text-lg truncate dark:text-gray-100">{account.name}</p>
           <p className="text-gray-500 text-sm truncate dark:text-gray-400">{account.email}</p>
         </div>
+        <Link
+          href="/forgot-password"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+        >
+          <KeyRound className="h-4 w-4" />
+          <span className="hidden sm:inline">Change password</span>
+        </Link>
       </div>
 
       {/* Editable contact details */}

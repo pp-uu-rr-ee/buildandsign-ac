@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
+import { Check, X } from "lucide-react";
 import { registerAction } from "@/lib/actions/auth";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import type { ActionResult } from "@/lib/actions/auth";
@@ -11,6 +12,14 @@ const initialState: ActionResult = { success: true };
 export function RegisterForm() {
   const [state, formAction, isPending] = useActionState(registerAction, initialState);
   const { t } = useLanguage();
+  const [password, setPassword] = useState("");
+
+  // Live password requirements (must mirror registerSchema).
+  const passwordReqs = [
+    { ok: password.length >= 8, label: t.auth.pwReqLength },
+    { ok: /[A-Za-z]/.test(password), label: t.auth.pwReqLetter },
+    { ok: /[0-9]/.test(password), label: t.auth.pwReqNumber },
+  ];
 
   const fieldErrors = !state.success ? state.fieldErrors : undefined;
   const globalError = !state.success && !state.fieldErrors ? state.error : null;
@@ -71,14 +80,33 @@ export function RegisterForm() {
           </label>
           <input
             id="password" name="password" type="password" autoComplete="new-password" required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             disabled={isPending}
           />
-          {fieldErrors?.password ? (
+          {fieldErrors?.password && (
             <p className="mt-1 text-xs text-red-600">{fieldErrors.password[0]}</p>
-          ) : (
-            <p className="mt-1 text-xs text-gray-400">Min 8 chars, one uppercase, one number</p>
           )}
+          <ul className="mt-2 space-y-1">
+            {passwordReqs.map((req) => (
+              <li
+                key={req.label}
+                className={`flex items-center gap-1.5 text-xs transition-colors ${
+                  req.ok
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-gray-400 dark:text-gray-500"
+                }`}
+              >
+                {req.ok ? (
+                  <Check className="h-3.5 w-3.5 shrink-0" />
+                ) : (
+                  <X className="h-3.5 w-3.5 shrink-0" />
+                )}
+                {req.label}
+              </li>
+            ))}
+          </ul>
         </div>
 
         <div>
