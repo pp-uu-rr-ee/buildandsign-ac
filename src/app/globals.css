@@ -88,37 +88,55 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
+  /* ── "Deep Night Cooling" neutral scale ────────────────────────────────
+     A blue-slate retint of Tailwind's gray-* (hue ~222°). Because v4 color
+     utilities resolve `var(--color-gray-*)` at use-site, overriding these
+     here recolors every `dark:` surface, border and text across the whole
+     app — the cold blue glow of an AC panel at night — without touching a
+     single component, and without affecting light mode. */
+  --color-gray-50: #eff3fb;
+  --color-gray-100: #e2e8f4;
+  --color-gray-200: #ccd5e8;
+  --color-gray-300: #aab6cf;
+  --color-gray-400: #8794b1;
+  --color-gray-500: #64748b;
+  --color-gray-600: #415073;
+  --color-gray-700: #2c3a56;
+  --color-gray-800: #1b2740;
+  --color-gray-900: #111a2e;
+  --color-gray-950: #0b1120;
+
+  --background: #0b1120;
+  --foreground: #e2e8f4;
+  --card: #111a2e;
+  --card-foreground: #e2e8f4;
+  --popover: #111a2e;
+  --popover-foreground: #e2e8f4;
   --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --secondary: #1b2740;
+  --secondary-foreground: #e2e8f4;
+  --muted: #1b2740;
+  --muted-foreground: #8794b1;
+  --accent: #1b2740;
+  --accent-foreground: #e2e8f4;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --border: oklch(0.8 0.04 240 / 14%);
+  --input: oklch(0.8 0.04 240 / 18%);
+  --ring: oklch(0.62 0.13 240);
+  --chart-1: oklch(0.7 0.15 240);
+  --chart-2: oklch(0.65 0.12 210);
+  --chart-3: oklch(0.6 0.1 270);
+  --chart-4: oklch(0.55 0.09 200);
+  --chart-5: oklch(0.5 0.08 250);
+  --sidebar: #111a2e;
+  --sidebar-foreground: #e2e8f4;
+  --sidebar-primary: oklch(0.62 0.19 250);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-accent: #1b2740;
+  --sidebar-accent-foreground: #e2e8f4;
+  --sidebar-border: oklch(0.8 0.04 240 / 14%);
+  --sidebar-ring: oklch(0.62 0.13 240);
 }
 
 @layer base {
