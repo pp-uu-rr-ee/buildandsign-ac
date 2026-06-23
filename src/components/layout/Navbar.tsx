@@ -18,36 +18,40 @@ export async function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/90 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/90">
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 bg-white/90 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/90">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-4">
           <MobileNav user={session} />
 
           <Link
             href="/"
-            className="flex items-center gap-2 font-bold text-blue-600 text-lg shrink-0"
+            className="flex items-center gap-2.5 shrink-0"
           >
-            <svg
-              className="h-7 w-7"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z" />
-              <path d="M8 12h8M12 8v8" />
-            </svg>
-            <span className="hidden sm:block">{siteConfig.name}</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
+              <svg
+                className="h-4 w-4 text-white"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z" />
+                <path d="M8 12h8M12 8v8" />
+              </svg>
+            </div>
+            <span className="hidden sm:block text-base font-black tracking-tight text-slate-900 dark:text-white">
+              {siteConfig.name}
+            </span>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center">
+          <nav className="hidden lg:flex items-center gap-0.5 flex-1 justify-center">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="px-4 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors dark:text-gray-300 dark:hover:text-blue-400 dark:hover:bg-blue-950/40"
+                className="px-3.5 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800"
               >
                 {link.label}
               </Link>
@@ -65,13 +69,13 @@ export async function Navbar() {
               <div className="hidden lg:flex items-center gap-2">
                 <Link
                   href="/login"
-                  className="px-3 py-1.5 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors dark:text-gray-200 dark:hover:bg-gray-800"
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors dark:text-slate-300 dark:hover:bg-slate-800"
                 >
                   {t.nav.signIn}
                 </Link>
                 <Link
                   href="/register"
-                  className="px-3 py-1.5 rounded-md bg-blue-600 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                  className="px-4 py-1.5 rounded-lg bg-blue-600 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
                 >
                   {t.nav.getStarted}
                 </Link>
