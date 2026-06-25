@@ -193,6 +193,80 @@ export async function getBookings({
   return { rows, total, pages: Math.ceil(total / limit), page };
 }
 
+// ── Today's activity (admin notifications) ───────────────────────────────────
+export type AdminNotification = {
+  kind: "order" | "booking";
+  id: string;
+  number: string;
+  customerName: string;
+  status: string;
+  createdAt: string; // ISO — serialisable to the client component
+  href: string;
+  serviceType?: string;
+  totalInSatang?: number;
+};
+
+/**
+ * Orders + bookings submitted *today* (Asia/Bangkok), newest first — the feed
+ * behind the admin notification bell.
+ */
+export async function getTodayNotifications(): Promise<AdminNotification[]> {
+  const [orderRows, bookingRows] = await Promise.all([
+    db
+      .select({
+        id: orders.id,
+        number: orders.orderNumber,
+        address: orders.shippingAddress,
+        status: orders.status,
+        totalInSatang: orders.totalInSatang,
+        createdAt: orders.createdAt,
+      })
+      .from(orders)
+      .where(
+        sql`(${orders.createdAt} AT TIME ZONE 'Asia/Bangkok')::date = (now() AT TIME ZONE 'Asia/Bangkok')::date`
+      ),
+    db
+      .select({
+        id: bookings.id,
+        number: bookings.bookingNumber,
+        address: bookings.serviceAddress,
+        status: bookings.status,
+        serviceType: bookings.serviceType,
+        createdAt: bookings.createdAt,
+      })
+      .from(bookings)
+      .where(
+        sql`(${bookings.createdAt} AT TIME ZONE 'Asia/Bangkok')::date = (now() AT TIME ZONE 'Asia/Bangkok')::date`
+      ),
+  ]);
+
+  const items: AdminNotification[] = [
+    ...orderRows.map((o) => ({
+      kind: "order" as const,
+      id: o.id,
+      number: o.number,
+      customerName: o.address?.fullName ?? "—",
+      status: o.status,
+      totalInSatang: o.totalInSatang,
+      createdAt: o.createdAt.toISOString(),
+      href: `/admin/orders/${o.id}`,
+    })),
+    ...bookingRows.map((b) => ({
+      kind: "booking" as const,
+      id: b.id,
+      number: b.number,
+      customerName: b.address?.fullName ?? "—",
+      status: b.status,
+      serviceType: b.serviceType,
+      createdAt: b.createdAt.toISOString(),
+      href: `/admin/bookings/${b.id}`,
+    })),
+  ];
+
+  items.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  return items;
+}
+
 export async function getBookingById(id: string) {
   const [row] = await db
     .select({
