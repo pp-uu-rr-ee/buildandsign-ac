@@ -66,7 +66,10 @@ export function FloatingContact() {
   }, [open]);
 
   return (
-    <div ref={ref} className="fixed bottom-6 right-5 z-50 flex flex-col items-end gap-3">
+    <div
+      ref={ref}
+      className="fixed bottom-6 right-5 z-50 flex flex-col items-end gap-3 pointer-events-none"
+    >
       {/* Contact buttons */}
       {contacts.map((item, i) => (
         <div
@@ -102,7 +105,7 @@ export function FloatingContact() {
       {/* Toggle button */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-xl transition-all duration-300 hover:bg-blue-700 active:scale-95"
+        className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-xl transition-all duration-300 hover:bg-blue-700 active:scale-95"
         aria-label={open ? "ปิดเมนูติดต่อ" : "ติดต่อเรา"}
       >
         <span

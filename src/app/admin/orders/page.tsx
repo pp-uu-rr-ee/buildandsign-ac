@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Eye } from "lucide-react";
 import { getOrders } from "@/lib/queries/admin";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { AdminListToolbar } from "@/components/admin/AdminListToolbar";
@@ -93,9 +94,10 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
                   <td className="px-4 py-3">
                     <Link
                       href={`/admin/orders/${o.id}`}
-                      className="text-xs text-blue-600 hover:underline"
+                      className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 transition-colors"
                     >
-                      View →
+                      <Eye className="h-3.5 w-3.5" />
+                      View
                     </Link>
                   </td>
                 </tr>
