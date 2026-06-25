@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LogOut, User, Package, CalendarCheck, LayoutDashboard, Sun, Moon, Languages } from "lucide-react";
+import { LogOut, User, Package, CalendarCheck, LayoutDashboard, Languages } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,12 +12,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { logoutAction } from "@/lib/actions/auth";
-import { useTheme } from "@/components/providers/ThemeProvider";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import type { SessionPayload } from "@/lib/session";
 
 export function UserMenu({ user }: { user: SessionPayload }) {
-  const { theme, toggle: toggleTheme } = useTheme();
   const { lang, t, toggle: toggleLang } = useLanguage();
 
   return (
@@ -40,24 +38,6 @@ export function UserMenu({ user }: { user: SessionPayload }) {
         </DropdownMenuGroup>
 
         <DropdownMenuSeparator />
-
-        {/* Theme toggle */}
-        <DropdownMenuItem className="p-0">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="flex w-full items-center justify-between gap-2 px-2 py-1.5 text-sm"
-          >
-            <span className="flex items-center gap-2">
-              {theme === "dark" ? (
-                <Moon className="h-4 w-4 text-blue-400" />
-              ) : (
-                <Sun className="h-4 w-4 text-yellow-500" />
-              )}
-              {theme === "dark" ? t.nav.darkMode : t.nav.lightMode}
-            </span>
-          </button>
-        </DropdownMenuItem>
 
         {/* Language toggle */}
         <DropdownMenuItem className="p-0">

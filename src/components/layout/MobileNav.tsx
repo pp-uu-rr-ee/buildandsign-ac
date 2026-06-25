@@ -11,14 +11,11 @@ import {
   Package,
   CalendarCheck,
   LayoutDashboard,
-  Sun,
-  Moon,
   Languages,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { siteConfig } from "@/config/site";
 import { useLanguage } from "@/components/providers/LanguageProvider";
-import { useTheme } from "@/components/providers/ThemeProvider";
 import { useCart, cartCount } from "@/lib/store/cart";
 import { logoutAction } from "@/lib/actions/auth";
 import type { SessionPayload } from "@/lib/session";
@@ -30,7 +27,6 @@ interface MobileNavProps {
 export function MobileNav({ user }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const { t, lang, toggle: toggleLang } = useLanguage();
-  const { theme, toggle: toggleTheme } = useTheme();
   const { items } = useCart();
   const count = cartCount(items);
 
@@ -136,27 +132,14 @@ export function MobileNav({ user }: MobileNavProps) {
             )}
           </Link>
 
-          {/* Theme + Language toggles */}
-          <div className="flex gap-2">
-            <button
-              onClick={toggleTheme}
-              className="flex flex-1 items-center justify-center gap-2 px-3 py-2 rounded-md border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-            >
-              {theme === "dark" ? (
-                <Moon className="h-3.5 w-3.5 text-blue-400" />
-              ) : (
-                <Sun className="h-3.5 w-3.5 text-yellow-500" />
-              )}
-              {theme === "dark" ? t.nav.darkMode : t.nav.lightMode}
-            </button>
-            <button
-              onClick={toggleLang}
-              className="flex flex-1 items-center justify-center gap-2 px-3 py-2 rounded-md border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-            >
-              <Languages className="h-3.5 w-3.5" />
-              {lang === "en" ? "EN → TH" : "TH → EN"}
-            </button>
-          </div>
+          {/* Language toggle */}
+          <button
+            onClick={toggleLang}
+            className="flex w-full items-center justify-center gap-2 px-3 py-2 rounded-md border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            <Languages className="h-3.5 w-3.5" />
+            {lang === "en" ? "EN → TH" : "TH → EN"}
+          </button>
 
           {/* Sign out (logged-in) or Login/Register (guest) */}
           {user ? (

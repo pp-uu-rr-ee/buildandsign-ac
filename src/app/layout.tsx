@@ -3,7 +3,6 @@ import { Kanit } from "next/font/google";
 import "./globals.css";
 import { siteConfig } from "@/config/site";
 import { Toaster } from "@/components/ui/sonner";
-import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { LanguageProvider } from "@/components/providers/LanguageProvider";
 import { FloatingContact } from "@/components/layout/FloatingContact";
 
@@ -41,31 +40,19 @@ export const metadata: Metadata = {
   },
 };
 
-// Blocking script — runs before React hydrates to avoid flash of wrong theme
-const themeScript = `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(t==null&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}})()`;
-
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      className={`${kanit.variable} h-full antialiased`}
-    >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-      </head>
+    <html lang="en" className={`${kanit.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
-        <ThemeProvider>
-          <LanguageProvider>
-            {children}
-            <FloatingContact />
-            <Toaster richColors position="top-right" />
-          </LanguageProvider>
-        </ThemeProvider>
+        <LanguageProvider>
+          {children}
+          <FloatingContact />
+          <Toaster richColors position="top-right" />
+        </LanguageProvider>
       </body>
     </html>
   );
