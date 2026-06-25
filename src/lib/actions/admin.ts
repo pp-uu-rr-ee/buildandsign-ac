@@ -418,14 +418,15 @@ const technicianSchema = z.object({
     .min(1, "Choose at least one specialization"),
 });
 
+// Open every day (Sun–Sat) 09:00–18:00, 60-minute slots.
 const DEFAULT_WEEKLY_SCHEDULE = {
-  "0": null, // Sunday off
-  "1": { startTime: "08:00", endTime: "18:00", slotDurationMinutes: 60 },
-  "2": { startTime: "08:00", endTime: "18:00", slotDurationMinutes: 60 },
-  "3": { startTime: "08:00", endTime: "18:00", slotDurationMinutes: 60 },
-  "4": { startTime: "08:00", endTime: "18:00", slotDurationMinutes: 60 },
-  "5": { startTime: "08:00", endTime: "18:00", slotDurationMinutes: 60 },
-  "6": { startTime: "08:00", endTime: "14:00", slotDurationMinutes: 60 },
+  "0": { startTime: "09:00", endTime: "18:00", slotDurationMinutes: 60 },
+  "1": { startTime: "09:00", endTime: "18:00", slotDurationMinutes: 60 },
+  "2": { startTime: "09:00", endTime: "18:00", slotDurationMinutes: 60 },
+  "3": { startTime: "09:00", endTime: "18:00", slotDurationMinutes: 60 },
+  "4": { startTime: "09:00", endTime: "18:00", slotDurationMinutes: 60 },
+  "5": { startTime: "09:00", endTime: "18:00", slotDurationMinutes: 60 },
+  "6": { startTime: "09:00", endTime: "18:00", slotDurationMinutes: 60 },
 };
 
 export async function createTechnicianAction(

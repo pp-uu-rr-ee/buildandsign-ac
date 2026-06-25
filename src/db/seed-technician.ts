@@ -29,15 +29,15 @@ async function seed() {
     status: "active",
     bio: "5 years experience. Carrier & Daikin certified.",
     specializations: ["cleaning", "repair", "installation", "inspection"],
-    // Mon–Sat, 8AM–6PM, 60-min slots
+    // Every day (Sun–Sat), 9AM–6PM, 60-min slots
     weeklySchedule: {
-      "0": null, // Sunday — off
-      "1": { startTime: "08:00", endTime: "18:00", slotDurationMinutes: 60 },
-      "2": { startTime: "08:00", endTime: "18:00", slotDurationMinutes: 60 },
-      "3": { startTime: "08:00", endTime: "18:00", slotDurationMinutes: 60 },
-      "4": { startTime: "08:00", endTime: "18:00", slotDurationMinutes: 60 },
-      "5": { startTime: "08:00", endTime: "18:00", slotDurationMinutes: 60 },
-      "6": { startTime: "08:00", endTime: "14:00", slotDurationMinutes: 60 }, // Saturday half-day
+      "0": { startTime: "09:00", endTime: "18:00", slotDurationMinutes: 60 },
+      "1": { startTime: "09:00", endTime: "18:00", slotDurationMinutes: 60 },
+      "2": { startTime: "09:00", endTime: "18:00", slotDurationMinutes: 60 },
+      "3": { startTime: "09:00", endTime: "18:00", slotDurationMinutes: 60 },
+      "4": { startTime: "09:00", endTime: "18:00", slotDurationMinutes: 60 },
+      "5": { startTime: "09:00", endTime: "18:00", slotDurationMinutes: 60 },
+      "6": { startTime: "09:00", endTime: "18:00", slotDurationMinutes: 60 },
     },
   });
 

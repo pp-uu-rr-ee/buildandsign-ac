@@ -65,6 +65,18 @@ export async function createBookingAction(
   }
   const address = parsed.data;
 
+  // Same-day (and past) bookings aren't allowed — earliest is tomorrow.
+  const startOfTomorrow = new Date();
+  startOfTomorrow.setHours(0, 0, 0, 0);
+  startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+  if (new Date(address.scheduledAt) < startOfTomorrow) {
+    return {
+      success: false,
+      error: "Please choose a date from tomorrow onwards.",
+      fieldErrors: { scheduledAt: ["Same-day booking isn't available."] },
+    };
+  }
+
   // Contact info comes from the customer's account row.
   const [account] = await db
     .select({ name: users.name, email: users.email, phone: users.phone })

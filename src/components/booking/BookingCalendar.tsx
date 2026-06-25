@@ -22,6 +22,10 @@ export function BookingCalendar({ selectedDate, onSelect }: Props) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  // Same-day booking isn't allowed — the earliest bookable day is tomorrow.
+  const minDate = new Date(today);
+  minDate.setDate(minDate.getDate() + 1);
+
   const [viewDate, setViewDate] = useState(() => {
     const d = new Date();
     d.setDate(1);
@@ -84,10 +88,9 @@ export function BookingCalendar({ selectedDate, onSelect }: Props) {
           const day = i + 1;
           const d = new Date(year, month, day);
           const dateStr = formatDate(d);
-          const isSunday = d.getDay() === 0;
-          const isPast = d < today;
+          const isPast = d < minDate; // today and earlier are not bookable
           const isTooFar = d > maxDate;
-          const isDisabled = isPast || isTooFar || isSunday;
+          const isDisabled = isPast || isTooFar;
           const isSelected = dateStr === selectedDate;
           const isToday = formatDate(d) === formatDate(today);
 
@@ -101,7 +104,7 @@ export function BookingCalendar({ selectedDate, onSelect }: Props) {
                 ${isSelected ? "bg-blue-600 text-white" : ""}
                 ${!isSelected && !isDisabled ? "hover:bg-blue-50 dark:hover:bg-blue-950/40 text-gray-700 dark:text-gray-200" : ""}
                 ${isDisabled ? "text-gray-300 dark:text-gray-700 cursor-not-allowed" : ""}
-                ${isToday && !isSelected ? "ring-1 ring-blue-400 text-blue-600 dark:text-blue-400" : ""}
+                ${isToday && !isSelected && !isDisabled ? "ring-1 ring-blue-400 text-blue-600 dark:text-blue-400" : ""}
               `}
             >
               {day}

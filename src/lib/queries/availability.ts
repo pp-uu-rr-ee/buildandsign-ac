@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { technicians, bookings, technicianUnavailabilities, users } from "@/db/schema";
+import { technicians, technicianUnavailabilities, users } from "@/db/schema";
 import { and, eq, gte, lte, sql } from "drizzle-orm";
 import type { ServiceId } from "@/config/services";
 import type { TimeSlot } from "@/types";
@@ -55,31 +55,14 @@ export async function getAvailableSlots(
 
   if (activeTechs.length === 0) return [];
 
-  // 2. Get bookings that overlap this date for these technicians
   const dayStart = new Date(`${dateStr}T00:00:00`);
   const dayEnd = new Date(`${dateStr}T23:59:59`);
 
-  // Only ACCEPTED/CONFIRMED bookings block slots.
-  // "pending" = customer submitted but admin hasn't quoted, or customer hasn't
-  // accepted the quote yet — multiple customers can compete for the same slot
-  // until one accepts. The accept-quote action runs a conflict check at the
-  // moment of acceptance.
-  const existingBookings = await db
-    .select({
-      technicianId: bookings.technicianId,
-      scheduledAt: bookings.scheduledAt,
-      durationMinutes: bookings.durationMinutes,
-    })
-    .from(bookings)
-    .where(
-      and(
-        gte(bookings.scheduledAt, dayStart),
-        lte(bookings.scheduledAt, dayEnd),
-        sql`${bookings.status} IN ('confirmed', 'in_progress', 'completed')`
-      )
-    );
+  // Overlapping bookings are allowed — any number of customers can book the
+  // same technician + time. Slots are never marked busy from existing bookings;
+  // only the technician's weekly schedule and leave (below) limit them.
 
-  // 3. Get unavailability blocks for this date
+  // Get unavailability blocks for this date
   const unavailabilities = await db
     .select({
       technicianId: technicianUnavailabilities.technicianId,
@@ -114,10 +97,6 @@ export async function getAvailableSlots(
     );
     if (isOnLeave) continue;
 
-    const techBookings = existingBookings.filter(
-      (b) => b.technicianId === tech.id
-    );
-
     const daySlots = buildDaySlots(
       dateStr,
       daySchedule.startTime,
@@ -126,25 +105,13 @@ export async function getAvailableSlots(
     );
 
     for (const slot of daySlots) {
-      const slotStart = new Date(`${dateStr}T${slot.start}:00`);
-      const slotEnd = new Date(`${dateStr}T${slot.end}:00`);
-
-      // Check overlap with existing bookings
-      const isBusy = techBookings.some((b) => {
-        const bStart = new Date(b.scheduledAt);
-        const bEnd = new Date(
-          bStart.getTime() + b.durationMinutes * 60 * 1000
-        );
-        return slotStart < bEnd && slotEnd > bStart;
-      });
-
       slots.push({
         technicianId: tech.id,
         technicianName: tech.name,
         date: dateStr,
         startTime: slot.start,
         endTime: slot.end,
-        isAvailable: !isBusy,
+        isAvailable: true,
       });
     }
   }
