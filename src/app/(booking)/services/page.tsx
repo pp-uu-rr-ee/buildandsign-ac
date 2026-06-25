@@ -62,7 +62,7 @@ export default async function ServicesPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight mb-4">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4">
                 {t.services.heroTitle}
               </h1>
               <p className="text-blue-100 text-base sm:text-lg mb-8">

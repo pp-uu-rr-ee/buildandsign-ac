@@ -321,44 +321,6 @@ export function orderReceiptHtml(d: OrderEmailData): string {
   return base(`Order Confirmed — ${d.orderNumber}`, body);
 }
 
-// ── Booking Quote Ready ───────────────────────────────────────────────────────
-export function bookingQuoteReadyHtml(d: {
-  bookingNumber: string;
-  customerName: string;
-  serviceTitle: string;
-  quotedTotalInSatang: number;
-  acceptUrl: string;
-}): string {
-  const body = `
-    <h2 style="margin:0 0 8px;font-size:22px;font-weight:700;color:${brand.text};">Your quote is ready</h2>
-    <p style="margin:0 0 24px;font-size:15px;color:${brand.muted};">Hi ${d.customerName},</p>
-    <p style="margin:0 0 24px;font-size:14px;color:${brand.text};line-height:1.6;">
-      Our team has reviewed your <strong>${d.serviceTitle}</strong> booking
-      <strong style="font-family:monospace;">${d.bookingNumber}</strong>.
-      Accept the quote to lock your slot — we'll arrange payment with you directly.
-    </p>
-
-    <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${brand.border};border-radius:8px;margin-bottom:24px;">
-      <tr>
-        <td style="padding:14px 16px;font-size:15px;color:${brand.text};font-weight:700;">Total quote</td>
-        <td style="padding:14px 16px;font-size:18px;color:${brand.primary};font-weight:700;text-align:right;">${formatPrice(d.quotedTotalInSatang)}</td>
-      </tr>
-    </table>
-
-    <div style="text-align:center;margin:32px 0;">
-      <a href="${d.acceptUrl}" style="display:inline-block;background:${brand.primary};color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 36px;border-radius:8px;">
-        Review &amp; Accept Quote
-      </a>
-    </div>
-
-    <p style="margin:0;font-size:13px;color:${brand.muted};text-align:center;line-height:1.6;">
-      Payment is arranged offline via Line, Facebook, or phone.<br />
-      Questions? Reply to this email or call us.
-    </p>
-  `;
-  return base(`Quote ready — ${d.bookingNumber}`, body);
-}
-
 // ── Password Reset ────────────────────────────────────────────────────────────
 export function passwordResetHtml(d: { customerName: string; resetUrl: string }): string {
   const body = `

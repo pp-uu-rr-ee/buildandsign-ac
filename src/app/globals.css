@@ -6,7 +6,16 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-sans: "Inter", "Geist", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  /* Kanit is the single brand face for both Thai and Latin/digits. Loaded via
+     next/font in app/layout.tsx. */
+  --font-sans: var(--font-kanit), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  /* Kanit (Thai) is a geometric face that reads heavier than Inter at the same
+     numeric weight, so the brand's display weights run one step lighter than
+     Tailwind's defaults — Kanit breathes and hierarchy leans on size, not
+     density. Values map to the Kanit weights actually loaded in layout.tsx. */
+  --font-weight-bold: 600;
+  --font-weight-black: 700;
 }
 
 @theme inline {

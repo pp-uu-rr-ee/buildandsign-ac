@@ -1,41 +1,34 @@
 "use client";
 
 import { MessageCircle, ExternalLink, Phone } from "lucide-react";
-import { formatPrice } from "@/lib/helpers/price";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 
 interface Props {
   bookingNumber: string;
-  quotedTotalInSatang: number;
 }
 
 /**
- * Once a customer has accepted the quote, settlement happens offline via
- * Line / Facebook / phone. This card replaces the old card-payment form.
+ * After a customer books, the team reaches out on Line/Facebook/phone to
+ * confirm the details and agree on a price — there is no in-app quote step.
  */
-export function BookingContactToPay({ bookingNumber, quotedTotalInSatang }: Props) {
+export function BookingContactCard({ bookingNumber }: Props) {
   const { lang } = useLanguage();
 
   const lineUrl = process.env.NEXT_PUBLIC_LINE_URL ?? "";
   const fbUrl = process.env.NEXT_PUBLIC_FACEBOOK_URL ?? "";
   const phone = process.env.NEXT_PUBLIC_BUSINESS_PHONE ?? "";
 
-  const title = lang === "th" ? "นัดชำระเงิน" : "Settle payment";
+  const title = lang === "th" ? "ยืนยันรายละเอียดและราคาทาง Line" : "Confirm details & price on Line";
   const subtitle =
     lang === "th"
-      ? `ทักหาเราเพื่อยืนยันวิธีชำระเงิน อ้างอิงเลขที่ ${bookingNumber}`
-      : `Contact us to confirm how to pay. Reference: ${bookingNumber}`;
+      ? `ทีมงานจะติดต่อกลับเพื่อยืนยันราคาและนัดหมาย หรือทักหาเราได้เลย อ้างอิงเลขที่ ${bookingNumber}`
+      : `Our team will reach out to confirm the price and schedule — or message us first. Reference: ${bookingNumber}`;
 
   return (
     <div className="rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/30 dark:bg-blue-950/20 p-5 space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{subtitle}</p>
-        </div>
-        <p className="text-2xl font-bold text-blue-700 dark:text-blue-300 shrink-0">
-          {formatPrice(quotedTotalInSatang)}
-        </p>
+      <div className="min-w-0">
+        <h3 className="font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{subtitle}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">

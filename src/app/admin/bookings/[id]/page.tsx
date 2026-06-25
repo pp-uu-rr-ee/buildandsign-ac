@@ -4,8 +4,6 @@ import { ChevronLeft } from "lucide-react";
 import { getBookingById, getActiveTechnicianOptions } from "@/lib/queries/admin";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { BookingStatusUpdater } from "@/components/admin/BookingStatusUpdater";
-import { BookingQuoteForm } from "@/components/admin/BookingQuoteForm";
-import { formatPrice } from "@/lib/helpers/price";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -46,9 +44,6 @@ export default async function AdminBookingDetailPage({ params }: Props) {
             <div className="px-5 py-4 grid grid-cols-2 gap-4 text-sm">
               <div><p className="text-xs text-gray-400 mb-0.5">Service Type</p><p className="capitalize font-medium">{booking.serviceType}</p></div>
               <div><p className="text-xs text-gray-400 mb-0.5">Duration</p><p className="font-medium">{booking.durationMinutes} minutes</p></div>
-              {booking.quotedPriceInSatang && (
-                <div><p className="text-xs text-gray-400 mb-0.5">Quoted Price</p><p className="font-medium">{formatPrice(booking.quotedPriceInSatang)}</p></div>
-              )}
               {booking.customerNotes && (
                 <div className="col-span-2"><p className="text-xs text-gray-400 mb-0.5">Customer Notes</p><p className="text-gray-700">{booking.customerNotes}</p></div>
               )}
@@ -114,13 +109,6 @@ export default async function AdminBookingDetailPage({ params }: Props) {
               </div>
             </div>
           )}
-
-          {/* Quote form */}
-          <BookingQuoteForm
-            bookingId={booking.id}
-            quotedPriceInSatang={booking.quotedPriceInSatang}
-            quoteConfirmedAt={booking.quoteConfirmedAt}
-          />
 
           {/* Status updater */}
           <BookingStatusUpdater

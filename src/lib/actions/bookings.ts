@@ -7,7 +7,7 @@ import { bookings, users } from "@/db/schema";
 import { and, eq, sql } from "drizzle-orm";
 import { getSession } from "@/lib/session";
 import { bookingSchema } from "@/lib/validations/booking";
-import { sendBookingConfirmation, sendBookingQuoteReady } from "@/lib/email";
+import { sendBookingConfirmation } from "@/lib/email";
 import { getService } from "@/config/services";
 
 function generateBookingNumber(): string {
@@ -343,175 +343,6 @@ export async function cancelBookingAction(
   return { success: true };
 }
 
-// ─── Admin: set the quote ────────────────────────────────────────────────────
-// Quote is just a price estimate now — no deposit/balance split. Customer
-// accepts the quote to lock the slot; settlement happens offline via Line/FB.
-
-export type SetQuoteResult =
-  | { success: true }
-  | { success: false; error: string };
-
-export async function setBookingQuoteAction(
-  bookingId: string,
-  quotedTotalInBaht: number
-): Promise<SetQuoteResult> {
-  const session = await getSession();
-  if (!session || session.role !== "admin") {
-    return { success: false, error: "Unauthorized." };
-  }
-
-  if (
-    !Number.isFinite(quotedTotalInBaht) ||
-    quotedTotalInBaht <= 0 ||
-    quotedTotalInBaht > 1_000_000
-  ) {
-    return { success: false, error: "Invalid quote amount." };
-  }
-
-  const quotedTotalInSatang = Math.round(quotedTotalInBaht * 100);
-
-  const [booking] = await db
-    .select({
-      id: bookings.id,
-      bookingNumber: bookings.bookingNumber,
-      serviceType: bookings.serviceType,
-      userId: bookings.userId,
-      serviceAddress: bookings.serviceAddress,
-    })
-    .from(bookings)
-    .where(eq(bookings.id, bookingId))
-    .limit(1);
-
-  if (!booking) return { success: false, error: "Booking not found." };
-
-  await db
-    .update(bookings)
-    .set({
-      quotedPriceInSatang: quotedTotalInSatang,
-      quoteConfirmedAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .where(eq(bookings.id, bookingId));
-
-  if (booking.userId) {
-    try {
-      const [user] = await db
-        .select({ email: users.email })
-        .from(users)
-        .where(eq(users.id, booking.userId))
-        .limit(1);
-
-      if (user?.email) {
-        const service = getService(booking.serviceType);
-        await sendBookingQuoteReady({
-          to: user.email,
-          bookingNumber: booking.bookingNumber,
-          customerName: booking.serviceAddress.fullName,
-          serviceTitle: service?.title ?? booking.serviceType,
-          quotedTotalInSatang,
-          bookingId: booking.id,
-        });
-      }
-    } catch (err) {
-      console.error("[email] quote-ready notification failed:", err);
-    }
-  }
-
-  return { success: true };
-}
-
-// ─── Customer: accept admin's quote ─────────────────────────────────────────
-
-export type AcceptQuoteResult =
-  | { success: true }
-  | { success: false; error: string };
-
-/**
- * Customer accepts the admin's quote — slot becomes confirmed.
- * Settlement happens offline via Line/Facebook/phone; this just locks the slot.
- */
-export async function acceptBookingQuoteAction(
-  bookingId: string
-): Promise<AcceptQuoteResult> {
-  const session = await getSession();
-  if (!session) return { success: false, error: "Please log in." };
-
-  try {
-    await db.transaction(async (tx) => {
-      const [booking] = await tx
-        .select({
-          id: bookings.id,
-          userId: bookings.userId,
-          status: bookings.status,
-          technicianId: bookings.technicianId,
-          scheduledAt: bookings.scheduledAt,
-          durationMinutes: bookings.durationMinutes,
-          quoteConfirmedAt: bookings.quoteConfirmedAt,
-          quoteAcceptedAt: bookings.quoteAcceptedAt,
-          quotedPriceInSatang: bookings.quotedPriceInSatang,
-        })
-        .from(bookings)
-        .where(
-          and(eq(bookings.id, bookingId), eq(bookings.userId, session.userId))
-        )
-        .for("update")
-        .limit(1);
-
-      if (!booking) throw new Error("Booking not found.");
-      if (!booking.quoteConfirmedAt || booking.quotedPriceInSatang == null) {
-        throw new Error("Quote not ready yet.");
-      }
-      if (booking.quoteAcceptedAt) {
-        throw new Error("Quote already accepted.");
-      }
-      if (booking.status === "cancelled") {
-        throw new Error("Booking is cancelled.");
-      }
-      if (!booking.technicianId) {
-        throw new Error("No technician assigned.");
-      }
-
-      // Slot-conflict check: any OTHER booking already confirmed for this
-      // technician overlapping our window?
-      const slotStart = new Date(booking.scheduledAt);
-      const slotEnd = new Date(
-        slotStart.getTime() + booking.durationMinutes * 60 * 1000
-      );
-
-      const conflicts = await tx
-        .select({ id: bookings.id })
-        .from(bookings)
-        .where(
-          and(
-            eq(bookings.technicianId, booking.technicianId),
-            sql`${bookings.id} != ${bookingId}`,
-            sql`${bookings.status} IN ('confirmed', 'in_progress', 'completed')`,
-            sql`${bookings.scheduledAt} < ${slotEnd.toISOString()}`,
-            sql`(${bookings.scheduledAt} + (${bookings.durationMinutes} || ' minutes')::interval) > ${slotStart.toISOString()}`
-          )
-        )
-        .limit(1);
-
-      if (conflicts.length > 0) {
-        throw new Error("Slot was just booked by someone else. Please pick another time.");
-      }
-
-      await tx
-        .update(bookings)
-        .set({
-          quoteAcceptedAt: new Date(),
-          status: "confirmed",
-          updatedAt: new Date(),
-        })
-        .where(eq(bookings.id, bookingId));
-    });
-
-    return { success: true };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to accept quote.";
-    return { success: false, error: message };
-  }
-}
 
 /**
  * Cancel bookings that never moved past "pending" within the window.
@@ -525,7 +356,6 @@ export async function cleanupStalePendingBookings(
     .where(
       and(
         eq(bookings.status, "pending"),
-        sql`${bookings.quoteConfirmedAt} IS NULL`,
         sql`${bookings.createdAt} < NOW() - INTERVAL '1 hour' * ${olderThanHours}`
       )
     )

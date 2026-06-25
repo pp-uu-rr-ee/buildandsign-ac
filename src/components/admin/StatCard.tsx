@@ -21,7 +21,7 @@ export function StatCard({ label, value, sub, icon: Icon, color }: Props) {
     <div className={`rounded-xl p-5 ${c.bg} flex items-start justify-between`}>
       <div>
         <p className="text-sm font-medium text-gray-500">{label}</p>
-        <p className={`text-3xl font-black mt-1 ${c.text}`}>{value}</p>
+        <p className={`text-3xl font-bold mt-1 ${c.text}`}>{value}</p>
         {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
       </div>
       <div className={`${c.icon} p-2.5 rounded-lg`}>

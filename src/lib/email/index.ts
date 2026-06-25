@@ -2,7 +2,6 @@ import { Resend } from "resend";
 import { siteConfig } from "@/config/site";
 import {
   bookingConfirmationHtml,
-  bookingQuoteReadyHtml,
   orderReceiptHtml,
   passwordResetHtml,
 } from "./templates";
@@ -109,34 +108,6 @@ export async function sendOrderReceipt(payload: OrderEmailPayload): Promise<void
       paymentMethod: payload.paymentMethod,
       shippingAddress: payload.shippingAddress,
       orderUrl: `${APP_URL}/orders/${payload.orderId}/confirmation`,
-    }),
-  });
-
-  if (error) throw new Error(`Resend error: ${error.message}`);
-}
-
-// ─── Quote ready (admin set a quote, customer needs to accept) ─────────────
-export async function sendBookingQuoteReady(payload: {
-  to: string;
-  bookingNumber: string;
-  customerName: string;
-  serviceTitle: string;
-  quotedTotalInSatang: number;
-  bookingId: string;
-}): Promise<void> {
-  const resend = getResend();
-  if (!resend) return;
-
-  const { error } = await resend.emails.send({
-    from: `${siteConfig.name} <${FROM}>`,
-    to: payload.to,
-    subject: `Quote ready — ${payload.bookingNumber}`,
-    html: bookingQuoteReadyHtml({
-      bookingNumber: payload.bookingNumber,
-      customerName: payload.customerName,
-      serviceTitle: payload.serviceTitle,
-      quotedTotalInSatang: payload.quotedTotalInSatang,
-      acceptUrl: `${APP_URL}/bookings/${payload.bookingId}`,
     }),
   });
 

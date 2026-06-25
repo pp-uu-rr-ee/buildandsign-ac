@@ -10,13 +10,11 @@ import {
 import { db } from "@/db";
 import { bookings, technicians, users } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
-import { formatPrice } from "@/lib/helpers/price";
 import { getService } from "@/config/services";
 import { getSession } from "@/lib/session";
 import { getT, getLang } from "@/lib/helpers/lang";
-import { BookingContactToPay } from "@/components/booking/BookingPayBalance";
+import { BookingContactCard } from "@/components/booking/BookingContactCard";
 import { CancelBookingButton } from "@/components/booking/CancelBookingButton";
-import { AcceptQuoteCard } from "@/components/booking/AcceptQuoteCard";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -58,12 +56,10 @@ export default async function BookingDetailPage({ params }: Props) {
   const scheduledDate = new Date(booking.scheduledAt);
   const locale = lang === "th" ? "th-TH" : "en-US";
 
-  const quoteReady =
-    booking.quoteConfirmedAt != null && booking.quotedPriceInSatang != null;
-  const quoteAccepted = booking.quoteAcceptedAt != null;
-  const awaitingQuote = !quoteReady && booking.status === "pending";
-  const canAcceptQuote = quoteReady && !quoteAccepted && booking.status !== "cancelled";
-  const showContactToPay = quoteAccepted && booking.quotedPriceInSatang != null;
+  const isActive =
+    booking.status === "pending" ||
+    booking.status === "confirmed" ||
+    booking.status === "in_progress";
 
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
@@ -114,51 +110,15 @@ export default async function BookingDetailPage({ params }: Props) {
             </Row>
           </Card>
 
-          {/* State 1: Awaiting quote from admin */}
-          {awaitingQuote && (
-            <div className="rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 p-4 text-sm text-amber-800 dark:text-amber-200">
-              <p className="font-medium">{t.booking.awaitingQuoteState}</p>
-              <p className="mt-1 text-xs opacity-80">{t.booking.awaitingQuoteHint}</p>
-            </div>
-          )}
-
-          {/* State 2: Quote ready, customer must accept to lock slot */}
-          {canAcceptQuote && (
-            <AcceptQuoteCard
-              bookingId={booking.id}
-              quotedTotalInSatang={booking.quotedPriceInSatang!}
-            />
-          )}
-
-          {/* State 3: Quote accepted — settle offline via Line/FB/phone */}
-          {showContactToPay && (
-            <BookingContactToPay
-              bookingNumber={booking.bookingNumber}
-              quotedTotalInSatang={booking.quotedPriceInSatang!}
-            />
-          )}
+          {/* Price & scheduling are agreed offline — point the customer to Line. */}
+          {isActive && <BookingContactCard bookingNumber={booking.bookingNumber} />}
         </div>
 
-        {/* Right — quote summary */}
+        {/* Right — help + cancel */}
         <aside>
-          <Card title={t.booking.paymentSummary}>
-            {booking.quotedPriceInSatang != null ? (
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">{t.booking.totalQuote}</span>
-                <span className="font-semibold text-gray-900 dark:text-gray-100">
-                  {formatPrice(booking.quotedPriceInSatang)}
-                </span>
-              </div>
-            ) : (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {t.confirmation.awaitingQuote}
-              </p>
-            )}
-          </Card>
-
           <a
             href="tel:+66999000000"
-            className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 rounded-md border border-gray-300 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-md border border-gray-300 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             <Phone className="h-4 w-4" />
             {t.booking.needHelpCall}

@@ -41,7 +41,7 @@ export async function Navbar() {
                 <path d="M8 12h8M12 8v8" />
               </svg>
             </div>
-            <span className="hidden sm:block text-base font-black tracking-tight text-slate-900 dark:text-white">
+            <span className="hidden sm:block text-base font-bold tracking-tight text-slate-900 dark:text-white">
               {siteConfig.name}
             </span>
           </Link>

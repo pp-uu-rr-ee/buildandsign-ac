@@ -104,7 +104,7 @@ export default async function HomePage() {
                 <BadgeCheck className="h-4 w-4" />
                 {t.home.heroBadge}
               </div>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight mb-6">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight mb-6">
                 {t.home.heroTitle}
               </h1>
               <p className="text-lg text-blue-100 max-w-xl mb-10">
@@ -389,7 +389,7 @@ export default async function HomePage() {
       <section className="py-20 bg-white dark:bg-gray-950">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="rounded-3xl bg-gradient-to-br from-blue-600 to-sky-500 px-8 py-16 text-center text-white">
-            <h2 className="text-3xl sm:text-4xl font-black mb-4">{t.home.ctaTitle}</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">{t.home.ctaTitle}</h2>
             <p className="text-blue-100 max-w-lg mx-auto mb-8 text-lg">
               {t.home.ctaSubtitle}
             </p>

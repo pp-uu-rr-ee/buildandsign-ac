@@ -2,14 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { getCustomerBookings } from "@/lib/queries/account";
-import { formatPrice } from "@/lib/helpers/price";
 import { getT, getLocale } from "@/lib/helpers/lang";
-import {
-  CalendarCheck,
-  ArrowRight,
-  ChevronRight,
-  CheckCircle2,
-} from "lucide-react";
+import { CalendarCheck, ArrowRight, ChevronRight } from "lucide-react";
 
 export const metadata = { title: "My Bookings" };
 
@@ -87,13 +81,6 @@ export default async function BookingsPage() {
               STATUS_STYLES[booking.status] ?? "bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700";
             const statusLabel = statusLabels[booking.status] ?? booking.status;
             const serviceLabel = serviceLabels[booking.serviceType] ?? booking.serviceType;
-            const price = booking.quotedPriceInSatang;
-
-            const canAcceptQuote =
-              booking.quoteConfirmedAt != null &&
-              booking.quoteAcceptedAt == null &&
-              booking.status !== "cancelled";
-            const quoteAccepted = booking.quoteAcceptedAt != null;
 
             return (
               <div
@@ -116,12 +103,6 @@ export default async function BookingsPage() {
                       <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${statusClass}`}>
                         {statusLabel}
                       </span>
-                      {quoteAccepted && (
-                        <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800">
-                          <CheckCircle2 className="h-3 w-3" />
-                          {t.booking.quoteAccepted ?? "Quote accepted"}
-                        </span>
-                      )}
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {booking.bookingNumber} ·{" "}
@@ -139,41 +120,9 @@ export default async function BookingsPage() {
                   </div>
 
                   <div className="text-right shrink-0">
-                    {price != null && (
-                      <p className="font-bold text-gray-900 dark:text-gray-100">
-                        {formatPrice(price)}
-                      </p>
-                    )}
-                    <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-blue-500 transition-colors ml-auto mt-1 dark:text-gray-600" />
+                    <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-blue-500 transition-colors ml-auto dark:text-gray-600" />
                   </div>
                 </Link>
-
-                {/* Accept-quote CTA (priority over pay-balance) */}
-                {canAcceptQuote && (
-                  <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-900/40 flex flex-col sm:flex-row sm:items-center gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide">
-                        {t.booking.quoteReadyTitle}
-                      </p>
-                      {booking.quotedPriceInSatang != null && (
-                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                          {formatPrice(booking.quotedPriceInSatang)}
-                        </p>
-                      )}
-                      <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-                        {t.booking.quoteReadySubtitle}
-                      </p>
-                    </div>
-                    <Link
-                      href={`/bookings/${booking.id}`}
-                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors shrink-0"
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                      {t.booking.acceptQuote}
-                    </Link>
-                  </div>
-                )}
-
               </div>
             );
           })}

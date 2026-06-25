@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Kanit } from "next/font/google";
 import "./globals.css";
 import { siteConfig } from "@/config/site";
 import { Toaster } from "@/components/ui/sonner";
@@ -7,9 +7,12 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { LanguageProvider } from "@/components/providers/LanguageProvider";
 import { FloatingContact } from "@/components/layout/FloatingContact";
 
-const inter = Inter({
-  subsets: ["latin", "latin-ext"],
+// Single brand face for both Thai and Latin/digits.
+const kanit = Kanit({
+  subsets: ["thai", "latin"],
+  weight: ["400", "500", "600", "700", "900"],
   display: "swap",
+  variable: "--font-kanit",
 });
 
 export const metadata: Metadata = {
@@ -47,7 +50,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.className} h-full antialiased`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${kanit.variable} h-full antialiased`}
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
