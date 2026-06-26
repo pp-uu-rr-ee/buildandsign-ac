@@ -6,6 +6,7 @@ import {
   timestamp,
   pgEnum,
   boolean,
+  jsonb,
   index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
@@ -18,6 +19,18 @@ export const userRoleEnum = pgEnum("user_role", [
   "technician",
 ]);
 
+/** One entry in a customer's saved address book. Name/phone come from the
+ *  account, so only the location fields live here. */
+export type SavedAddress = {
+  id: string;
+  addressLine1: string;
+  addressLine2?: string | null;
+  city: string;
+  province: string;
+  postalCode: string;
+  isDefault?: boolean;
+};
+
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 255 }).notNull(),
@@ -27,6 +40,11 @@ export const users = pgTable("users", {
   role: userRoleEnum("role").notNull().default("customer"),
   emailVerified: boolean("email_verified").notNull().default(false),
   avatarUrl: text("avatar_url"),
+  // Customer address book — reused across checkout and booking.
+  savedAddresses: jsonb("saved_addresses")
+    .$type<SavedAddress[]>()
+    .notNull()
+    .default([]),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

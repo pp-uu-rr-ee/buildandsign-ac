@@ -18,7 +18,12 @@ export default async function CheckoutPage() {
   if (!session) redirect("/login?callbackUrl=/checkout");
 
   const [account] = await db
-    .select({ name: users.name, email: users.email, phone: users.phone })
+    .select({
+      name: users.name,
+      email: users.email,
+      phone: users.phone,
+      savedAddresses: users.savedAddresses,
+    })
     .from(users)
     .where(eq(users.id, session.userId))
     .limit(1);
@@ -34,6 +39,7 @@ export default async function CheckoutPage() {
         accountName={account.name}
         accountEmail={account.email}
         accountPhone={account.phone}
+        savedAddresses={account.savedAddresses}
       />
     </div>
   );

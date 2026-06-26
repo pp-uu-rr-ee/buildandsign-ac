@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import { User, ShoppingBag, CalendarCheck, ArrowRight, KeyRound } from "lucide-react";
 import { LogoutButton } from "@/components/account/LogoutButton";
 import { ProfileForm } from "@/components/account/ProfileForm";
+import { AddressManager } from "@/components/account/AddressManager";
 
 export const metadata = { title: "My Account" };
 
@@ -18,7 +19,12 @@ export default async function AccountPage() {
   const [{ totalOrders, totalBookings }, [account]] = await Promise.all([
     getCustomerStats(session.userId),
     db
-      .select({ name: users.name, email: users.email, phone: users.phone })
+      .select({
+        name: users.name,
+        email: users.email,
+        phone: users.phone,
+        savedAddresses: users.savedAddresses,
+      })
       .from(users)
       .where(eq(users.id, session.userId))
       .limit(1),
@@ -52,6 +58,11 @@ export default async function AccountPage() {
       {/* Editable contact details */}
       <div className="mb-6">
         <ProfileForm name={account.name} email={account.email} phone={account.phone} />
+      </div>
+
+      {/* Saved address book */}
+      <div className="mb-6">
+        <AddressManager addresses={account.savedAddresses} />
       </div>
 
       {/* Stats + quick links */}

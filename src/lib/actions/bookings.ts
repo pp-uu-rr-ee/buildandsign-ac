@@ -9,6 +9,7 @@ import { getSession } from "@/lib/session";
 import { bookingSchema } from "@/lib/validations/booking";
 import { sendBookingConfirmation } from "@/lib/email";
 import { getService } from "@/config/services";
+import { ensureSavedAddress } from "@/lib/actions/addresses";
 
 function generateBookingNumber(): string {
   const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -132,6 +133,19 @@ export async function createBookingAction(
   } catch (err) {
     console.error("[bookings] insert failed:", err);
     return { success: false, error: "Could not create booking." };
+  }
+
+  // First-time address → save it to the customer's address book.
+  try {
+    await ensureSavedAddress(session.userId, {
+      addressLine1: data.addressLine1,
+      addressLine2: data.addressLine2,
+      city: data.city,
+      province: data.province,
+      postalCode: data.postalCode,
+    });
+  } catch (e) {
+    console.error("[address] ensureSavedAddress (booking) failed:", e);
   }
 
   await maybeSendConfirmation(

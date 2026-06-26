@@ -92,6 +92,13 @@
       "when": 1781154000000,
       "tag": "0012_move_energy_rating",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1781155000000,
+      "tag": "0013_saved_addresses",
+      "breakpoints": true
     }
   ]
 }

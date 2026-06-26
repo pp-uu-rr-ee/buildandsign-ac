@@ -9,6 +9,8 @@ import { createOrderAction } from "@/lib/actions/orders";
 import type { OrderActionResult } from "@/lib/actions/orders";
 import { formatPrice } from "@/lib/helpers/price";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import { AddressBook } from "@/components/address/AddressBook";
+import type { SavedAddress } from "@/db/schema";
 
 const SHIPPING_THRESHOLD = 500000;
 const SHIPPING_FLAT = 49900;
@@ -19,9 +21,10 @@ type Props = {
   accountName: string;
   accountEmail: string;
   accountPhone: string | null;
+  savedAddresses: SavedAddress[];
 };
 
-export function CheckoutForm({ accountName, accountEmail, accountPhone }: Props) {
+export function CheckoutForm({ accountName, accountEmail, accountPhone, savedAddresses }: Props) {
   const { t, lang } = useLanguage();
   const { items, clearCart } = useCart();
   const subtotal = cartTotal(items);
@@ -133,16 +136,10 @@ export function CheckoutForm({ accountName, accountEmail, accountPhone }: Props)
             </div>
           </section>
 
-          {/* Shipping address */}
+          {/* Shipping address — pick a saved one or enter a new one */}
           <section className="space-y-4">
             <h2 className="font-semibold text-gray-900 dark:text-white">{t.checkout.shippingAddress}</h2>
-            <Field label={t.checkout.addressLine1} name="addressLine1" required error={fieldErrors?.addressLine1?.[0]} />
-            <Field label={t.checkout.addressLine2} name="addressLine2" />
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Field label={t.checkout.city} name="city" required error={fieldErrors?.city?.[0]} />
-              <Field label={t.checkout.province} name="province" required error={fieldErrors?.province?.[0]} />
-              <Field label={t.checkout.postalCode} name="postalCode" required error={fieldErrors?.postalCode?.[0]} />
-            </div>
+            <AddressBook addresses={savedAddresses} fieldErrors={fieldErrors} />
           </section>
 
           {/* Notes */}
@@ -315,21 +312,3 @@ function ContactRow({
   );
 }
 
-function Field({
-  label, name, type = "text", required, placeholder, error,
-}: {
-  label: string; name: string; type?: string; required?: boolean; placeholder?: string; error?: string;
-}) {
-  return (
-    <div>
-      <label htmlFor={name} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <input
-        id={name} name={name} type={type} placeholder={placeholder} required={required}
-        className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-      />
-      {error && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>}
-    </div>
-  );
-}

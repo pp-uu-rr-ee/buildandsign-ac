@@ -6,10 +6,12 @@ import { Plus, Trash2, AirVent, User, Mail, Phone, Pencil } from "lucide-react";
 import { BookingCalendar } from "./BookingCalendar";
 import { SlotPicker } from "./SlotPicker";
 import { createBookingAction } from "@/lib/actions/bookings";
+import { AddressBook } from "@/components/address/AddressBook";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import type { TimeSlot } from "@/types";
 import type { ServiceId, ServiceGroup } from "@/config/services";
 import type { BookingActionResult } from "@/lib/actions/bookings";
+import type { SavedAddress } from "@/db/schema";
 
 type SerializableService = {
   id: ServiceId;
@@ -26,6 +28,7 @@ type Props = {
   accountName: string;
   accountEmail: string;
   accountPhone: string | null;
+  savedAddresses: SavedAddress[];
 };
 
 const initialState: BookingActionResult = { success: true, bookingId: "" };
@@ -55,6 +58,7 @@ export function BookingWizard({
   accountName,
   accountEmail,
   accountPhone,
+  savedAddresses,
 }: Props) {
   const { t, lang } = useLanguage();
   const locale = lang === "th" ? "th-TH" : "en-US";
@@ -261,18 +265,10 @@ export function BookingWizard({
             </div>
           </section>
 
-          {/* Address */}
+          {/* Address — pick a saved one or enter a new one */}
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-4 dark:text-gray-100">{t.booking.serviceAddress}</h2>
-            <div className="space-y-4">
-              <Field label={t.booking.addressLine1} name="addressLine1" required error={fieldErrors.addressLine1?.[0]} />
-              <Field label={t.booking.addressLine2} name="addressLine2" />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Field label={t.booking.city} name="city" required error={fieldErrors.city?.[0]} />
-                <Field label={t.booking.province} name="province" required error={fieldErrors.province?.[0]} />
-                <Field label={t.booking.postalCode} name="postalCode" required error={fieldErrors.postalCode?.[0]} />
-              </div>
-            </div>
+            <AddressBook addresses={savedAddresses} fieldErrors={fieldErrors} />
           </section>
 
           {/* AC units */}
@@ -513,27 +509,6 @@ export function BookingWizard({
           </div>
         </div>
       </form>
-    </div>
-  );
-}
-
-function Field({
-  label, name, type = "text", required, placeholder, error, defaultValue,
-}: {
-  label: string; name: string; type?: string; required?: boolean;
-  placeholder?: string; error?: string; defaultValue?: string;
-}) {
-  return (
-    <div>
-      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <input
-        id={name} name={name} type={type} placeholder={placeholder}
-        defaultValue={defaultValue}
-        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
-      />
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
   );
 }

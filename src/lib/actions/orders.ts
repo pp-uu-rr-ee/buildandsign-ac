@@ -8,6 +8,7 @@ import { eq, sql, and } from "drizzle-orm";
 import { getSession } from "@/lib/session";
 import { checkoutSchema, cartItemsSchema } from "@/lib/validations/checkout";
 import { sendOrderReceipt } from "@/lib/email";
+import { ensureSavedAddress } from "@/lib/actions/addresses";
 
 export type OrderActionResult =
   | { success: true; orderId: string }
@@ -214,6 +215,21 @@ export async function createOrderAction(
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Inquiry failed.";
     return { success: false, error: msg };
+  }
+
+  // First-time address → save it to the customer's address book.
+  if (session?.userId) {
+    try {
+      await ensureSavedAddress(session.userId, {
+        addressLine1: data.addressLine1,
+        addressLine2: data.addressLine2,
+        city: data.city,
+        province: data.province,
+        postalCode: data.postalCode,
+      });
+    } catch (e) {
+      console.error("[address] ensureSavedAddress (order) failed:", e);
+    }
   }
 
   // ── 4. Fire-and-forget receipt email (best effort) ────────────────────────

@@ -32,7 +32,12 @@ export default async function BookServicePage({ params }: Props) {
   if (!session) redirect(`/login?callbackUrl=/book/${serviceId}`);
 
   const [account] = await db
-    .select({ name: users.name, email: users.email, phone: users.phone })
+    .select({
+      name: users.name,
+      email: users.email,
+      phone: users.phone,
+      savedAddresses: users.savedAddresses,
+    })
     .from(users)
     .where(eq(users.id, session.userId))
     .limit(1);
@@ -82,6 +87,7 @@ export default async function BookServicePage({ params }: Props) {
             accountName={account.name}
             accountEmail={account.email}
             accountPhone={account.phone}
+            savedAddresses={account.savedAddresses}
           />
         </div>
 
